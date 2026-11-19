@@ -24,7 +24,7 @@ public class HealthTest {
         DeploymentOptions options = new DeploymentOptions()
                 .setConfig(new JsonObject().put("http.port", port));
 
-        vertx.deployVerticle(new MainVerticle(), options, testContext.succeedingThenComplete());
+        vertx.deployVerticle(new HttpServerVerticle(), options, testContext.succeedingThenComplete());
     }
 
     @Test

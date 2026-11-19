@@ -38,3 +38,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# OpenSpec-generated agent skills (each dev runs: openspec init --tools claude)
+.claude/skills/
+.agents/

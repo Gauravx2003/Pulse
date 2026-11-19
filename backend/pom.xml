@@ -12,7 +12,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <vertx.version>4.5.10</vertx.version>
-        <main.verticle>com.pulse.MainVerticle</main.verticle>
+        <main.verticle>com.pulse.HttpServerVerticle</main.verticle>
     </properties>
 
     <dependencyManagement>
@@ -72,6 +72,46 @@
 
     <build>
         <plugins>
+            <!-- Self-registering modules live in backend/modules/<id>/ (design.md decision 10):
+                 Java sources compile from there, migrations/ and seed/ are copied to classpath modules/<id>/. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>add-module-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>modules</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-module-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>add-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>modules</directory>
+                                    <targetPath>modules</targetPath>
+                                    <excludes>
+                                        <exclude>**/*.java</exclude>
+                                        <exclude>**/.gitkeep</exclude>
+                                    </excludes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

@@ -24,8 +24,8 @@ Pulse (employee performance and growth system for engineering teams) has a compl
   - A simple append-only audit table with an extended event list.
   - CSV safety (formula-injection escaping, bound check ids, snapshot-based undo, enumerated attendance status and leave values).
   - Rule versioning: closed periods and submitted appraisals are frozen and reproducible.
-  - Seeded tool data with a Sync now simulation instead of live integrations; time zone Asia/Kolkata with a pinnable demo date.
-- Defer to a later release: MFA, KMS and field-level encryption, PostgreSQL row-level security, audit hash chain, live OAuth, webhooks and real connectors (see "Deferred hardening" in `design.md`).
+  - Seeded tool data with a Sync now simulation for TFS, Slack and HRMS, then, later in the same week and only after seed-based acceptance, live read-only GitHub (personal access token) and Jira Cloud (API token) connectors for the demo; time zone Asia/Kolkata with a pinnable demo date.
+- Defer to a later release: MFA, KMS and field-level encryption, PostgreSQL row-level security, audit hash chain, live OAuth, webhooks, scheduled live polling and real connectors for TFS, Slack, HRMS and PagerDuty (see "Deferred hardening" in `design.md`).
 - Record the remaining open questions in `design.md`, so they are decided rather than assumed.
 
 ## Capabilities
@@ -36,7 +36,7 @@ Platform (cross-cutting):
 - `platform/auth-session`: password sign-in, lockout and throttling, password policy and reset, sessions and revocation, flag-gated demo accounts.
 - `platform/rbac-visibility`: permissions, built-in and custom roles, visibility rules, server-side enforcement in one policy service, separation of duties.
 - `platform/audit-log`: append-only audit table, event catalogue, access to the log.
-- `platform/secrets-credentials`: integration credential forms in v1: validation, masked placeholders, write-only display, rotation display.
+- `platform/secrets-credentials`: integration credential forms in v1: validation, encrypted storage for the GitHub and Jira tokens, masked placeholders for seeded tools, write-only display, rotation display.
 - `platform/security-baseline`: transport and browser security headers, CSP, CSRF, CORS, input validation, output encoding, rate limiting, dependency and static scanning.
 - `platform/privacy-retention`: retention windows, user deletion and anonymization, 360° comment retention, data-subject requests, salary protection.
 - `platform/period-calendar`: sprint, month, release, quarter and all periods; working-day calendar; time zone and the clock.
@@ -50,7 +50,7 @@ Platform (cross-cutting):
 
 Administration:
 - `admin/users-roles`: user directory, add, edit, deactivate, delete, invites, roles and permission matrix, custom roles.
-- `admin/integrations-connectors`: connector tiles backed by seeded data, simulated test and Sync now, tile states, person matching, Jira configuration.
+- `admin/integrations-connectors`: connector tiles, live GitHub and Jira connectors with real Test connection and Sync now, seeded and simulated behaviour for other tools, coexistence of seed and live data, tile states, person matching, Jira configuration.
 - `admin/data-imports-exports`: import cards, templates, exports, data-source map, upload history; per-import column and check definitions.
 
 Work data:
@@ -89,7 +89,7 @@ None. The project has no existing specs.
 ## Impact
 
 - **New code base:** Vue.js SPA, Vert.x service (API, workers, in-process scheduler), PostgreSQL schema and migrations.
-- **External systems:** none called in v1. Jira, GitHub, TFS, Slack and HRMS data is pre-seeded; nudges, kudos and invites go to an outbox (optional SMTP). Live connectors are a later release.
+- **External systems:** only GitHub (`api.github.com`) and Jira Cloud (`*.atlassian.net`) are called, read-only, when an Admin connects them. TFS, Slack and HRMS data is pre-seeded; nudges, kudos and invites go to an outbox (optional SMTP). Other live connectors are a later release.
 - **Data sensitivity:** salary, attendance check-in times, 360° feedback, weekly pulse notes. These drive the security and privacy requirements.
 - **Reference material** (`reference/`) stays the behavioural reference. Where a spec here differs from it, this change wins and the difference is called out in `design.md`.
 - **Scope note:** this change defines the whole of v1. The one-week cut line is chosen later, in `tasks`, not here.

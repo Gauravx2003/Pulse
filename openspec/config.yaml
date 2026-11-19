@@ -1,5 +1,28 @@
 schema: spec-driven
 
+context: |
+  Backend is Java on Vert.x. All code must follow the "Vert.x & Java Coding Standards"
+  in openspec/changes/pulse-v1-baseline/design.md (Decision 1):
+  - Only two verticles: HttpServerVerticle (mounts /api/v1 sub-routers from self-registering
+    modules) and SchedulerVerticle (in-process cron/periodic jobs). No verticle per module;
+    modules are plain Java classes (Router, Service, Repository) sharing one PgPool and CalcService.
+  - Never block the event loop: no synchronous I/O, Thread.sleep(), JDBC or heavy CPU loops in
+    handlers/services. BCrypt, CSV parsing/validation (up to 5,000 rows) and seed file reading
+    always run in vertx.executeBlocking(() -> ...).
+  - DB access only via io.vertx.pgclient.PgPool with parameterized Tuple queries. Compose with
+    Future.all(...) and .compose(...), not nested callbacks. Transactions use pool.withTransaction(conn -> ...).
+  - Route failures go through ctx.fail(statusCode, exception) to one central FailureHandler that
+    returns the standard JSON error contract (400, 403, 404, 409, 422).
+
+rules:
+  tasks:
+    - Every task that adds a handler, service or repository must comply with the Vert.x & Java Coding Standards in design.md.
+
+operations:
+  apply:
+    guidance:
+      - Before writing code, re-read the Vert.x & Java Coding Standards in design.md. Reject and fix any code that blocks the event loop, deploys extra verticles, uses non-reactive DB access, or bypasses the central FailureHandler.
+
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.
 # Include constraints an agent cannot infer by reading the code.

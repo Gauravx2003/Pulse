@@ -4,7 +4,7 @@
 
 Pulse is built from the reference package in `reference/` (spec, prototype v11, design system v30). Stack is fixed: Vue 3 SPA, Vert.x backend, PostgreSQL. See proposal.md for motivation and the capability specs for requirements. This document covers how, and where this change departs from the reference.
 
-**Delivery constraint:** three interns build a full working v1 in one week, in parallel. This drives a *lean v1*: security that is standard and enforced in the service layer, no external live integrations, and rich seed data. Controls that were drafted for a larger production build (MFA, KMS, row-level security, audit hash chain, live OAuth and webhooks) are deferred, not forgotten; see "Deferred hardening".
+**Delivery constraint:** three interns build a full working v1 in one week, in parallel. This drives a *lean v1*: security that is standard and enforced in the service layer and rich seed data. Everything is built on seed data first; then two live read-only connectors for the demo (GitHub with a personal access token, Jira Cloud with an API token) are added later in the same week. Controls that were drafted for a larger production build (MFA, KMS, row-level security, audit hash chain, live OAuth and webhooks) are deferred, not forgotten; see "Deferred hardening".
 
 ## Goals / Non-Goals
 
@@ -12,18 +12,18 @@ Pulse is built from the reference package in `reference/` (spec, prototype v11, 
 - One calculation library whose output is checked against the prototype oracle, so the same number appears on every screen.
 - Every permission and visibility rule enforced server-side in one service layer.
 - Three tracks that touch disjoint files, so they can run in parallel without merge conflicts.
-- A demo that runs end to end on seeded data, including every role's demo account.
+- A demo that runs end to end on seeded data, including every role's demo account, and shows real GitHub pull requests and Jira issues flowing in beside it.
 
 **Non-Goals (v1):**
 - SSO, MFA, KMS or envelope encryption, PostgreSQL row-level security, audit hash chain.
-- Live Jira, GitHub, TFS, Slack or HRMS connections, OAuth flows and webhooks.
+- Live TFS, Slack, HRMS or PagerDuty connections, OAuth flows and webhooks. (Live GitHub and Jira Cloud read-only connectors are in scope; see Decision 6.)
 - Payroll, leave approval, multi-tenancy (single organization per deployment).
 - Production-hardening for external exposure beyond the baseline below.
 
 ## Decisions
 
 ### 1. Architecture: modular monolith
-One Vert.x deployable, one PostgreSQL database, modules per capability group. Heavy work (calculation, CSV checks, "Sync now") runs on worker verticles. Single instance in v1, so no cross-instance job locking.
+One Vert.x deployable, one PostgreSQL database, modules per capability group. Heavy work (BCrypt, CSV checks, seed reading) runs via `vertx.executeBlocking`; see the Vert.x & Java Coding Standards below. Single instance in v1, so no cross-instance job locking.
 - *Why:* one-number-everywhere needs strong consistency; a three-person team cannot operate distributed services.
 - *Rejected:* microservices, separate calculation service.
 
@@ -39,6 +39,18 @@ One Vert.x deployable, one PostgreSQL database, modules per capability group. He
                       v
                  PostgreSQL (schema, seed, audit table)
 ```
+
+#### Vert.x & Java Coding Standards (strict, binding on all three tracks' `/opsx:apply` runs)
+
+1. **Verticle topology.** Exactly two verticles: `HttpServerVerticle` (mounts `/api/v1` sub-routers from self-registering modules) and `SchedulerVerticle` (in-process cron and periodic jobs). Never deploy a verticle per module. Modules are plain Java classes (Router, Service, Repository) that share one `PgPool` and the `CalcService`.
+2. **Zero event-loop blocking.**
+   - HTTP handlers and services must never do synchronous I/O, `Thread.sleep()`, JDBC, or heavy CPU loops.
+   - BCrypt hashing and verification, CSV parsing and validation (up to 5,000 rows), and seed-file reading always run inside `vertx.executeBlocking(() -> ...)`.
+3. **Reactive DB and Future composition.**
+   - Use only `io.vertx.pgclient.PgPool` (reactive SQL client) with parameterized `Tuple` queries. No string-concatenated SQL.
+   - Chain multiple queries with `Future.all(...)` and `.compose(...)`, never nested callbacks.
+   - Transactions use `pool.withTransaction(conn -> ...)`.
+4. **Error and context propagation.** Every route failure goes through `ctx.fail(statusCode, exception)` to one central `FailureHandler`, which returns the standard JSON error contract for 400, 403, 404, 409 and 422. Handlers do not write error responses themselves.
 
 ### 2. Authorization: service-layer policy, no RLS
 Every route declares its required permissions. A single policy service resolves visibility (self, direct report, all.view, mentor, account owner) and is the only code that builds visibility filters; domain modules call it and never write their own. Forbidden and nonexistent records return the same response. Contract tests per role per endpoint are mandatory.
@@ -70,9 +82,18 @@ Each sub-folder exports a formula-module descriptor that `CalcService` discovers
 - *Why:* the prototype is the only executable statement of the formulas; if the port and the prototype disagree, the spec section 12 text decides and the difference is recorded.
 
 ### 6. Seed data and external tools
-Jira, GitHub, TFS, Slack and HRMS data come from rich pre-seeded PostgreSQL tables, derived from the prototype's sample data. The Integrations screen shows connector tiles and settings forms backed by seed state; **Sync now** runs a simulation that bumps "synced N min ago", writes a sync log entry and re-derives aggregates from seed. No outbound network calls, no webhooks, no credential storage in v1; credential forms validate and accept input but store only masked placeholders. Nudge and kudos-to-Slack write to a notifications outbox.
+TFS, Slack and HRMS data come from rich pre-seeded PostgreSQL tables, derived from the prototype's sample data. Jira and GitHub are seeded the same way and additionally have live read-only connectors. The Integrations screen shows connector tiles and settings forms. Until Phase 2 lands, every tool is seeded. For the seeded tools **Sync now** runs a simulation that bumps "synced N min ago", writes a sync log entry and re-derives aggregates from seed, with no network call. For GitHub and Jira, **Test connection** makes a real authenticated request and **Sync now** runs the real `fetchChanges(since)`. No webhooks and no OAuth in v1. Credential forms of seeded tools store only masked placeholders. Nudge and kudos-to-Slack write to a notifications outbox.
+- *Live connectors (GitHub and Jira Cloud), built in Phase 2:* v1 is first built and accepted entirely on seed data (tasks groups 1 to 23). The live connectors are added later in the same week (tasks group 24), only after that acceptance passes, behind the `ConnectorPort` seam so no Phase 1 contract or formula changes. Their tables (`external_accounts`, `sync_state`, `integration_connections`) arrive in migration V190, not in the base schema. Both are `ConnectorPort` implementations built on the Vert.x `WebClient`, read-only (GET only), and write only through `IngestService`.
+  - `GitHubConnector` takes a PAT and owner/repo, reads `/repos/{owner}/{repo}/pulls?state=all` and `/repos/{owner}/{repo}/commits`, aggregates commits per author per day into `commit_days`, and upserts with `source = 'github'`, `external_id` = GitHub id. Pull requests have no `since` filter, so it pages `sort=updated&direction=desc` and stops at the stored cursor; commits use `since`.
+  - `JiraConnector` takes site URL, email and API token (basic auth), reads `/rest/api/3/search/jql` with a `updated >= cursor` JQL over the configured boards and follows `nextPageToken`, and upserts issues with `source = 'jira'`, `external_id` = issue key. The sprint field maps to a `sprints` row upserted with `source = 'jira'`.
+  - *Test connection:* GitHub `GET /user` plus `GET /repos/{owner}/{repo}` (scopes from `X-OAuth-Scopes`), Jira `GET /rest/api/3/myself`. Pass only on HTTP 200.
+  - *Sync now:* runs `fetchChanges(since)`, upserts through `IngestService`, writes `sync_log`, advances the cursor in `sync_state`, then publishes the same cache-invalidation event that CSV commits use so `CalcService` recomputes. A 401, 429 or 5xx stops the run, keeps rows already written and sets the tile to "Sync failed · code". Live sync runs only through Sync now in v1.
+  - *Person matching:* live authors and assignees are matched to people through `external_accounts` (work email first, manual link otherwise). Unmatched records are stored with a null person and stay out of per-person figures until linked.
+  - *Secrets:* the PAT and API token are stored AES-256-GCM encrypted under `PULSE_SECRET_KEY` and are never returned, logged or audited. This replaces "masked placeholder only" for these two tools; KMS stays deferred. `integration_connections` (tool, non-secret config json, secret ciphertext, last 4, state, rotated_at) holds them.
+  - *Outbound safety:* GitHub requests go only to `https://api.github.com`; the Jira site URL must be `https` and end in `.atlassian.net`; redirects are not followed; every request has connect and read timeouts. These are the minimum SSRF guards now that something makes outbound calls.
+  - *Coexistence with seed:* `SeedConnector` still runs at startup whenever `PULSE_DEMO_SEED=true` (`source = 'seed'`), so demo users and all screens stay populated. Live rows live beside them under their own `source`; the unique index on (source, external_id) means the two never collide, a live sync never deletes seed rows, and `CalcService` reads every source together. If the live repository or project belongs to the same people as the seed, their figures include both; the demo runbook says so.
 - *Culture reported inputs:* 12 of the 35 culture data parameters have no source table in v1 (the prototype generates them from a hash). They live in `culture_signals` (person_id, quarter, param_key, raw_value, display_value, source_label, is_simulated), extracted by the seed tool from the prototype's `valData`, read by `calc/core` and shown in the detail view with their source label as reported inputs; a live connector can fill the same table later.
-- *Seed is the first connector (seam for live data):* tables that mirror an external tool carry `source` (default `'seed'`), `external_id` and `synced_at` with a unique index on (source, external_id). A `ConnectorPort` interface (`fetchChanges(since)` returning normalized records) has one v1 implementation, `SeedConnector`, which reads the extracted seed JSON. An `IngestService` is the only write path to those tables (idempotent upsert by source and external id), used by the seed loader and by **Sync now**. A live connector later implements the same port and writes through the same service, so calculation and screens do not change. Port, `SeedConnector` and `IngestService` belong to Track 1 (task 5.4); the columns are added by the track that owns each table (tasks 2.1, 7.1, 17.1).
+- *Seed is the first connector (seam for live data):* tables that mirror an external tool carry `source` (default `'seed'`), `external_id` and `synced_at` with a unique index on (source, external_id). A `ConnectorPort` interface (`fetchChanges(since)` returning normalized records) has three v1 implementations: `SeedConnector`, which reads the extracted seed JSON, and the live `GitHubConnector` and `JiraConnector` described above. An `IngestService` is the only write path to those tables (idempotent upsert by source and external id), used by the seed loader and by **Sync now**. Every connector writes through the same service, so calculation and screens do not change. Port, `SeedConnector` and `IngestService` belong to Track 1 (task 5.4); the columns are added by the track that owns each table (tasks 2.1, 7.1, 17.1).
 - *Salary/CTC* lives in the people seed table and an optional `ctc` column in the Users CSV import; it is returned only through the appraisal service to `appraisal.manage` and `appraisal.approve` holders and is excluded from logs and from every export except the appraisal export.
 - *Today:* the clock is the server clock in **Asia/Kolkata**; a `PULSE_TODAY` setting (ignored in production profile) pins "today" to 2026-09-28 so demo data and tests match the prototype. Dates display as "28 Sep", times in 24 h.
 
@@ -89,6 +110,7 @@ Vue 3 SPA. Reuse `reference/3-design-system` directly: copy `tokens.css` and `co
 - **Ownership by directory.** Backend `backend/modules/<module>/` and frontend `frontend/src/modules/<module>/` belong to exactly one track.
 - **Self-registering modules.** A module exports its routes, permissions, menu entries and migration/seed locations; the shell discovers modules by directory scan (backend) and `import.meta.glob` (frontend), so nobody edits a shared registry.
 - **Migrations per track:** Track 1 uses `V100–V199`, Track 2 `V200–V299`, Track 3 `V300–V399`, so numbers never collide. Seed files follow the same ranges and load in number order.
+- **Two phases.** Phase 1 builds everything on seed data. Phase 2 (live GitHub and Jira, tasks group 24) starts only after Phase 1 acceptance and must not change Phase 1 contracts.
 - **Contract freeze at the end of Day 1.** Track 1 publishes the skeleton, policy API, session middleware, API client, UI kit, base schema (people, roles, rules, calendar) and base seed. Tracks 2 and 3 build against this and may not change it without Track 1's agreement.
 - **Calculation library folders:** `calc/core/` belongs to Track 1, `calc/work/` to Track 2 and `calc/people/` to Track 3 (decision 5).
 - **Shared files** (root build files, `README`, CI) are edited only by Track 1.
@@ -101,7 +123,7 @@ Vue 3 SPA. Reuse `reference/3-design-system` directly: copy `tokens.css` and `co
 | Sign-in | SSO target, password pilot | Password only, bcrypt, server sessions | Locked decision |
 | Passwords | Temp password min 6 | Invite link; 8-char policy; demo seed exempt | Avoid emailed passwords while keeping demo accounts |
 | MFA, KMS, RLS, audit hash chain | Not in reference; drafted in earlier specs | Deferred | One-week lean v1 |
-| External tools | Live connectors | Seeded data plus Sync now simulation | One-week lean v1 |
+| External tools | Live connectors for all tools | Live read-only GitHub (PAT) and Jira Cloud (API token); TFS, Slack, HRMS and the rest seeded with a Sync now simulation | One-week lean v1 with a live demo |
 | Salary source | Unspecified | People seed and optional `ctc` CSV column | Locked decision |
 | Time zone | Unspecified | Asia/Kolkata, "today" pinnable for demo | Locked decision |
 | Rule changes | Apply instantly everywhere | Live and future only; closed periods frozen | Reproducible appraisals |
@@ -125,7 +147,7 @@ Vue 3 SPA. Reuse `reference/3-design-system` directly: copy `tokens.css` and `co
 
 ## Deferred hardening (not in the one-week build)
 
-MFA for privileged roles; KMS-backed envelope encryption and field-level salary encryption; PostgreSQL row-level security; audit hash chain with verification; live OAuth, webhooks and real connectors; password-breach list; SSO; SSRF protections for admin-supplied URLs (not needed while nothing makes outbound calls); formal backup and key-rotation procedures. **Post-v1 live integration phase** (deferred with the connectors): an `external_accounts` table (person_id, tool, tool_account_id) for person matching, a `sync_state` table (tool, cursor, last run) for incremental sync, a "reset demo data" command that removes rows with `source = 'seed'`, canonical-record fixtures and contract tests per connector, and computing Delivery and Quality pillars from live sprint data.
+MFA for privileged roles; KMS-backed envelope encryption and field-level salary encryption; PostgreSQL row-level security; audit hash chain with verification; live OAuth, webhooks, scheduled live polling and real connectors for TFS, Slack, HRMS and PagerDuty; password-breach list; SSO; full SSRF protections for admin-supplied URLs (v1 only allow-lists `api.github.com` and `*.atlassian.net`); formal backup and key-rotation procedures. **Post-v1 live integration phase:** a "reset demo data" command that removes rows with `source = 'seed'`, canonical-record fixtures and contract tests per connector, and computing Delivery and Quality pillars from live sprint data.
 
 ## Migration Plan
 

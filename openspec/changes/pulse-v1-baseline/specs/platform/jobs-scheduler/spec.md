@@ -21,7 +21,7 @@ The system SHALL let an Admin trigger any registered job on demand for demos and
 - **THEN** it runs once and writes a run record
 
 ### Requirement: Run records and failure visibility
-The system SHALL record each run's start, end, outcome and counts, SHALL retry a failed job with backoff up to a limit, and SHALL show a failed job and a failed simulated sync in the Integrations screen and as an Admin item in the Action center.
+The system SHALL record each run's start, end, outcome and counts, SHALL retry a failed job with backoff up to a limit, and SHALL show a failed job and a failed sync in the Integrations screen and as an Admin item in the Action center.
 
 #### Scenario: Failed job
 - **WHEN** a job fails after its retries

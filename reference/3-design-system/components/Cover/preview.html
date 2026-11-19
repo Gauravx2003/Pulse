@@ -1,0 +1,60 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--surface); color:var(--ink); font-family:var(--font-sans); overflow:hidden; }
+  .cover { position:relative; width:960px; height:288px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:288px; overflow:hidden; }
+  .art svg { display:block; width:480px; height:288px; }
+  .brand { fill:var(--brand); }
+  .deep { fill:var(--ink); }
+  .amber { fill:var(--accent); }
+  .teal2 { fill:var(--brand-hover); }
+  .blk { rx:var(--radius-lg); }
+  .pill { rx:var(--radius-sm); }
+  .pill.b { fill:var(--brand-soft); }
+  .pill.a { fill:var(--accent); }
+  .pill.g { fill:var(--surface); }
+  .mark { stroke:var(--surface); stroke-width:2; }
+  .words { position:absolute; left:var(--space-6); bottom:var(--space-6); max-width:440px; }
+  .name { margin:0; font-size:120px; line-height:.92; font-weight:600; letter-spacing:-.03em; color:var(--ink); }
+  .tag { margin:var(--space-3) 0 0 6px; font-size:14px; line-height:20px; color:var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 288" width="480" height="288">
+<!--
+  blocks      brand 128×196 bled off the top (identity, largest) · accent 128×64 under it (the amber 'stale / at capacity' signal) · brand-hover 112×224 · ink 208×240 bleeding off the right edge — ≈35% of 960×288
+  arrangement one tall teal slab with an amber foot, a darker teal column, then an ink panel bleeding right; bottoms on one line space-6 above the edge, space-4 gutters
+  pattern     meter pills, from "Utilization uses UtilizationMeter (bar + 100% mark)": six space-2-tall brand-soft bars at a space-8 pitch inside the ink panel, crossing one surface-coloured capacity mark; bars past the mark turn accent
+  scales      gutters space-4; pitch space-8; bar height space-2; block corners radius-lg; bar rx radius-sm (half of space-2)
+-->
+<rect class="brand blk" x="16" y="-12" width="128" height="196" rx="12"/>
+<rect class="amber blk" x="16" y="200" width="128" height="64" rx="12"/>
+<rect class="teal2 blk" x="160" y="40" width="112" height="224" rx="12"/>
+<rect class="deep blk" x="288" y="24" width="208" height="240" rx="12"/>
+<rect class="pill b" x="304" y="56" width="104" height="8" rx="4"/>
+<rect class="pill b" x="304" y="88" width="64" height="8" rx="4"/>
+<rect class="pill a" x="304" y="120" width="152" height="8" rx="4"/>
+<rect class="pill b" x="304" y="152" width="88" height="8" rx="4"/>
+<rect class="pill a" x="304" y="184" width="176" height="8" rx="4"/>
+<rect class="pill b" x="304" y="216" width="48" height="8" rx="4"/>
+<line class="mark" x1="432" y1="40" x2="432" y2="240"/>
+<rect class="pill g" x="176" y="216" width="56" height="8" rx="4"/>
+<rect class="pill g" x="176" y="232" width="80" height="8" rx="4"/>
+</svg>
+</div>
+<div class="words">
+  <h1 class="name">Pulse</h1>
+  <p class="tag">Performance, road maps and live workload — one honest picture.</p>
+</div>
+</div>
+</body>
+</html>

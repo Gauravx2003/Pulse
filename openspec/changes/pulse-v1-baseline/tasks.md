@@ -1,0 +1,194 @@
+# Tasks
+
+Three interns work in parallel, one track each. Apply **only the groups of your own track**. Rules that keep the tracks conflict-free (see design.md decision 10):
+
+- Directory ownership: `backend/modules/<module>/` and `frontend/src/modules/<module>/` belong to one track. Never edit another track's module directory.
+- Migrations and seeds: Track 1 uses `V100–V199`, Track 2 `V200–V299`, Track 3 `V300–V399`.
+- Modules self-register (routes, permissions, menu entries, migrations, seed, jobs, action providers). Nobody edits a shared registry.
+- Shared and root files are edited only by Track 1.
+- Formulas live only in `calc/core/` (Track 1), `calc/work/` (Track 2) or `calc/people/` (Track 3) and are exposed only through `CalcService`; modules never hold formulas or threshold constants (design.md decision 5).
+- **Day 1 contract freeze:** groups 1 to 3 and tasks 2.1 to 2.3, 4.10, 4.11, the `ConnectorPort` / `SeedConnector` / `IngestService` part of 5.4, 6.1 to 6.4 (Track 1) must land before the end of Day 1; Tracks 2 and 3 start with their own schema, seed and formulas using stubs, and rebase onto the frozen contracts.
+- Every number-producing formula is verified against the prototype oracle `reference/2-prototype/src/app.js` using the harness from task 4.2, even when the owning track ports it.
+- UI acceptance: every screen must match its "Screen detail" block in the reference spec (`reference/1-spec/Pulse-Product-and-Development-Specification.md`: headers, KPI rows, columns, buttons, modals, fields and messages), not only pass Playwright and the UI audit.
+- Reference specs: `openspec/changes/pulse-v1-baseline/specs/<path>/spec.md`. Where a spec mentions MFA, KMS, row-level security, audit hash chain or live integrations, design.md overrides it for v1 (deferred hardening).
+
+# TRACK 1 — Platform, Auth, DB schema and seed, Calculation engine, Shared admin, UI kit
+
+## 1. Scaffold and contract freeze
+
+- [ ] 1.1 Create the monorepo with `backend/` (Vert.x), `frontend/` (Vue 3 + Vite) and a `docker-compose` PostgreSQL; verify `docker compose up` starts the DB, `GET /health` returns 200 and the Vite dev server renders a blank page.
+- [ ] 1.2 Implement backend module self-registration (directory scan of a module descriptor: routes, permissions, menu entries, migrations dir, seed dir, jobs, action providers) and the frontend `import.meta.glob` route loader; verify a sample module appears in the router and in `GET /me` without editing any shared file.
+- [ ] 1.3 Implement the migration runner honouring ranges V100/V200/V300 and a seed loader that runs seed files in number order; verify a test that loads all ranges in order and a CI script that fails on duplicate version numbers.
+- [ ] 1.4 Add `CODEOWNERS` and a `CONTRIBUTING.md` describing the three tracks, directory ownership, branch-per-track and daily merge to main, with a PR checklist ("no formula or threshold constant outside `calc/`; modules call `CalcService`"; "oracle comparison included for any new formula"); verify the files exist and CODEOWNERS maps every `modules/*` directory to a track and `calc/core`, `calc/work`, `calc/people` to Tracks 1, 2 and 3.
+- [ ] 1.5 Add CI (build, unit tests, lint with a rule that forbids hex colors in Vue files, dependency vulnerability scan); verify the pipeline passes on the skeleton and fails when a hex color is added to a `.vue` file.
+
+## 2. Base schema, seed tooling and base seed
+
+- [ ] 2.1 Write migration V100 for users, roles, role_permissions, people (title, department, level, joined_on, ctc), reporting_lines (effective-dated), sessions, audit_log (insert-only; revoke UPDATE/DELETE from the app role), rules and rule_versions, holidays, sprints, releases (people, holidays, sprints and releases also carry the ingest columns `source` default `'seed'`, `external_id` and `synced_at`, with a unique index on (source, external_id); seed rows use the prototype's key as `external_id`), notifications, outbox, sync_log and `culture_signals` (person_id, quarter, param_key, raw_value, display_value, source_label, is_simulated; unique on person_id, quarter and param_key) for the 12 culture data parameters that have no live source; verify the migration applies on an empty DB, an UPDATE on `audit_log` from the app role is rejected, a duplicate (source, external_id) insert into `sprints` fails, and a duplicate (person, quarter, param_key) insert into `culture_signals` fails.
+- [ ] 2.2 Build the seed extraction tool: it loads `reference/2-prototype/src/app.js` in a sandboxed Node context and dumps its sample datasets (people, joined dates, issues, PRs, bugs, attendance, training, visits, OKRs, 360, etc.) as JSON under `seed/extracted/`; it also runs the prototype's `valData` (app.js ~2202) for every person and the seeded quarter and dumps the 12 hash-generated parameters (Manager follow-ups, Decisions documented, Median time to decide, Decisions reversed, Root-cause analyses written, Spikes and experiments run, Ideas proposed → piloted, Risks raised in planning, Time to productivity on a new tool, Cross-team issues, Docs, templates and prompts shared, Hours saved by automation) to `seed/extracted/culture_signals.json` with exact raw value, display string and source label, to be loaded into `culture_signals` with `is_simulated = true`; verify the script is re-runnable, the JSON files exist with non-empty arrays for every dataset named in the prototype, and `culture_signals.json` holds exactly 12 rows per person whose values equal the prototype's `valData` output.
+- [ ] 2.3 Write the base seed (roles and permission grants per spec rbac-visibility, all demo accounts `hr@`, `rahul@`, `priya@`, `arjun@`, `neha@`, `kiran@`, `dev@`, `sara@`, `rohit@`, `anjali@`, `sana@`, `meera@` with password `demo123`, people with managers, levels, departments, joined dates and CTC, holidays, sprints and releases, rule defaults) from the extracted JSON; verify a test that every demo account exists with the role from the handoff table and people count equals the prototype's.
+- [ ] 2.4 Add the `PULSE_DEMO_SEED` flag, the production profile and the startup guard; verify startup fails when the production profile is set with `PULSE_DEMO_SEED=true`, and the demo seed is skipped when the flag is off.
+
+## 3. Authentication, sessions, authorization and security baseline
+
+- [ ] 3.1 Implement sign-in and sign-out with bcrypt (cost 12), generic error text, deactivated and missing-role messages, per-account lockout (5 failures, 15 min) and per-IP throttle; verify tests for each scenario in `platform/auth-session`.
+- [ ] 3.2 Implement server-side sessions in PostgreSQL (HttpOnly, Secure, SameSite=Strict cookie, 12 h lifetime, CSRF token on writes, revocation on deactivation, password change and permission change); verify tests: forged CSRF returns 403, deactivation makes the next request 401.
+- [ ] 3.3 Implement the invite, set-password and reset flows with single-use expiring tokens delivered to the outbox, 8-character policy for user-chosen passwords; verify tests for reuse, expiry and unknown-email indistinguishability.
+- [ ] 3.4 Implement the permission catalogue and `GET /me` (user, role, permissions, generated menu); verify a test that each of Admin, Manager and Employee gets exactly the menu of the screen map.
+- [ ] 3.5 Implement the policy service: route-level permission declaration, visibility resolver (self, direct report, all.view, mentor, account owner, attendance check-in direct manager only), repository helpers that require a scope argument, uniform 403/404 responses, separation-of-duties checks; verify with a reusable `assertRoleMatrix(endpoint, expectations)` test helper and tests for peer access, mentor exception and self-approval refusal.
+- [ ] 3.6 Implement the security baseline: CSP without inline scripts, nosniff, frame-ancestors none, referrer policy, CORS to the app origin, schema validation with unknown-field rejection, body-size limits applied while streaming, per-user and per-IP rate limits, generic 500 with request id, log redaction of passwords, tokens, CTC and free text; verify header assertions in an integration test and a redaction unit test.
+- [ ] 3.7 Implement the audit service (`audit.record` in the caller's transaction) with the event catalogue of `platform/audit-log` and a read endpoint behind an audit-read permission; verify that a failed action rolls back its audit row only when the action rolls back, and that reads are themselves audited.
+- [ ] 3.8 Implement the API conventions (`/api/v1`, error contract 400/401/403/404/409/422/429 with stable codes, pagination with maximum page size, optimistic-lock helper, UUID ids); verify contract tests for each error code and a 409 on a stale version.
+- [ ] 3.9 Write `docs/backend-guide.md` explaining how a module declares routes and permissions, uses the policy service and the audit service, and adds migrations in its range; verify by having Tracks 2 and 3 each add one endpoint following only the guide.
+
+## 4. Period model and calculation engine (oracle-verified)
+
+- [ ] 4.1 Implement the period-calendar library: period keys (`s:`, `m:`, `r:`, `q:`, `all`), sprint ranges including three-week sprints, working-day calendar (weekend, holiday, leave, visit day, before joining), Asia/Kolkata time zone, `PULSE_TODAY` pin (ignored in production), "28 Sep" and 24-hour formatting; verify unit tests for each scenario in `platform/period-calendar`, including a joiner mid-month and a week with a holiday.
+- [ ] 4.2 Build the oracle harness: a test utility that loads `reference/2-prototype/src/app.js` in a sandbox, exposes its functions and offers `oracle.compare(name, args, port)` that asserts equality to the displayed precision; verify the harness calls `index` for one person and returns a finite number, and document usage in `docs/oracle.md` so Tracks 2 and 3 can use it.
+- [ ] 4.3 Port `index()` into `calc/core/` together with its helpers `cultureAvg`, `okrP` and `growthP` (growth blended with the training score), with rule weights and normalization when weights do not total 100; Delivery and Quality pillars are read from the seeded `pillars` in v1 (a recorded deviation from spec section 12); verify by comparing against the oracle `index` (app.js line ~190) for every seeded person under default weights and two altered weight sets.
+- [ ] 4.4 Port `valData`, `valueBonus` and `cult` using the **later** `cult` definition (app.js line ~2251, with data share), including Moral & Ethics s=0, no-opportunity parameters left out, bonus cap 0.3 and the 5.0 ceiling; the 12 parameters that the prototype generates with its hash function are read from `culture_signals` (seeded in task 2.2), never recomputed, and the other 23 are computed from the seeded tables; each parameter in the detail payload carries `source_label` and `is_simulated`; verify by comparing all 11 values for every seeded person and both quarters against the oracle (CalcService output equals the prototype exactly), by a test that the detail payload reproduces the score from its own inputs, and by a test that each of the 12 reported parameters shows its source label and `is_simulated = true`.
+- [ ] 4.5 Port `discMetrics` and `discScore` (rules a–h, base band, 1-point floor, 3.0 until 4 weeks of data, manager override with reason, rule h from attendance score); verify against the oracle `discMetrics` (line ~703) for all seeded people, with and without overrides.
+- [ ] 4.6 Port `attStats` and its helpers (statuses, notice classification, office policy with leave and holiday reduction, punctuality allowance, score and band, Collaboration presence band); verify against the oracle `attStats` (line ~2301) for every person, month, sprint and quarter in the seed, including a person with sick leave only.
+- [ ] 4.7 Port `trRating` with `ciStats` and checkpoint averaging (re-weighting, Provisional state, bands, plan-length-weighted overall); verify against the oracle `trRating` (line ~1652) for every seeded assignment.
+- [ ] 4.8 Port `aprRecommend` with `aprParts`, `aprBand`, `aprRules` (score weights, bands, 20% cap, pro-rating for 6–11 months, 0.5% rounding, eligibility); verify against the oracle `aprRecommend` (line ~996) for every seeded person.
+- [ ] 4.9 Add the result guard (no NaN, Infinity, null or negative zero; explicit not-applicable state) and the snapshot and rule-version store (period-close snapshot, appraisal and 360° freeze); verify a property test over all ported functions with empty and extreme inputs, and a test that editing a rule does not change a stored snapshot.
+- [ ] 4.10 Implement `CalcService` as the only public entry to the calculation library: it discovers formula-module descriptors from `calc/core`, `calc/work` and `calc/people`, and adds cache with event-based invalidation (import commit, confirmation, override, rule change); verify a p95 under 500 ms for a period switch on the seed and a test that an invalidation event changes the next read. Tasks 4.3 to 4.8 place their ports in `calc/core/`.
+- [ ] 4.11 Create the `calc/work/` and `calc/people/` skeletons with empty descriptors, one example formula each and a registry test; verify a descriptor added in `calc/work` appears in `CalcService` without editing `calc/core`, and land it before the end of Day 1 so Tracks 2 and 3 can add formulas.
+
+## 5. Shared admin backend services
+
+- [ ] 5.1 Implement users-roles backend (directory with visibility, add with invite, edit with effective-dated manager, deactivate, delete with reassignment and the privacy-retention anonymization, role matrix, custom roles, last-login); verify tests for every scenario in `admin/users-roles` including delete-self refusal and manager limits, plus the `platform/privacy-retention` scenario that deactivated reports are hidden from managers without `users.all`.
+- [ ] 5.2 Implement rules-thresholds backend (all rule groups with defaults of section 12, range validation, safe-regex validation of the PR title pattern, weights-total-100, versioning, reset with audit diff); verify tests in `platform/rules-thresholds` and that a rule edit does not alter a stored snapshot.
+- [ ] 5.3 Implement the notifications service (create, list, read, read-all, badge counts interface used by other modules, privacy rule for text); verify tests for each trigger helper and for visibility.
+- [ ] 5.4 Implement the connector seam and integrations-connectors as seeded simulation: a `ConnectorPort` interface (`fetchChanges(since)` returning normalized records per entity), a `SeedConnector` as its only v1 implementation reading `seed/extracted/` JSON, and an `IngestService` that is the single write path (upsert by `source` and `external_id`, stamps `synced_at`) for every table that has the ingest columns, used by the seed loader and by Sync now; then the screens' backend (tile states, settings forms that validate but store masked placeholders only, Sync now calling the port through `IngestService` and writing a sync log entry, credential activity log, Jira configuration, unmatched accounts list); verify that running Sync now twice produces no duplicate rows and updates `synced_at`, that a stub second connector registered for a test tool writes through the same `IngestService`, that no outbound network call is made (test with a blocked network) and the Admin-only access rule. The `ConnectorPort`, `SeedConnector` and `IngestService` part lands before the end of Day 1.
+- [ ] 5.5 Implement the in-process scheduler with a manual trigger endpoint and module-registered jobs (Friday pulse prompt, Monday digest, month-end attendance reminder, daily stale-signal refresh, expiring-token check, retention purge), single instance; verify each job runs when triggered and records a run row.
+
+## 6. Frontend shell and UI kit
+
+- [ ] 6.1 Copy `reference/3-design-system/tokens` CSS and `components/bundle.css` as the only styling base, add the theme toggle persisted per browser; verify light and dark render and the hex-color lint rule passes.
+- [ ] 6.2 Wrap each design-system component (Badge, StatTile, UtilizationMeter, TeamHeatmap, SprintTaskTable, CultureValues, IntegrationTile, RoadmapTimeline, TeamView, EmployeeDashboard) as Vue 3 components without restyling, following each component's README; verify a `/kit` page that renders each component and visually matches its `preview.html`.
+- [ ] 6.3 Build the shared UI primitives from spec `platform/app-shell-ui` (page header, KPI row, card, scrolling table, tabs, period control, modal with focus trap, drawer, toast, alert strip, empty state, form fields); verify keyboard-only tests (Esc, focus return) and an axe scan with no violations.
+- [ ] 6.4 Build the app shell: sign-in screen, side menu from `GET /me`, top bar (breadcrumb, person selector, sync status, bell, theme, sign out), no-access card, router guards, one API client handling 401, 403, 409 and 429, and shared period state (the sprint, month or release choice carries across screens, history rows open their period, Attendance keeps its own choice); verify Playwright tests signing in as the three roles, opening a forbidden route and carrying Sprint 42 from Effort to Bugs & support.
+- [ ] 6.5 Build the screens Users, Roles & permissions, Rules & thresholds, Integrations and the notification panel with menu badges; verify a Playwright test per screen and role against the screen detail in the reference spec sections 11.1 to 11.4 and 11.6.
+- [ ] 6.6 Write the shared UI audit script (every route, tab and role at 390, 1024 and 1440 px; scan for NaN, undefined, null, Infinity, empty cards and horizontal overflow) and the e2e helper to sign in as any demo account; verify it runs clean on the Track 1 screens and is documented in `docs/ui-audit.md`.
+
+# TRACK 2 — Work, Pull requests, Effort, Bugs, Utilization, Action center, Progress, OKRs, Road map
+
+Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the policy and calc interfaces. Migrations and seeds stay in `V200–V299` (V200 data layer, V210 OKRs, V220 Road map). Suggested order: 7, 8, 9, 14, 10, 11, 12, 13, 15 (OKRs early because Track 3's CSV engine and Progress depend on the OKR service).
+
+## 7. Track 2 data layer and seed
+
+- [ ] 7.1 Write migration V200 for issues, issue_events (activity timeline), worklogs, commit_days, pull_requests, pr_reviews, pr_comments, bugs, support_tickets, extra_items and weekly_pulse, where the tables that mirror an external tool (issues, issue_events, worklogs, commit_days, pull_requests, pr_reviews, pr_comments, bugs, support_tickets) carry the ingest columns `source` default `'seed'`, `external_id` and `synced_at` with a unique index on (source, external_id); verify the migration applies after V100, a test that each table has an index for its policy scope column, and that a duplicate (source, external_id) insert into `issues` fails.
+- [ ] 7.2 Write Track 2 seed files (V200 range) from `seed/extracted/` for issues, activity, worklogs, PRs, bugs, support tickets and pulse answers, loaded through the `SeedConnector` and `IngestService` of task 5.4 (never by direct inserts into ingest tables); verify row counts match the prototype datasets and a test that Priya's live-sprint issues equal the prototype's.
+- [ ] 7.3 Implement the repositories that require a policy scope; verify a contract test that an Employee cannot read a peer's issues, PRs or pulse through any repository.
+
+## 8. Work items and Overview
+
+- [ ] 8.1 Port the workload formulas into `calc/work/`, exposed through `CalcService` (utilization and bands, remaining-hours fallback chain, stale, not started, overdue, no estimate, date-and-time checks, sprint metrics, cycle time, reopen rate); verify by comparing against the oracle (`perMetrics`, `monthStats`, `qStats`) for every seeded person and sprint using the harness of task 4.2.
+- [ ] 8.2 Implement the Overview endpoint (live sprint, month, closed sprint, release, onboarding joiner) and Work items endpoint (filters, search, sort, daily load, history, issue timeline); verify tests for each scenario in `work/work-items` including idle across a holiday.
+- [ ] 8.3 Implement the issue drawer data and the Nudge action (outbox message, per-issue and per-sender rate limit, record); verify a test that the second nudge inside the window is refused.
+- [ ] 8.4 Build the Overview and Work items screens (Vue) including the issue drawer, period controls and onboarding badge; verify Playwright flows as `priya@` and `rahul@` and the UI audit script on both screens.
+
+## 9. Team utilization
+
+- [ ] 9.1 Implement team utilization endpoints (KPIs, daily heatmap, people table, closed-period views, release card) and the rebalance suggestion (skills match, no onboarding recipients, no external write); verify tests for `work/team-utilization` including the 100% and 100.1% band edge and the PLAT-2198 example.
+- [ ] 9.2 Build the Team utilization screen with heatmap, people table, period controls and alert strip; verify a Playwright test as `rahul@` and that `priya@` gets the no-access card.
+
+## 10. Pull requests
+
+- [ ] 10.1 Port the PR standard into `calc/work/`, exposed through `CalcService` (7 checks, Pending handling, comment classes, rubber-stamp, first-review time, per-person and team stats); verify by comparing against the oracle `prStats` (line ~1543) for every seeded person and period.
+- [ ] 10.2 Implement PR endpoints (team, person, list, detail, standard read) with the standard taken from Rules, and the rewrite suggestions for titles and comments; verify tests for each scenario in `work/pull-requests` and that a person's PR standard below 85% shows Discipline rule g as Improve.
+- [ ] 10.3 Build the Pull requests screens (Team and Person tabs, PR detail modal, PR standard modal); verify Playwright and the UI audit.
+
+## 11. Effort and extra-mile
+
+- [ ] 11.1 Implement hours and days worked, code-only days, extra-work detection from seeded events (the nine types and points) and the evidence text as formulas in `calc/work/`, exposed through `CalcService`; verify by comparing monthly totals against the oracle `monthStats` (line ~430) and tests for each scenario in `work/effort-extra-mile`.
+- [ ] 11.2 Implement confirm and reject with caps (0.05 per point, 0.3 per value per quarter, 6 per month, visit cap 8), self-confirm refusal, audit, and calc cache invalidation; verify that confirming changes the culture bonus on the next culture read and the cap test.
+- [ ] 11.3 Build the Effort screens (Team and Person tabs, daily log calendar, evidence modal, Confirm all); verify Playwright and the UI audit.
+
+## 12. Bugs and support
+
+- [ ] 12.1 Implement bug attribution (seeded caused-by and blame results), dispute, keep or remove, take it, pick up, mark resolved, support tickets and queue, proactive points awaiting confirmation; verify tests for each scenario in `work/bugs-support` and audit of dispute decisions.
+- [ ] 12.2 Build the Bugs & support screens including modals; verify Playwright for dispute and take-it flows and the UI audit.
+
+## 13. Action center and Progress with weekly pulse
+
+- [ ] 13.1 Implement the Action center engine with an **action provider** interface (modules register providers through their descriptor), the sorting by priority, and Track 2's own providers (workload, stale, code-only, pulse, effort, bugs, rubber-stamp, integrations); verify a test with a stub provider from Track 3 appearing without editing Track 2 code.
+- [ ] 13.2 Implement people signals, sprint forecast, next-sprint capacity (calling the attendance, training and visit services through their interfaces), skills coverage, team pulse, team wins and digest preview, with the velocity, forecast, capacity, skills-coverage and signal-threshold formulas in `calc/work/` exposed through `CalcService`; verify tests for each scenario in `insight/action-center`.
+- [ ] 13.3 Implement Progress (next steps via providers, achievements, trends) and the weekly pulse (Friday job from task 5.5, both answers required, low-answer notification and Do today item, visibility); verify tests in `insight/progress-pulse` including the peer-access refusal and no pulse text in logs.
+- [ ] 13.4 Build the Action center and Progress screens including the pulse modal and digest modal; verify Playwright as `rahul@` and `priya@` and the UI audit.
+- [ ] 13.5 Run contract tests for every Track 2 endpoint with `assertRoleMatrix` for Admin, Manager, Employee and a peer; verify all pass and the matrix is committed as `backend/modules/*/contract.test`.
+
+## 14. OKRs
+
+- [ ] 14.1 Write migration V210 for objectives and key_results (quarter, level, owner or team, epic, value, start, target, current, unit, check-ins) and the OKR seed (V210 range) from `seed/extracted/`; verify the migration applies after V100 and V200 and the seeded objective count equals the prototype's.
+- [ ] 14.2 Implement the OKR service and API (CRUD, validation, progress and OKR pillar (the pillar formula lives in `calc/work/`, exposed through `CalcService`, and is compared with the oracle's pillar for every seeded person), check-ins, okr.own and okr.team permissions, signals for Progress, import and export service methods); verify tests for every scenario in `growth/okrs`.
+- [ ] 14.3 Expose the OKR import and export service interface (find owner, upsert objective, bulk check-in, list for export) for Track 3's CSV engine and register the off-track next-step provider; verify a service-level test that an update of a matching objective acts as a check-in and that Track 3's stub can call it.
+- [ ] 14.4 Build the OKR screens (cards, quarter dropdown, New and Edit modals, Check-in, delete confirmation, Import and Export entry points that link to the Data imports modal); verify Playwright as `priya@` and `rahul@` and the UI audit.
+
+## 15. Road map
+
+- [ ] 15.1 Write migration V220 for milestones, promotion_targets and skills_matrix and the road-map seed (V220 range); verify the migration applies after V210 and a seeded road map exists for Priya.
+- [ ] 15.2 Implement milestones (propose and confirm), promotion readiness criteria (reading the performance index through the calc service) and the skills matrix with visibility rules; verify tests for every scenario in `growth/roadmap`.
+- [ ] 15.3 Build the Road map screen and the Add milestone modal; verify Playwright as `priya@` and `rahul@`, that a peer gets the no-access card, and the UI audit.
+
+# TRACK 3 — CSV engine, Attendance, Visits, Culture, Reviews (incl. 1:1s and kudos), Training, Appraisal
+
+Priority order inside the track (do in this order; the last two are the first to slip): 16, 17, 18, 19, 20, 21, 22. Depends on Track 1 contract freeze (end of Day 1). Migrations and seeds stay in `V300–V399`. OKRs and Road map moved to Track 2 (groups 14 and 15); Track 3 consumes them only through their service interfaces.
+
+## 16. CSV engine and Data imports
+
+- [ ] 16.1 Write migration V300 for import_checks (staging), import_log, import_before_images and the Track 3 base tables; verify the migration applies after V100 and V200.
+- [ ] 16.2 Implement the CSV framework (streaming parser with BOM, delimiters, aliases, dates in two formats, limits 5,000 rows and 5 MB, check ids bound to user, type and file hash with 30-minute expiry, idempotent commit, serialization of commits, undo within 24 hours with conflict refusal, history, formula-safe exports) with an import-type registry that modules join through their descriptors; verify tests for every scenario in `platform/csv-import-framework`, including 5,000 rows validated in under 3 seconds.
+- [ ] 16.3 Register the import types Users (with optional `ctc` column, role limits, manager in the same file, trainee-title warning), OKRs, Customer visits, Holiday calendar and Attendance as definitions (columns, checks, modes) calling the owning module's service (the OKR definition calls the Track 2 OKR service from task 14.3, using a stub until it lands); verify the sample file of each type passes check and commit, and the error cases of `admin/data-imports-exports` each produce the stated message.
+- [ ] 16.4 Build the Data imports screen and the three-step upload modal (choose, check, done), import cards, exports (including the Appraisal proposals payroll CSV card for appraisal roles), data sources map and history with Undo, and wire the entry points on other screens (Import and Export CSV on Users, Import CSV on Customer visits, Upload monthly CSV and per-month Upload or Replace on Attendance, Holiday calendar import on Rules & thresholds); verify Playwright with `hr@` and `rahul@` and a malformed-CSV test.
+
+## 17. Attendance
+
+- [ ] 17.1 Write migration V310 and seed for attendance_records (with the ingest columns `source` default `'seed'`, `external_id` and `synced_at`, unique on (source, external_id); CSV uploads write `source = 'csv'`) and attendance_uploads, with the seed loaded through `IngestService`; implement the attendance service using `attStats` from task 4.6 (statuses, notice, office policy, punctuality, score, check-in visibility to the direct manager only); verify tests for every scenario in `time/attendance`, including sick leave never penalized.
+- [ ] 17.2 Implement upload (Replace months and Merge days) behind `attendance.upload`, notification to managers, cache invalidation so capacity, Discipline rule h and Collaboration presence update, and undo that reverts them; verify an end-to-end test: upload, rule h changes, undo, rule h returns.
+- [ ] 17.3 Register the attendance action providers (past month not uploaded, upload due, absences and policy items); verify they appear in the Action center for `hr@` and `rahul@`.
+- [ ] 17.4 Build the Attendance screens (Team and Person tabs, grid, calendar, leave list, month by month, monthly uploads, banner); verify Playwright, phone-width grid and the UI audit.
+
+## 18. Customer visits
+
+- [ ] 18.1 Implement visits (lifecycle, validation incl. overlap with leave and visits, report, feedback by the account owner, verify and reject, points via formulas in `calc/people/` exposed through `CalcService`, verified against the oracle `visitPts` (line ~1288) and `vStats` (line ~1306), capacity and On duty effect, notifications) and the action providers; verify tests for every scenario in `time/customer-visits` including the 5-point example.
+- [ ] 18.2 Build the Customer visits screens (Team, Person, account-owner view, plan and log modal, report, feedback, detail); verify Playwright as `rahul@`, `priya@` and `sana@` and the UI audit.
+
+## 19. Culture values
+
+- [ ] 19.1 Implement the culture endpoints that return the calculation payload from the calc service (values, per-value detail, Discipline view, period selector, evidence log) and the Discipline override with reason and self-refusal; verify tests for every scenario in `culture/culture-values` and that the payload reproduces each score.
+- [ ] 19.2 Build the Culture values screens (11-value list, radar, calculation detail, Discipline rules and heatmap, override modal, kudos modal, rules table); verify Playwright as `priya@` and `rahul@` and the UI audit.
+
+## 20. Reviews: performance, 1:1s and kudos, 360°
+
+- [ ] 20.1 Implement performance review (index breakdown, trend, calibration for `reviews.calibrate`, summary, submit for calibration, self-calibration refusal); verify tests for `culture/reviews-performance`.
+- [ ] 20.2 Implement 1:1s (signal agenda, shared notes, action items, overdue signal) and kudos (self-kudos refusal, feed, outbox copy to Slack); verify tests for `culture/one-on-ones-kudos` and the action provider for overdue 1:1s.
+- [ ] 20.3 Implement 360° cycles, assignment (derived groups, duplicates skipped), reminders, form validation, draft and submit, results with server-side anonymity threshold (the merge, hidden-strength and blind-spot aggregation lives in `calc/people/`, exposed through `CalcService`), preliminary results for managers, publish that feeds culture values, pseudonymous reviewer storage; verify tests for every scenario in `culture/review-360`, including a group under threshold merged or hidden in every response.
+- [ ] 20.4 Build the Reviews screens (Performance with the Review summary modal and Copy summary, 1:1s & feedback with Give kudos, 360° with To give, My feedback, Team, Cycles, review form, results, assign and cycle modals); verify Playwright of assign, notify, submit and publish end to end with three demo accounts and the UI audit.
+
+## 21. Training and mentoring
+
+- [ ] 21.1 Implement the plan library, assignment (skips, load warning, notifications), lifecycle with the 422 on a failed assessment, check-ins, checkpoints through the 360° form, assessment, final reviews, sign-off, acknowledgements, mentoring tools and suggestions, with `trRating` taken from task 4.7; verify tests for every scenario in `growth/training-mentoring` and a rating comparison against the oracle for all seeded assignments.
+- [ ] 21.2 Register the training action providers (final review due, blockers, behind sessions) and the onboarding effect on utilization; verify they appear for `rahul@` and that onboarding joiners are excluded from rebalance.
+- [ ] 21.3 Build the Training screens (My training, Mentoring, Trainees & assignments, plan detail with the multi-plan picker, Plan library with pass rate, average outcome and trainee rating, Mentors table and all modals); verify Playwright as `rohit@`, `sara@` and `rahul@` through assign, check-in, assessment, final review and sign-off, and the UI audit.
+
+## 22. Appraisal
+
+- [ ] 22.1 Implement appraisal (score and bands via `aprRecommend` from task 4.8, 20% cap, budget 12% editable, per-cycle effective date, exceptions with reasons, submit blocked over budget, approve and send back, release letters, self-approval refusal, frozen at submit, evidence panel without reviewer identity, CTC only to appraisal roles, export with audit); verify tests for every scenario in `appraisal/appraisal`.
+- [ ] 22.2 Build the Appraisal & increments screens (KPIs, distribution, standards modal, people table with inline percent, evidence modal, Release letters, Approve all) and register the draft and waiting-for-approval action providers; verify Playwright as `rahul@` and `hr@` and that `priya@` gets no access.
+
+# ALL TRACKS — Integration and acceptance (after tracks merge)
+
+## 23. Integration checks
+
+- [ ] 23.1 Run the contract-test matrix (Admin, Manager, Employee, peer, mentor, account owner) across every endpoint of all three tracks; verify zero cross-role leaks and the same response for forbidden and nonexistent records.
+- [ ] 23.2 Run the full oracle comparison for `index`, `cult`, `valData`, `discMetrics`, `attStats`, `trRating`, `aprRecommend` over the whole seed and a cross-screen test that utilization, stale count and Discipline are identical on Overview, Work items, Team utilization and Culture values and equal the `CalcService` output for the same inputs; also confirm in review that the PR checklist item "no formula or threshold constant outside `calc/`" held for all three tracks.
+- [ ] 23.3 Run the end-to-end flows of reference section 15 with Playwright: extra work to confirm to culture bonus; 360° assign to notify to submit to publish; training assign to sign-off; visit plan to verify; seeded Jira work to workload to Discipline to index to appraisal score; attendance upload to rule h to undo; each CSV import with its sample file; appraisal propose to approve to export.
+- [ ] 23.4 Run the shared UI audit for every demo account, route and tab at 390, 1024 and 1440 px; verify no NaN, undefined, null, Infinity, empty card or horizontal overflow; also run an axe scan on every screen and keyboard-only runs of every modal and form with no violations, and confirm the first screen after sign-in renders in under 2 seconds on the seed.
+- [ ] 23.5 Write the demo runbook (`docs/demo.md`: start commands, demo flags, accounts, pinned date, what is simulated) and verify a fresh clone starts with one command and every demo account signs in.
+
+## Workflow follow-up
+
+- Review the "Deferred hardening" list in design.md before loading any real data.
+- Archive the change after review, then verify the archived result.

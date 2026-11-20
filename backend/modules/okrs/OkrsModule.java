@@ -7,10 +7,12 @@ import com.pulse.platform.module.PulseModule;
  * OKR seed {@code seed/S210__okrs.sql} (task 14.1). The service, API, permissions and the import and
  * export interface for Track 3 arrive with tasks 14.2 and 14.3.
  */
-public class OkrsModule implements PulseModule {
+public class OkrsModule implements PulseModule
+{
 
     @Override
-    public String id() {
+    public String id()
+    {
         return "okrs";
     }
 }

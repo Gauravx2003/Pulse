@@ -7,10 +7,12 @@ import com.pulse.platform.module.PulseModule;
  * {@code migrations/V200__work_data_layer.sql} creates the tables shared by every Track 2 module
  * (task 7.1). Routes, permissions and menu entries arrive with tasks 8.2 to 8.4.
  */
-public class WorkModule implements PulseModule {
+public class WorkModule implements PulseModule
+{
 
     @Override
-    public String id() {
+    public String id()
+    {
         return "work";
     }
 }

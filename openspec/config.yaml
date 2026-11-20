@@ -31,6 +31,8 @@ operations:
     guidance:
       - Before writing code, re-read the Vert.x & Java Coding Standards in design.md. Reject and fix any code that blocks the event loop, deploys extra verticles, uses non-reactive DB access, or bypasses the central FailureHandler.
       - Reject and replace any POJO/DTO/entity classes with Vert.x JsonObject and JsonArray.
+      - Java Brace & Spacing Style (Allman Style) Always place opening `{` and closing `}` braces on a new line (next-line braces for classes, methods, if/else, loops, and try/catch blocks), and leave blank lines 
+        between logical statements/blocks for readability.
 
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.

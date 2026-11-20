@@ -36,28 +36,36 @@ import java.util.stream.Stream;
  *
  * <p>Scanning does blocking I/O: call {@link #discover()} via {@code executeBlocking}.
  */
-public final class ModuleRegistry {
+public final class ModuleRegistry
+{
 
     private static final Logger log = LoggerFactory.getLogger(ModuleRegistry.class);
 
     public static final String BASE_PACKAGE = "com.pulse.modules";
+
     private static final String BASE_PATH = BASE_PACKAGE.replace('.', '/');
+
     private static final Pattern MODULE_CLASS =
             Pattern.compile("^" + Pattern.quote(BASE_PATH) + "/([a-z0-9_]+)/([A-Za-z0-9_]*Module)\\.class$");
 
     private final Map<String, PulseModule> modules;
 
-    private ModuleRegistry(Map<String, PulseModule> modules) {
+    private ModuleRegistry(Map<String, PulseModule> modules)
+    {
+
         this.modules = modules;
     }
 
-    public static ModuleRegistry of(List<PulseModule> modules) {
+    public static ModuleRegistry of(List<PulseModule> modules)
+    {
+
         Map<String, PulseModule> byId = new LinkedHashMap<>();
         modules.stream()
                 .sorted(Comparator.comparing(PulseModule::id))
                 .forEach(m -> {
                     PulseModule previous = byId.putIfAbsent(m.id(), m);
-                    if (previous != null) {
+                    if (previous != null)
+                    {
                         throw new IllegalStateException("Duplicate module id '" + m.id() + "': "
                                 + previous.getClass().getName() + " and " + m.getClass().getName());
                     }
@@ -65,30 +73,40 @@ public final class ModuleRegistry {
         return new ModuleRegistry(byId);
     }
 
-    public static ModuleRegistry discover() {
+    public static ModuleRegistry discover()
+    {
+
         return discover(Thread.currentThread().getContextClassLoader());
     }
 
-    public static ModuleRegistry discover(ClassLoader loader) {
+    public static ModuleRegistry discover(ClassLoader loader)
+    {
+
         Set<String> classNames = new TreeSet<>();
-        try {
+        try
+        {
             Enumeration<URL> roots = loader.getResources(BASE_PATH);
-            while (roots.hasMoreElements()) {
+            while (roots.hasMoreElements())
+            {
                 URL root = roots.nextElement();
-                switch (root.getProtocol()) {
+                switch (root.getProtocol())
+                {
                     case "file" -> scanDirectory(root, classNames);
                     case "jar" -> scanJar(root, classNames);
                     default -> log.warn("Skipping unsupported module classpath root {}", root);
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
             throw new UncheckedIOException("Module scan failed", e);
         }
 
         List<PulseModule> found = new ArrayList<>();
-        for (String className : classNames) {
+        for (String className : classNames)
+        {
             PulseModule module = instantiate(loader, className);
-            if (module != null) {
+            if (module != null)
+            {
                 found.add(module);
             }
         }
@@ -97,14 +115,19 @@ public final class ModuleRegistry {
         return registry;
     }
 
-    private static void scanDirectory(URL root, Set<String> out) throws IOException {
+    private static void scanDirectory(URL root, Set<String> out) throws IOException
+    {
+
         Path base;
-        try {
+        try
+        {
             base = Paths.get(root.toURI());
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException e)
+        {
             throw new IOException(e);
         }
-        try (Stream<Path> files = Files.walk(base, 2)) {
+        try (Stream<Path> files = Files.walk(base, 2))
+        {
             files.filter(Files::isRegularFile).forEach(p -> {
                 String rel = BASE_PATH + "/" + base.relativize(p).toString().replace('\\', '/');
                 collect(rel, out);
@@ -112,51 +135,73 @@ public final class ModuleRegistry {
         }
     }
 
-    private static void scanJar(URL root, Set<String> out) throws IOException {
+    private static void scanJar(URL root, Set<String> out) throws IOException
+    {
+
         JarURLConnection conn = (JarURLConnection) root.openConnection();
         conn.setUseCaches(false);
-        try (JarFile jar = conn.getJarFile()) {
+        try (JarFile jar = conn.getJarFile())
+        {
             Enumeration<JarEntry> entries = jar.entries();
-            while (entries.hasMoreElements()) {
+            while (entries.hasMoreElements())
+            {
                 collect(entries.nextElement().getName(), out);
             }
         }
     }
 
-    private static void collect(String resourcePath, Set<String> out) {
+    private static void collect(String resourcePath, Set<String> out)
+    {
+
         Matcher m = MODULE_CLASS.matcher(resourcePath);
-        if (m.matches()) {
+        if (m.matches())
+        {
             out.add(BASE_PACKAGE + "." + m.group(1) + "." + m.group(2));
         }
     }
 
-    private static PulseModule instantiate(ClassLoader loader, String className) {
-        try {
+    private static PulseModule instantiate(ClassLoader loader, String className)
+    {
+
+        try
+        {
             Class<?> type = Class.forName(className, true, loader);
             if (!PulseModule.class.isAssignableFrom(type) || type.isInterface()
-                    || java.lang.reflect.Modifier.isAbstract(type.getModifiers())) {
+                    || java.lang.reflect.Modifier.isAbstract(type.getModifiers()))
+            {
                 return null;
             }
             return (PulseModule) type.getDeclaredConstructor().newInstance();
-        } catch (ReflectiveOperationException e) {
+        } catch (ReflectiveOperationException e)
+        {
             throw new IllegalStateException("Cannot instantiate module " + className
                     + " (it needs a public no-arg constructor)", e);
         }
     }
 
-    public Collection<PulseModule> modules() {
+    public Collection<PulseModule> modules()
+    {
+
         return modules.values();
     }
 
-    /** Full permission catalogue contributed by all modules, in discovery order. */
-    public Set<String> permissions() {
+    /**
+     * Full permission catalogue contributed by all modules, in discovery order.
+     */
+    public Set<String> permissions()
+    {
+
         Set<String> all = new LinkedHashSet<>();
         modules.values().forEach(m -> all.addAll(m.permissions()));
         return all;
     }
 
-    /** Menu visible to a user holding {@code granted}, grouped and ordered. */
-    public JsonArray menuFor(Set<String> granted) {
+    /**
+     * Menu visible to a user holding {@code granted}, grouped and ordered.
+     */
+    public JsonArray menuFor(Set<String> granted)
+    {
+
         Map<String, JsonArray> groups = new LinkedHashMap<>();
         modules.values().stream()
                 .flatMap(m -> m.menu().stream())

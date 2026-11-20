@@ -46,7 +46,7 @@ class BaseSeedTest {
         owner = db.ownerPool();
         ScriptCatalog platform = ScriptCatalog.load(BaseSeedTest.class.getClassLoader(), List.of(ScriptCatalog.PLATFORM));
         await(MigrationRunner.migrate(owner, platform));
-        List<SqlScript> seeded = await(MigrationRunner.seed(owner, platform));
+        List<SqlScript> seeded = await(MigrationRunner.seed(owner, platform, true));
         assertEquals(List.of(100, 110), seeded.stream().map(SqlScript::version).toList());
     }
 

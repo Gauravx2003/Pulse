@@ -44,7 +44,7 @@ class MigrationRunnerTest {
         ScriptCatalog catalog = ScriptCatalogTest.load(PEOPLE, WORK, PLATFORM);
 
         List<SqlScript> migrated = await(MigrationRunner.migrate(pool, catalog));
-        List<SqlScript> seeded = await(MigrationRunner.seed(pool, catalog));
+        List<SqlScript> seeded = await(MigrationRunner.seed(pool, catalog, true));
 
         assertEquals(5, migrated.size());
         assertEquals(3, seeded.size());
@@ -56,10 +56,10 @@ class MigrationRunnerTest {
     void secondRunIsANoOp() throws Exception {
         ScriptCatalog catalog = ScriptCatalogTest.load(PEOPLE, WORK, PLATFORM);
         await(MigrationRunner.migrate(pool, catalog));
-        await(MigrationRunner.seed(pool, catalog));
+        await(MigrationRunner.seed(pool, catalog, true));
 
         assertTrue(await(MigrationRunner.migrate(pool, catalog)).isEmpty());
-        assertTrue(await(MigrationRunner.seed(pool, catalog)).isEmpty());
+        assertTrue(await(MigrationRunner.seed(pool, catalog, true)).isEmpty());
         assertEquals(8, appliedOrder().size());
     }
 

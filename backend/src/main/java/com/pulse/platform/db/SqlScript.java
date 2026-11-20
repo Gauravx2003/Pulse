@@ -58,6 +58,14 @@ public record SqlScript(Kind kind, int version, String description, String sourc
         return new SqlScript(kind, version, m.group(3), source, resource, sql, sha256(sql));
     }
 
+    /** Prefix of a demo seed description: {@code S110__demo_org.sql} loads only with PULSE_DEMO_SEED on. */
+    public static final String DEMO_PREFIX = "demo_";
+
+    /** True for a demo seed file ({@code S<n>__demo_<description>.sql}). */
+    public boolean demo() {
+        return kind == Kind.SEED && description.startsWith(DEMO_PREFIX);
+    }
+
     /** Short label such as {@code V205}. */
     public String label() {
         return kind.prefix() + version;

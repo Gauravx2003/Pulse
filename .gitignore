@@ -40,3 +40,7 @@ Thumbs.db
 *.log
 
 .mcp.json
+
+# OpenSpec-generated agent skills (each dev runs: openspec init --tools claude)
+.claude/skills/
+.agents/

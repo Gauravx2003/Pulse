@@ -13,11 +13,11 @@ public class Main {
 
         Vertx vertx = Vertx.vertx();
 
-        vertx.deployVerticle(new MainVerticle(), res -> {
+        vertx.deployVerticle(new HttpServerVerticle(), res -> {
             if (res.succeeded()) {
-                log.info("Pulse MainVerticle deployed successfully! Deployment ID: {}", res.result());
+                log.info("Pulse HttpServerVerticle deployed successfully! Deployment ID: {}", res.result());
             } else {
-                log.error("Failed to deploy Pulse MainVerticle", res.cause());
+                log.error("Failed to deploy Pulse HttpServerVerticle", res.cause());
                 System.exit(1);
             }
         });

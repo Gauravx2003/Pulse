@@ -3,9 +3,13 @@ schema: spec-driven
 context: |
   Backend is Java on Vert.x. All code must follow the "Vert.x & Java Coding Standards"
   in openspec/changes/pulse-v1-baseline/design.md (Decision 1):
-  - Only two verticles: HttpServerVerticle (mounts /api/v1 sub-routers from self-registering
+  - Only two verticle classes: HttpServerVerticle (mounts /api/v1 sub-routers from self-registering
     modules) and SchedulerVerticle (in-process cron/periodic jobs). No verticle per module;
     modules are plain Java classes (Router, Service, Repository) sharing one PgPool and CalcService.
+  - HttpServerVerticle is deployed with instances = availableProcessors() (override via
+    PULSE_HTTP_INSTANCES); SchedulerVerticle always runs as exactly 1 instance. The PgPool is
+    created once with PoolOptions.setShared(true) so all HTTP instances share it. No mutable
+    per-instance state: sessions, lockout and rate-limit counters live in PostgreSQL or vertx.sharedData().
   - Never block the event loop: no synchronous I/O, Thread.sleep(), JDBC or heavy CPU loops in
     handlers/services. BCrypt, CSV parsing/validation (up to 5,000 rows) and seed file reading
     always run in vertx.executeBlocking(() -> ...).

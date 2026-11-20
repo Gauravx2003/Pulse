@@ -23,7 +23,7 @@ Pulse is built from the reference package in `reference/` (spec, prototype v11, 
 ## Decisions
 
 ### 1. Architecture: modular monolith
-One Vert.x deployable, one PostgreSQL database, modules per capability group. Heavy work (BCrypt, CSV checks, seed reading) runs via `vertx.executeBlocking`; see the Vert.x & Java Coding Standards below. Single instance in v1, so no cross-instance job locking.
+One Vert.x deployable, one PostgreSQL database, modules per capability group. Heavy work (BCrypt, CSV checks, seed reading) runs via `vertx.executeBlocking`; see the Vert.x & Java Coding Standards below. Single deployed process in v1 (one JVM, one container), so no cross-process job locking.
 - *Why:* one-number-everywhere needs strong consistency; a three-person team cannot operate distributed services.
 - *Rejected:* microservices, separate calculation service.
 
@@ -42,7 +42,11 @@ One Vert.x deployable, one PostgreSQL database, modules per capability group. He
 
 #### Vert.x & Java Coding Standards (strict, binding on all three tracks' `/opsx:apply` runs)
 
-1. **Verticle topology.** Exactly two verticles: `HttpServerVerticle` (mounts `/api/v1` sub-routers from self-registering modules) and `SchedulerVerticle` (in-process cron and periodic jobs). Never deploy a verticle per module. Modules are plain Java classes (Router, Service, Repository) that share one `PgPool` and the `CalcService`.
+1. **Verticle topology.** Exactly two verticle *classes*: `HttpServerVerticle` (mounts `/api/v1` sub-routers from self-registering modules) and `SchedulerVerticle` (in-process cron and periodic jobs). Never deploy a verticle per module. Modules are plain Java classes (Router, Service, Repository) that share one `PgPool` and the `CalcService`.
+   - **Instances, not classes, give parallelism.** `HttpServerVerticle` is deployed with `DeploymentOptions.setInstances(n)`, where `n` defaults to `Runtime.getRuntime().availableProcessors()` and can be overridden by config (`PULSE_HTTP_INSTANCES`). All instances listen on the same port and Vert.x round-robins connections across their event loops. Each instance mounts every module.
+   - **`SchedulerVerticle` always runs as exactly 1 instance.** More instances would fire every job more than once.
+   - **One shared `PgPool` across instances.** Create it with `PoolOptions.setShared(true)` and a fixed pool name, so N HTTP instances reuse one connection pool instead of opening N pools. Size it with `PULSE_DB_POOL_SIZE` and keep it below the PostgreSQL `max_connections` limit.
+   - **No per-instance mutable state.** Handlers and services stay stateless. Anything that must be consistent across instances (sessions, sign-in lockout counters, per-IP rate-limit counters, caches that are written to) lives in PostgreSQL or in `vertx.sharedData()`, never in a field of a verticle or module object.
 2. **Zero event-loop blocking.**
    - HTTP handlers and services must never do synchronous I/O, `Thread.sleep()`, JDBC, or heavy CPU loops.
    - BCrypt hashing and verification, CSV parsing and validation (up to 5,000 rows), and seed-file reading always run inside `vertx.executeBlocking(() -> ...)`.

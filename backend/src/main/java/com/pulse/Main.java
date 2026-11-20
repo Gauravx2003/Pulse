@@ -11,7 +11,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Process entry point: discovers modules, runs migrations and seed files once, then deploys the
- * HTTP verticle. Migrations run here, not in a verticle, so they run exactly once per process.
+ * HTTP verticle. Migrations run here, not in a verticle, so they run exactly once per process, as
+ * the owner account; the HTTP verticle then uses the shared app-role pool ({@link Db#pool}).
  */
 public class Main {
 
@@ -22,11 +23,12 @@ public class Main {
 
         Vertx vertx = Vertx.vertx();
         JsonObject config = new JsonObject();
-        PgPool pool = Db.pool(vertx, config);
+        PgPool migrationPool = Db.migrationPool(vertx, config);
         ClassLoader loader = Main.class.getClassLoader();
 
         vertx.executeBlocking(() -> ModuleRegistry.discover(loader))
-                .compose(registry -> DatabaseBootstrap.run(vertx, pool, registry, loader))
+                .compose(registry -> DatabaseBootstrap.run(vertx, migrationPool, registry, loader))
+                .eventually(v -> migrationPool.close())
                 .compose(migrated -> vertx.deployVerticle(new HttpServerVerticle()))
                 .onSuccess(id -> log.info("Pulse HttpServerVerticle deployed successfully! Deployment ID: {}", id))
                 .onFailure(err -> {

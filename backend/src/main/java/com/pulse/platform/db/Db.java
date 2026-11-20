@@ -15,16 +15,43 @@ import io.vertx.sqlclient.PoolOptions;
  * {@code db.user}, {@code db.password}, {@code db.poolSize}) and fall back to the environment
  * ({@code DB_HOST}, {@code DB_PORT}, {@code DB_NAME}, {@code DB_USER}, {@code DB_PASSWORD},
  * {@code PULSE_DB_POOL_SIZE}).
+ *
+ * <p>Two accounts (design.md decisions 4 and 7): migrations run as the connecting owner account
+ * through {@link #migrationPool}; the application pool switches to the role {@code pulse_app}
+ * ({@code db.appRole} / {@code PULSE_DB_APP_ROLE}), which has DML only, cannot run DDL and cannot
+ * update or delete {@code audit_log}. The value {@code none} keeps the owner account (not for production).
  */
 public final class Db {
 
     public static final String POOL_NAME = "pulse-pool";
 
+    public static final String DEFAULT_APP_ROLE = "pulse_app";
+
     private Db() {
     }
 
+    /** The shared application pool, running as the app role. */
     public static PgPool pool(Vertx vertx, JsonObject config) {
-        return PgPool.pool(vertx, connectOptions(config), poolOptions(config));
+        return PgPool.pool(vertx, appConnectOptions(config), poolOptions(config));
+    }
+
+    /** A small, unshared pool as the owner account, for the migration runner only; close it after use. */
+    public static PgPool migrationPool(Vertx vertx, JsonObject config) {
+        return PgPool.pool(vertx, connectOptions(config), new PoolOptions().setMaxSize(1));
+    }
+
+    /** Owner connection options with the app role applied at session start. */
+    public static PgConnectOptions appConnectOptions(JsonObject config) {
+        PgConnectOptions options = connectOptions(config);
+        String role = appRole(config);
+        if (!role.equalsIgnoreCase("none")) {
+            options.addProperty("role", role);
+        }
+        return options;
+    }
+
+    public static String appRole(JsonObject config) {
+        return setting(config, "db.appRole", "PULSE_DB_APP_ROLE", DEFAULT_APP_ROLE).trim();
     }
 
     public static PgConnectOptions connectOptions(JsonObject config) {

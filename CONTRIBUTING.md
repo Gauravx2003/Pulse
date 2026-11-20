@@ -75,4 +75,4 @@ cd backend && mvn exec:java            # runs migrations + seeds, then serves :8
 cd frontend && npm install && npm run dev
 ```
 
-The backend reads `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` and `PULSE_DB_POOL_SIZE`. The database tests in `MigrationRunnerTest` use the same variables and are skipped when no database is reachable.
+The backend reads `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` and `PULSE_DB_POOL_SIZE`. Migrations run as `DB_USER`; at runtime the app switches to the role `pulse_app` (created by V100, DML only, no UPDATE or DELETE on `audit_log`). `PULSE_DB_APP_ROLE` overrides the role name. The database tests in `MigrationRunnerTest` use the same variables and are skipped when no database is reachable.

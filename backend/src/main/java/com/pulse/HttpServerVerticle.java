@@ -1,5 +1,6 @@
 package com.pulse;
 
+import com.pulse.platform.db.Db;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.ModuleRegistry;
 import com.pulse.platform.module.PulseModule;
@@ -62,7 +63,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
         router.get(API_PREFIX + "/me").handler(ctx -> ctx.json(currentUser()));
 
-        ModuleContext moduleContext = new ModuleContext(vertx, config());
+        ModuleContext moduleContext = new ModuleContext(vertx, config(), Db.pool(vertx, config()));
         for (PulseModule module : registry.modules()) {
             Router sub = Router.router(vertx);
             module.routes(sub, moduleContext);

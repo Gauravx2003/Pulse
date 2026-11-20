@@ -2,10 +2,13 @@ package com.pulse.modules.okrs;
 
 import com.pulse.platform.module.PulseModule;
 
+import java.util.List;
+
 /**
- * Track 2 OKRs module. For now it only registers {@code migrations/V210__okrs.sql} and the demo
- * OKR seed {@code seed/S210__okrs.sql} (task 14.1). The service, API, permissions and the import and
- * export interface for Track 3 arrive with tasks 14.2 and 14.3.
+ * Track 2 OKRs module: schema {@code migrations/V210__okrs.sql}, demo seed
+ * {@code seed/S210__demo_okrs.sql} (task 14.1) and {@link OkrService} (task 14.2). The HTTP routes are
+ * mounted once the session user, the policy service and the central FailureHandler exist (tasks 3.x);
+ * progress and the OKR pillar come from CalcService (task 4.10).
  */
 public class OkrsModule implements PulseModule
 {
@@ -14,5 +17,11 @@ public class OkrsModule implements PulseModule
     public String id()
     {
         return "okrs";
+    }
+
+    @Override
+    public List<String> permissions()
+    {
+        return List.of(OkrService.OKR_OWN, OkrService.OKR_TEAM);
     }
 }

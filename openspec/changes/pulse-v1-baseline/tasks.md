@@ -80,7 +80,7 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 
 ## 7. Track 2 data layer and seed
 
-- [ ] 7.1 Write migration V200 for issues, issue_events (activity timeline), worklogs, commit_days, pull_requests, pr_reviews, pr_comments, bugs, support_tickets, extra_items and weekly_pulse, where the tables that mirror an external tool (issues, issue_events, worklogs, commit_days, pull_requests, pr_reviews, pr_comments, bugs, support_tickets) carry the ingest columns `source` default `'seed'`, `external_id` and `synced_at` with a unique index on (source, external_id); verify the migration applies after V100, a test that each table has an index for its policy scope column, and that a duplicate (source, external_id) insert into `issues` fails.
+- [x] 7.1 Write migration V200 for issues, issue_events (activity timeline), worklogs, commit_days, pull_requests, pr_reviews, pr_comments, bugs, support_tickets, extra_items and weekly_pulse, where the tables that mirror an external tool (issues, issue_events, worklogs, commit_days, pull_requests, pr_reviews, pr_comments, bugs, support_tickets) carry the ingest columns `source` default `'seed'`, `external_id` and `synced_at` with a unique index on (source, external_id); verify the migration applies after V100, a test that each table has an index for its policy scope column, and that a duplicate (source, external_id) insert into `issues` fails.
 - [ ] 7.2 Write Track 2 seed files (V200 range) from `seed/extracted/` for issues, activity, worklogs, PRs, bugs, support tickets and pulse answers, loaded through the `SeedConnector` and `IngestService` of task 5.4 (never by direct inserts into ingest tables); verify row counts match the prototype datasets and a test that Priya's live-sprint issues equal the prototype's.
 - [ ] 7.3 Implement the repositories that require a policy scope; verify a contract test that an Employee cannot read a peer's issues, PRs or pulse through any repository.
 
@@ -123,14 +123,14 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 
 ## 14. OKRs
 
-- [ ] 14.1 Write migration V210 for objectives and key_results (quarter, level, owner or team, epic, value, start, target, current, unit, check-ins) and the OKR seed (V210 range) from `seed/extracted/`; verify the migration applies after V100 and V200 and the seeded objective count equals the prototype's.
+- [x] 14.1 Write migration V210 for objectives and key_results (quarter, level, owner or team, epic, value, start, target, current, unit, check-ins) and the OKR seed (V210 range) from `seed/extracted/`; verify the migration applies after V100 and V200 and the seeded objective count equals the prototype's.
 - [ ] 14.2 Implement the OKR service and API (CRUD, validation, progress and OKR pillar (the pillar formula lives in `calc/work/`, exposed through `CalcService`, and is compared with the oracle's pillar for every seeded person), check-ins, okr.own and okr.team permissions, signals for Progress, import and export service methods); verify tests for every scenario in `growth/okrs`.
 - [ ] 14.3 Expose the OKR import and export service interface (find owner, upsert objective, bulk check-in, list for export) for Track 3's CSV engine and register the off-track next-step provider; verify a service-level test that an update of a matching objective acts as a check-in and that Track 3's stub can call it.
 - [ ] 14.4 Build the OKR screens (cards, quarter dropdown, New and Edit modals, Check-in, delete confirmation, Import and Export entry points that link to the Data imports modal); verify Playwright as `priya@` and `rahul@` and the UI audit.
 
 ## 15. Road map
 
-- [ ] 15.1 Write migration V220 for milestones, promotion_targets and skills_matrix and the road-map seed (V220 range); verify the migration applies after V210 and a seeded road map exists for Priya.
+- [x] 15.1 Write migration V220 for milestones, promotion_targets and skills_matrix and the road-map seed (V220 range); verify the migration applies after V210 and a seeded road map exists for Priya.
 - [ ] 15.2 Implement milestones (propose and confirm), promotion readiness criteria (reading the performance index through the calc service) and the skills matrix with visibility rules; verify tests for every scenario in `growth/roadmap`.
 - [ ] 15.3 Build the Road map screen and the Add milestone modal; verify Playwright as `priya@` and `rahul@`, that a peer gets the no-access card, and the UI audit.
 

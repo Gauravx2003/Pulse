@@ -1,0 +1,63 @@
+# Pulse code owners: one track per directory (design.md decision 10, CONTRIBUTING.md).
+# Track 1 — Platform, auth, schema/seed, calc core, shared admin, UI kit: @Gauravx2003
+# Track 2 — Work, PRs, effort, bugs, utilization, action center, progress, OKRs, road map: @ROMIL05
+# Track 3 — CSV engine, attendance, visits, culture, reviews, training, appraisal: @Krupen08
+#
+# Later rules win. Everything not listed below (root files, CI, backend/src, frontend shell,
+# scripts, docs, openspec) is shared and owned by Track 1.
+# scripts/check-codeowners.sh fails CI when a modules/* directory has no entry here.
+
+*                                       @Gauravx2003
+
+# ---- Calculation library (design.md decision 5) ----
+/backend/calc/core/                     @Gauravx2003
+/backend/calc/work/                     @ROMIL05
+/backend/calc/people/                   @Krupen08
+
+# ---- Track 1 modules ----
+/backend/modules/sample/                @Gauravx2003
+/frontend/src/modules/sample/           @Gauravx2003
+/backend/modules/users/                 @Gauravx2003
+/frontend/src/modules/users/            @Gauravx2003
+/backend/modules/rules/                 @Gauravx2003
+/frontend/src/modules/rules/            @Gauravx2003
+/backend/modules/integrations/          @Gauravx2003
+/frontend/src/modules/integrations/     @Gauravx2003
+/backend/modules/notifications/         @Gauravx2003
+/frontend/src/modules/notifications/    @Gauravx2003
+
+# ---- Track 2 modules ----
+/backend/modules/work/                  @ROMIL05
+/frontend/src/modules/work/             @ROMIL05
+/backend/modules/utilization/           @ROMIL05
+/frontend/src/modules/utilization/      @ROMIL05
+/backend/modules/pull_requests/         @ROMIL05
+/frontend/src/modules/pull_requests/    @ROMIL05
+/backend/modules/effort/                @ROMIL05
+/frontend/src/modules/effort/           @ROMIL05
+/backend/modules/bugs/                  @ROMIL05
+/frontend/src/modules/bugs/             @ROMIL05
+/backend/modules/action_center/         @ROMIL05
+/frontend/src/modules/action_center/    @ROMIL05
+/backend/modules/progress/              @ROMIL05
+/frontend/src/modules/progress/         @ROMIL05
+/backend/modules/okrs/                  @ROMIL05
+/frontend/src/modules/okrs/             @ROMIL05
+/backend/modules/roadmap/               @ROMIL05
+/frontend/src/modules/roadmap/          @ROMIL05
+
+# ---- Track 3 modules ----
+/backend/modules/imports/               @Krupen08
+/frontend/src/modules/imports/          @Krupen08
+/backend/modules/attendance/            @Krupen08
+/frontend/src/modules/attendance/       @Krupen08
+/backend/modules/visits/                @Krupen08
+/frontend/src/modules/visits/           @Krupen08
+/backend/modules/culture/               @Krupen08
+/frontend/src/modules/culture/          @Krupen08
+/backend/modules/reviews/               @Krupen08
+/frontend/src/modules/reviews/          @Krupen08
+/backend/modules/training/              @Krupen08
+/frontend/src/modules/training/         @Krupen08
+/backend/modules/appraisal/             @Krupen08
+/frontend/src/modules/appraisal/        @Krupen08

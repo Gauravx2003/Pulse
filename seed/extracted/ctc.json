@@ -1,0 +1,34 @@
+[
+  {
+    "person": "ps",
+    "ctc_lakh": 18
+  },
+  {
+    "person": "am",
+    "ctc_lakh": 32
+  },
+  {
+    "person": "nj",
+    "ctc_lakh": 9
+  },
+  {
+    "person": "kr",
+    "ctc_lakh": 17
+  },
+  {
+    "person": "dp",
+    "ctc_lakh": 16.5
+  },
+  {
+    "person": "sk",
+    "ctc_lakh": 30
+  },
+  {
+    "person": "rk",
+    "ctc_lakh": 6
+  },
+  {
+    "person": "an",
+    "ctc_lakh": 6
+  }
+]

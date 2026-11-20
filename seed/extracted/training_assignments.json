@@ -1,0 +1,1846 @@
+[
+  {
+    "id": "ta1kk9",
+    "plan": {
+      "id": "tp1",
+      "name": "Software Engineer onboarding",
+      "forRole": "Trainee / new Software Engineer",
+      "weeks": 12,
+      "desc": "From laptop setup to shipping a small feature on the Platform team.",
+      "targets": [
+        "Adaptability",
+        "Discipline",
+        "Collaboration"
+      ],
+      "checkpoints": [
+        14,
+        30,
+        60,
+        90
+      ],
+      "modules": [
+        {
+          "id": "mxvlzb8",
+          "title": "Laptop, accounts and access (Jira, GitHub, Slack)",
+          "type": "Hands-on task",
+          "week": 1,
+          "hours": 4,
+          "res": "IT onboarding checklist"
+        },
+        {
+          "id": "m7uvg5l",
+          "title": "Company, product and customer overview",
+          "type": "Course",
+          "week": 1,
+          "hours": 3,
+          "res": "LMS · Motadata 101"
+        },
+        {
+          "id": "mog5qlw",
+          "title": "Codebase walkthrough with mentor",
+          "type": "Shadowing",
+          "week": 1,
+          "hours": 6,
+          "res": ""
+        },
+        {
+          "id": "md7ivg1",
+          "title": "Jira workflow & daily updates (Discipline)",
+          "type": "Course",
+          "week": 2,
+          "hours": 2,
+          "res": "Confluence · How we use Jira"
+        },
+        {
+          "id": "mb82vf5",
+          "title": "Git, branching and code-review standards",
+          "type": "Reading",
+          "week": 2,
+          "hours": 3,
+          "res": "Engineering handbook"
+        },
+        {
+          "id": "mch11s8",
+          "title": "First bug fix with mentor",
+          "type": "Hands-on task",
+          "week": 3,
+          "hours": 10,
+          "res": ""
+        },
+        {
+          "id": "myyh1ka",
+          "title": "Observability basics: metrics, logs, traces",
+          "type": "Course",
+          "week": 4,
+          "hours": 6,
+          "res": "LMS · Observability 1"
+        },
+        {
+          "id": "ml81vci",
+          "title": "On-call shadowing (1 week)",
+          "type": "Shadowing",
+          "week": 6,
+          "hours": 8,
+          "res": ""
+        },
+        {
+          "id": "moivt1t",
+          "title": "Ship a small feature end-to-end",
+          "type": "Hands-on task",
+          "week": 8,
+          "hours": 30,
+          "res": ""
+        },
+        {
+          "id": "m46s13o",
+          "title": "Present your feature at the team demo",
+          "type": "Meeting",
+          "week": 10,
+          "hours": 2,
+          "res": ""
+        },
+        {
+          "id": "mhqbpju",
+          "title": "90-day technical assessment",
+          "type": "Assessment",
+          "week": 12,
+          "hours": 3,
+          "res": "Mentor + manager panel"
+        }
+      ],
+      "cadence": "Weekly"
+    },
+    "pid": "rk",
+    "mentor": "u-ps",
+    "start": "2026-09-14",
+    "status": "Active",
+    "done": {
+      "mxvlzb8": {
+        "at": "2026-09-15",
+        "note": ""
+      },
+      "m7uvg5l": {
+        "at": "2026-09-17",
+        "note": ""
+      },
+      "mog5qlw": {
+        "at": "2026-09-19",
+        "note": ""
+      },
+      "md7ivg1": {
+        "at": "2026-09-21",
+        "note": ""
+      },
+      "mb82vf5": {
+        "at": "2026-09-23",
+        "note": ""
+      }
+    },
+    "by": "Rahul Nair",
+    "updates": [
+      {
+        "period": "2026-09-14",
+        "periodLabel": "Week of 14 Sept",
+        "done": "Laptop, accounts and access done; product overview course; codebase walkthrough with Priya.",
+        "hours": 22,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-18",
+        "status": "Verified",
+        "reviewer": "Priya Shah",
+        "revRole": "Mentor",
+        "comment": "Great first week — you asked the right questions in the walkthrough. Next: read the Jira workflow page before Monday.",
+        "verifiedAt": "2026-09-19"
+      },
+      {
+        "period": "2026-09-21",
+        "periodLabel": "Week of 21 Sept",
+        "done": "Jira workflow course and Git/branching standards. Set up local build.",
+        "hours": 18,
+        "conf": 3,
+        "blockers": "Local build failed twice (resolved with Priya)",
+        "next": "",
+        "submittedAt": "2026-09-25",
+        "status": "Verified",
+        "reviewer": "Rahul Nair",
+        "revRole": "Manager",
+        "comment": "Good pace. Please post a short daily update in #platform-standup so we see progress between check-ins.",
+        "verifiedAt": "2026-09-26"
+      }
+    ],
+    "acks": {
+      "ci:2026-09-14": {
+        "st": "Agreed",
+        "comment": "Will read it before Monday.",
+        "at": "2026-09-22"
+      }
+    },
+    "attempt": 1,
+    "assignedAt": "2026-09-12",
+    "sessions": [
+      {
+        "id": "seta1kk90",
+        "date": "2026-09-15",
+        "dur": 30,
+        "mode": "In person",
+        "topics": "Codebase walkthrough follow-up; how services talk to each other",
+        "next": "Read the ingestion README",
+        "by": "Priya Shah",
+        "blocker": false,
+        "at": "2026-09-15"
+      },
+      {
+        "id": "seta1kk91",
+        "date": "2026-09-17",
+        "dur": 30,
+        "mode": "In person",
+        "topics": "Local build issues and how to debug them",
+        "next": "Pair on first bug next week",
+        "by": "Priya Shah",
+        "blocker": false,
+        "at": "2026-09-17"
+      },
+      {
+        "id": "seta1kk92",
+        "date": "2026-09-22",
+        "dur": 30,
+        "mode": "In person",
+        "topics": "First bug fix plan (PLAT-2141 style)",
+        "next": "Open a draft PR by Thursday",
+        "by": "Priya Shah",
+        "blocker": false,
+        "at": "2026-09-22"
+      },
+      {
+        "id": "seta1kk93",
+        "date": "2026-09-24",
+        "dur": 30,
+        "mode": "In person",
+        "topics": "PR feedback and PR title standard",
+        "next": "Fix PR title and add risk section",
+        "by": "Priya Shah",
+        "blocker": false,
+        "at": "2026-09-24"
+      }
+    ],
+    "asks": [
+      {
+        "text": "Local build fails after pulling main — can we look together?",
+        "at": "2026-09-28",
+        "done": null
+      }
+    ],
+    "meet": "Twice a week"
+  },
+  {
+    "id": "ta2x9h",
+    "plan": {
+      "id": "tp1",
+      "name": "Software Engineer onboarding",
+      "forRole": "Trainee / new Software Engineer",
+      "weeks": 12,
+      "desc": "From laptop setup to shipping a small feature on the Platform team.",
+      "targets": [
+        "Adaptability",
+        "Discipline",
+        "Collaboration"
+      ],
+      "checkpoints": [
+        14,
+        30,
+        60,
+        90
+      ],
+      "modules": [
+        {
+          "id": "mxvlzb8",
+          "title": "Laptop, accounts and access (Jira, GitHub, Slack)",
+          "type": "Hands-on task",
+          "week": 1,
+          "hours": 4,
+          "res": "IT onboarding checklist"
+        },
+        {
+          "id": "m7uvg5l",
+          "title": "Company, product and customer overview",
+          "type": "Course",
+          "week": 1,
+          "hours": 3,
+          "res": "LMS · Motadata 101"
+        },
+        {
+          "id": "mog5qlw",
+          "title": "Codebase walkthrough with mentor",
+          "type": "Shadowing",
+          "week": 1,
+          "hours": 6,
+          "res": ""
+        },
+        {
+          "id": "md7ivg1",
+          "title": "Jira workflow & daily updates (Discipline)",
+          "type": "Course",
+          "week": 2,
+          "hours": 2,
+          "res": "Confluence · How we use Jira"
+        },
+        {
+          "id": "mb82vf5",
+          "title": "Git, branching and code-review standards",
+          "type": "Reading",
+          "week": 2,
+          "hours": 3,
+          "res": "Engineering handbook"
+        },
+        {
+          "id": "mch11s8",
+          "title": "First bug fix with mentor",
+          "type": "Hands-on task",
+          "week": 3,
+          "hours": 10,
+          "res": ""
+        },
+        {
+          "id": "myyh1ka",
+          "title": "Observability basics: metrics, logs, traces",
+          "type": "Course",
+          "week": 4,
+          "hours": 6,
+          "res": "LMS · Observability 1"
+        },
+        {
+          "id": "ml81vci",
+          "title": "On-call shadowing (1 week)",
+          "type": "Shadowing",
+          "week": 6,
+          "hours": 8,
+          "res": ""
+        },
+        {
+          "id": "moivt1t",
+          "title": "Ship a small feature end-to-end",
+          "type": "Hands-on task",
+          "week": 8,
+          "hours": 30,
+          "res": ""
+        },
+        {
+          "id": "m46s13o",
+          "title": "Present your feature at the team demo",
+          "type": "Meeting",
+          "week": 10,
+          "hours": 2,
+          "res": ""
+        },
+        {
+          "id": "mhqbpju",
+          "title": "90-day technical assessment",
+          "type": "Assessment",
+          "week": 12,
+          "hours": 3,
+          "res": "Mentor + manager panel"
+        }
+      ],
+      "cadence": "Weekly"
+    },
+    "pid": "an",
+    "mentor": "u-sk",
+    "start": "2026-08-03",
+    "status": "Active",
+    "done": {
+      "mxvlzb8": {
+        "at": "2026-08-06",
+        "note": ""
+      },
+      "m7uvg5l": {
+        "at": "2026-08-12",
+        "note": ""
+      },
+      "mog5qlw": {
+        "at": "2026-08-18",
+        "note": ""
+      },
+      "md7ivg1": {
+        "at": "2026-08-24",
+        "note": ""
+      },
+      "mb82vf5": {
+        "at": "2026-08-30",
+        "note": ""
+      },
+      "mch11s8": {
+        "at": "2026-09-05",
+        "note": ""
+      },
+      "myyh1ka": {
+        "at": "2026-09-11",
+        "note": ""
+      },
+      "ml81vci": {
+        "at": "2026-09-17",
+        "note": ""
+      }
+    },
+    "by": "Rahul Nair",
+    "updates": [
+      {
+        "period": "2026-08-03",
+        "periodLabel": "Week of 3 Aug",
+        "done": "Accounts, product overview and codebase walkthrough.",
+        "hours": 20,
+        "conf": 2,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-08-07",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "Solid start — keep notes of what you learn.",
+        "verifiedAt": "2026-08-08"
+      },
+      {
+        "period": "2026-08-10",
+        "periodLabel": "Week of 10 Aug",
+        "done": "Jira workflow and Git standards; first code review.",
+        "hours": 22,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-08-14",
+        "status": "Verified",
+        "reviewer": "Rahul Nair",
+        "revRole": "Manager",
+        "comment": "Nice first review comments, clear and polite.",
+        "verifiedAt": "2026-08-15"
+      },
+      {
+        "period": "2026-08-17",
+        "periodLabel": "Week of 17 Aug",
+        "done": "First bug fix merged with mentor (PLAT-2141).",
+        "hours": 26,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-08-21",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "Bug fix was clean; add a test next time.",
+        "verifiedAt": "2026-08-22"
+      },
+      {
+        "period": "2026-08-24",
+        "periodLabel": "Week of 24 Aug",
+        "done": "Observability course half done.",
+        "hours": 18,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-08-28",
+        "status": "Verified",
+        "reviewer": "Rahul Nair",
+        "revRole": "Manager",
+        "comment": "Keep going, finish the course by Friday.",
+        "verifiedAt": "2026-08-29"
+      },
+      {
+        "period": "2026-08-31",
+        "periodLabel": "Week of 31 Aug",
+        "done": "Observability course finished; started on-call prep.",
+        "hours": 12,
+        "conf": 2,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-04",
+        "status": "Needs work",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "Only 12 h logged and the on-call prep module is not ticked. Block 2 hours a day for training next week and tell me early if sprint work gets in the way.",
+        "verifiedAt": "2026-09-05"
+      },
+      {
+        "period": "2026-09-07",
+        "periodLabel": "Week of 7 Sept",
+        "done": "On-call shadowing, 2 incidents observed.",
+        "hours": 24,
+        "conf": 4,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-11",
+        "status": "Verified",
+        "reviewer": "Rahul Nair",
+        "revRole": "Manager",
+        "comment": "Good incident notes. Share them with the team.",
+        "verifiedAt": "2026-09-12"
+      },
+      {
+        "period": "2026-09-21",
+        "periodLabel": "Week of 21 Sept",
+        "done": "Started small feature: agent status badge.",
+        "hours": 20,
+        "conf": 4,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-25",
+        "status": "Submitted",
+        "reviewer": "",
+        "revRole": "",
+        "comment": "",
+        "verifiedAt": ""
+      }
+    ],
+    "acks": {
+      "ci:2026-08-03": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-08-11"
+      },
+      "ci:2026-08-31": {
+        "st": "Disagreed",
+        "comment": "Sprint work took priority that week — I flagged it in stand-up.",
+        "at": "2026-09-08"
+      }
+    },
+    "attempt": 1,
+    "assignedAt": "2026-08-01",
+    "sessions": [
+      {
+        "id": "seta2x9h0",
+        "date": "2026-08-07",
+        "dur": 45,
+        "mode": "Video",
+        "topics": "Week plan and blockers",
+        "next": "Finish the week’s modules",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-08-07"
+      },
+      {
+        "id": "seta2x9h1",
+        "date": "2026-08-14",
+        "dur": 45,
+        "mode": "Video",
+        "topics": "On-call prep",
+        "next": "Shadow next incident",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-08-14"
+      },
+      {
+        "id": "seta2x9h2",
+        "date": "2026-08-21",
+        "dur": 45,
+        "mode": "Video",
+        "topics": "Feature: agent status badge",
+        "next": "Share a design sketch",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-08-21"
+      },
+      {
+        "id": "seta2x9h3",
+        "date": "2026-08-28",
+        "dur": 45,
+        "mode": "Video",
+        "topics": "Week plan and blockers",
+        "next": "Finish the week’s modules",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-08-28"
+      },
+      {
+        "id": "seta2x9h4",
+        "date": "2026-09-04",
+        "dur": 45,
+        "mode": "Video",
+        "topics": "On-call prep",
+        "next": "Shadow next incident",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-04"
+      },
+      {
+        "id": "seta2x9h5",
+        "date": "2026-09-11",
+        "dur": 45,
+        "mode": "Video",
+        "topics": "Feature: agent status badge",
+        "next": "Share a design sketch",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-11"
+      },
+      {
+        "id": "seta2x9h6",
+        "date": "2026-09-18",
+        "dur": 45,
+        "mode": "Video",
+        "topics": "Week plan and blockers",
+        "next": "Finish the week’s modules",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-18"
+      }
+    ],
+    "asks": [],
+    "meet": "Weekly"
+  },
+  {
+    "id": "ta390n",
+    "plan": {
+      "id": "tp3",
+      "name": "Jira discipline refresher",
+      "forRole": "Anyone with Discipline below 3.5",
+      "weeks": 2,
+      "desc": "Short plan to build the daily-update habit and proactive re-planning.",
+      "targets": [
+        "Discipline",
+        "Agility in Execution"
+      ],
+      "checkpoints": [
+        10
+      ],
+      "modules": [
+        {
+          "id": "m1mrbj3",
+          "title": "How Discipline is measured (a–g)",
+          "type": "Reading",
+          "week": 1,
+          "hours": 1,
+          "res": "Pulse · Culture values → Discipline"
+        },
+        {
+          "id": "mcfxl68",
+          "title": "Split large tickets into ≤ 2-day pieces",
+          "type": "Hands-on task",
+          "week": 1,
+          "hours": 2,
+          "res": ""
+        },
+        {
+          "id": "mdnjubz",
+          "title": "Daily update habit — 10 working days streak",
+          "type": "Hands-on task",
+          "week": 2,
+          "hours": 1,
+          "res": ""
+        },
+        {
+          "id": "mvmgtmy",
+          "title": "Re-plan due dates before they pass",
+          "type": "Hands-on task",
+          "week": 2,
+          "hours": 1,
+          "res": ""
+        }
+      ],
+      "cadence": "Daily",
+      "passMark": 70,
+      "assessType": "Practical task"
+    },
+    "pid": "rk",
+    "mentor": "u-sk",
+    "start": "2026-09-21",
+    "status": "Active",
+    "done": {
+      "m1mrbj3": {
+        "at": "2026-09-22",
+        "note": ""
+      },
+      "mcfxl68": {
+        "at": "2026-09-24",
+        "note": ""
+      }
+    },
+    "by": "Rahul Nair",
+    "updates": [
+      {
+        "period": "2026-09-21",
+        "periodLabel": "Mon 21",
+        "done": "Read how Discipline is measured.",
+        "hours": 1.5,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-21",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-22"
+      },
+      {
+        "period": "2026-09-22",
+        "periodLabel": "Tue 22",
+        "done": "Split PLAT-2270 into 3 tickets.",
+        "hours": 1.5,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-22",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "Good split — each piece is under 2 days now.",
+        "verifiedAt": "2026-09-23"
+      },
+      {
+        "period": "2026-09-23",
+        "periodLabel": "Wed 23",
+        "done": "Updated all tickets before 6 pm.",
+        "hours": 1.5,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-23",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-24"
+      },
+      {
+        "period": "2026-09-24",
+        "periodLabel": "Thu 24",
+        "done": "Updated tickets; re-planned one due date early.",
+        "hours": 1.5,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-24",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-25"
+      },
+      {
+        "period": "2026-09-25",
+        "periodLabel": "Fri 25",
+        "done": "Updated tickets and logged time same day.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-25",
+        "status": "Submitted",
+        "reviewer": "",
+        "revRole": "",
+        "comment": "",
+        "verifiedAt": ""
+      }
+    ],
+    "acks": {},
+    "attempt": 1,
+    "assignedAt": "2026-09-18",
+    "cadence": "Daily",
+    "sessions": [
+      {
+        "id": "seta390n0",
+        "date": "2026-09-21",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Daily update habit: what counts as a meaningful update",
+        "next": "Update before lunch",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-21"
+      },
+      {
+        "id": "seta390n1",
+        "date": "2026-09-22",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Splitting PLAT-2270 into small tickets",
+        "next": "Keep each ticket under 2 days",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-22"
+      },
+      {
+        "id": "seta390n2",
+        "date": "2026-09-23",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Re-planning a due date early",
+        "next": "Move due dates before they pass",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-23"
+      },
+      {
+        "id": "seta390n3",
+        "date": "2026-09-25",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Daily update habit: what counts as a meaningful update",
+        "next": "Update before lunch",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-25"
+      }
+    ],
+    "asks": [],
+    "meet": "Daily"
+  },
+  {
+    "id": "ta4ewq",
+    "plan": {
+      "id": "tp5",
+      "name": "Code review & PR standard",
+      "forRole": "Anyone below the PR or review-comment target",
+      "weeks": 2,
+      "desc": "Write PRs and review comments to the team standard (TFS and GitHub).",
+      "targets": [
+        "Collaboration",
+        "Discipline"
+      ],
+      "checkpoints": [
+        7
+      ],
+      "cadence": "Weekly",
+      "passMark": 70,
+      "assessType": "Code review",
+      "modules": [
+        {
+          "id": "mpbvtpu",
+          "title": "Read the PR standard and comment standard",
+          "type": "Reading",
+          "week": 1,
+          "hours": 1,
+          "res": "Pulse · Pull requests → PR standard"
+        },
+        {
+          "id": "mo4nvjb",
+          "title": "Rewrite 5 old PR titles and descriptions",
+          "type": "Hands-on task",
+          "week": 1,
+          "hours": 2,
+          "res": ""
+        },
+        {
+          "id": "mas8gk3",
+          "title": "Review 5 PRs with labelled comments and reasons",
+          "type": "Hands-on task",
+          "week": 2,
+          "hours": 4,
+          "res": ""
+        },
+        {
+          "id": "m8efk0d",
+          "title": "Pair review with mentor",
+          "type": "Shadowing",
+          "week": 2,
+          "hours": 2,
+          "res": ""
+        }
+      ]
+    },
+    "pid": "an",
+    "mentor": "u-sk",
+    "start": "2026-08-17",
+    "status": "Completed",
+    "done": {
+      "mpbvtpu": {
+        "at": "2026-08-18",
+        "note": ""
+      },
+      "mo4nvjb": {
+        "at": "2026-08-21",
+        "note": ""
+      },
+      "mas8gk3": {
+        "at": "2026-08-24",
+        "note": ""
+      },
+      "m8efk0d": {
+        "at": "2026-08-27",
+        "note": ""
+      }
+    },
+    "by": "Rahul Nair",
+    "updates": [
+      {
+        "period": "2026-08-17",
+        "periodLabel": "Week of 17 Aug",
+        "done": "Read the standards; rewrote 5 old PR titles.",
+        "hours": 4,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-08-21",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "Titles are right now; descriptions still miss the risk section.",
+        "verifiedAt": "2026-08-22"
+      },
+      {
+        "period": "2026-08-24",
+        "periodLabel": "Week of 24 Aug",
+        "done": "Reviewed 5 PRs with labelled comments.",
+        "hours": 6,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-08-28",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "Good labels — add the reason on every suggestion.",
+        "verifiedAt": "2026-08-29"
+      }
+    ],
+    "acks": {
+      "ci:2026-08-17": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-09-05"
+      },
+      "ci:2026-08-24": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-09-05"
+      },
+      "as:1": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-09-05"
+      },
+      "fm:1": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-09-05"
+      },
+      "fg:1": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-09-05"
+      },
+      "cp:r100": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-08-26"
+      }
+    },
+    "attempt": 1,
+    "assignedAt": "2026-08-14",
+    "end": "2026-08-30",
+    "assess": {
+      "date": "2026-09-01",
+      "type": "Code review",
+      "score": 82,
+      "pass": 70,
+      "result": "Pass",
+      "notes": "Reviewed 3 real PRs: correct labels and one real race found; two suggestions had no reason.",
+      "by": "Sara Khan",
+      "byRole": "Mentor",
+      "at": "2026-09-01"
+    },
+    "final": {
+      "mentor": {
+        "rating": 4,
+        "good": "Careful reviewer, found a real race condition.",
+        "improve": "Give the reason on every suggestion.",
+        "by": "Sara Khan",
+        "at": "2026-09-03"
+      },
+      "manager": {
+        "rating": 4,
+        "good": "Titles and descriptions now meet the standard.",
+        "improve": "Review more cross-team PRs.",
+        "decision": "Completed",
+        "reason": "",
+        "by": "Rahul Nair",
+        "at": "2026-09-04"
+      }
+    },
+    "ack": {
+      "st": "Agreed",
+      "comment": "Clear feedback — I will add reasons to every suggestion.",
+      "planRating": 5,
+      "mentorRating": 5,
+      "improve": "More real PR examples.",
+      "at": "2026-09-05"
+    },
+    "sessions": [
+      {
+        "id": "seta4ewq0",
+        "date": "2026-08-20",
+        "dur": 30,
+        "mode": "Call",
+        "topics": "How to label review comments",
+        "next": "Review 5 PRs with labels",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-08-20"
+      },
+      {
+        "id": "seta4ewq1",
+        "date": "2026-08-27",
+        "dur": 30,
+        "mode": "Call",
+        "topics": "Giving the reason on suggestions",
+        "next": "Prepare for the code-review assessment",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-08-27"
+      }
+    ],
+    "asks": [],
+    "meet": "Weekly"
+  },
+  {
+    "id": "ta58eb",
+    "plan": {
+      "id": "tp3",
+      "name": "Jira discipline refresher",
+      "forRole": "Anyone with Discipline below 3.5",
+      "weeks": 2,
+      "desc": "Short plan to build the daily-update habit and proactive re-planning.",
+      "targets": [
+        "Discipline",
+        "Agility in Execution"
+      ],
+      "checkpoints": [
+        10
+      ],
+      "modules": [
+        {
+          "id": "m1mrbj3",
+          "title": "How Discipline is measured (a–g)",
+          "type": "Reading",
+          "week": 1,
+          "hours": 1,
+          "res": "Pulse · Culture values → Discipline"
+        },
+        {
+          "id": "mcfxl68",
+          "title": "Split large tickets into ≤ 2-day pieces",
+          "type": "Hands-on task",
+          "week": 1,
+          "hours": 2,
+          "res": ""
+        },
+        {
+          "id": "mdnjubz",
+          "title": "Daily update habit — 10 working days streak",
+          "type": "Hands-on task",
+          "week": 2,
+          "hours": 1,
+          "res": ""
+        },
+        {
+          "id": "mvmgtmy",
+          "title": "Re-plan due dates before they pass",
+          "type": "Hands-on task",
+          "week": 2,
+          "hours": 1,
+          "res": ""
+        }
+      ],
+      "cadence": "Daily",
+      "passMark": 70,
+      "assessType": "Practical task"
+    },
+    "pid": "nj",
+    "mentor": "u-sk",
+    "start": "2026-09-01",
+    "status": "Active",
+    "done": {
+      "m1mrbj3": {
+        "at": "2026-09-02",
+        "note": ""
+      },
+      "mcfxl68": {
+        "at": "2026-09-05",
+        "note": ""
+      },
+      "mdnjubz": {
+        "at": "2026-09-08",
+        "note": ""
+      }
+    },
+    "by": "Rahul Nair",
+    "updates": [
+      {
+        "period": "2026-09-01",
+        "periodLabel": "Tue 1",
+        "done": "Updated my tickets.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-01",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-02"
+      },
+      {
+        "period": "2026-09-02",
+        "periodLabel": "Wed 2",
+        "done": "Updated my tickets.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-02",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-03"
+      },
+      {
+        "period": "2026-09-03",
+        "periodLabel": "Thu 3",
+        "done": "Updated my tickets.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-03",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "Updates are late in the day — aim for before lunch.",
+        "verifiedAt": "2026-09-04"
+      },
+      {
+        "period": "2026-09-07",
+        "periodLabel": "Mon 7",
+        "done": "Updated my tickets.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-07",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-08"
+      },
+      {
+        "period": "2026-09-08",
+        "periodLabel": "Tue 8",
+        "done": "Updated my tickets.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-08",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-09"
+      },
+      {
+        "period": "2026-09-09",
+        "periodLabel": "Wed 9",
+        "done": "Updated my tickets.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-09",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-10"
+      },
+      {
+        "period": "2026-09-10",
+        "periodLabel": "Thu 10",
+        "done": "Updated my tickets.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-10",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-11"
+      },
+      {
+        "period": "2026-09-14",
+        "periodLabel": "Mon 14",
+        "done": "Updated my tickets.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-14",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-15"
+      },
+      {
+        "period": "2026-09-15",
+        "periodLabel": "Tue 15",
+        "done": "Updated tickets and re-planned before due dates.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-15",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-16"
+      },
+      {
+        "period": "2026-09-16",
+        "periodLabel": "Wed 16",
+        "done": "Updated tickets and re-planned before due dates.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-16",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-17"
+      },
+      {
+        "period": "2026-09-17",
+        "periodLabel": "Thu 17",
+        "done": "Updated tickets and re-planned before due dates.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-17",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-18"
+      },
+      {
+        "period": "2026-09-21",
+        "periodLabel": "Mon 21",
+        "done": "Updated tickets and re-planned before due dates.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-21",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-22"
+      },
+      {
+        "period": "2026-09-22",
+        "periodLabel": "Tue 22",
+        "done": "Updated tickets and re-planned before due dates.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-22",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-23"
+      },
+      {
+        "period": "2026-09-23",
+        "periodLabel": "Wed 23",
+        "done": "Updated tickets and re-planned before due dates.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-23",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-24"
+      },
+      {
+        "period": "2026-09-24",
+        "periodLabel": "Thu 24",
+        "done": "Updated tickets and re-planned before due dates.",
+        "hours": 1,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-24",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-25"
+      }
+    ],
+    "acks": {
+      "as:1": {
+        "st": "Agreed",
+        "comment": "Fair — I will update before lunch every day.",
+        "at": "2026-09-18"
+      },
+      "fm:1": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-09-18"
+      },
+      "fg:1": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-09-18"
+      }
+    },
+    "attempt": 2,
+    "assignedAt": "2026-08-29",
+    "end": "2026-09-25",
+    "cadence": "Daily",
+    "history": [
+      {
+        "attempt": 1,
+        "assess": {
+          "date": "2026-09-16",
+          "type": "Practical task",
+          "score": 64,
+          "pass": 70,
+          "result": "Fail",
+          "notes": "Daily updates on 71% of days; 3 due dates changed after they passed.",
+          "by": "Rahul Nair",
+          "byRole": "Manager",
+          "at": "2026-09-16"
+        },
+        "final": {
+          "mentor": {
+            "rating": 3,
+            "good": "Much better ticket splitting.",
+            "improve": "Re-plan before the due date, not after.",
+            "by": "Sara Khan",
+            "at": "2026-09-17"
+          },
+          "manager": {
+            "rating": 2.5,
+            "good": "Effort is visible.",
+            "improve": "Daily update habit is not there yet.",
+            "decision": "Extend",
+            "newEnd": "2026-09-25",
+            "reason": "Below the 70% pass mark — one more week to build the habit.",
+            "by": "Rahul Nair",
+            "at": "2026-09-18"
+          }
+        }
+      }
+    ],
+    "sessions": [
+      {
+        "id": "seta58eb0",
+        "date": "2026-09-01",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Daily updates before lunch",
+        "next": "Set a reminder at 12:30",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-01"
+      },
+      {
+        "id": "seta58eb1",
+        "date": "2026-09-02",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Why due dates slipped",
+        "next": "Re-plan before the due date",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-02"
+      },
+      {
+        "id": "seta58eb2",
+        "date": "2026-09-04",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Daily updates before lunch",
+        "next": "Set a reminder at 12:30",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-04"
+      },
+      {
+        "id": "seta58eb3",
+        "date": "2026-09-08",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Why due dates slipped",
+        "next": "Re-plan before the due date",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-08"
+      },
+      {
+        "id": "seta58eb4",
+        "date": "2026-09-10",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Daily updates before lunch",
+        "next": "Set a reminder at 12:30",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-10"
+      },
+      {
+        "id": "seta58eb5",
+        "date": "2026-09-15",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Why due dates slipped",
+        "next": "Re-plan before the due date",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-15"
+      },
+      {
+        "id": "seta58eb6",
+        "date": "2026-09-18",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Daily updates before lunch",
+        "next": "Set a reminder at 12:30",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-18"
+      },
+      {
+        "id": "seta58eb7",
+        "date": "2026-09-22",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Why due dates slipped",
+        "next": "Re-plan before the due date",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-22"
+      },
+      {
+        "id": "seta58eb8",
+        "date": "2026-09-24",
+        "dur": 15,
+        "mode": "Call",
+        "topics": "Daily updates before lunch",
+        "next": "Set a reminder at 12:30",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-24"
+      }
+    ],
+    "asks": [],
+    "meet": "Daily"
+  },
+  {
+    "id": "ta69fv",
+    "plan": {
+      "id": "tp4",
+      "name": "Ownership & decision making",
+      "forRole": "Engineer II → Senior track",
+      "weeks": 4,
+      "desc": "Write ADRs, run a design review and own an outcome.",
+      "targets": [
+        "Outcome Ownership",
+        "Decision Making",
+        "Risk Appetite"
+      ],
+      "checkpoints": [
+        14,
+        28
+      ],
+      "modules": [
+        {
+          "id": "mz99kdp",
+          "title": "Writing good ADRs",
+          "type": "Course",
+          "week": 1,
+          "hours": 2,
+          "res": "Engineering handbook · ADRs"
+        },
+        {
+          "id": "mue55rp",
+          "title": "Author one ADR for a real decision",
+          "type": "Hands-on task",
+          "week": 2,
+          "hours": 6,
+          "res": ""
+        },
+        {
+          "id": "mkd824r",
+          "title": "Run a design review",
+          "type": "Meeting",
+          "week": 3,
+          "hours": 2,
+          "res": ""
+        },
+        {
+          "id": "mgwmjgs",
+          "title": "Propose and run one spike / experiment",
+          "type": "Hands-on task",
+          "week": 4,
+          "hours": 8,
+          "res": ""
+        }
+      ],
+      "cadence": "Weekly",
+      "passMark": 70,
+      "assessType": "Presentation"
+    },
+    "pid": "kr",
+    "mentor": "u-sk",
+    "start": "2026-08-17",
+    "status": "Active",
+    "done": {
+      "mz99kdp": {
+        "at": "2026-08-18",
+        "note": ""
+      },
+      "mue55rp": {
+        "at": "2026-08-21",
+        "note": ""
+      },
+      "mkd824r": {
+        "at": "2026-08-24",
+        "note": ""
+      },
+      "mgwmjgs": {
+        "at": "2026-08-27",
+        "note": ""
+      }
+    },
+    "by": "Rahul Nair",
+    "updates": [
+      {
+        "period": "2026-08-17",
+        "periodLabel": "Week of 17 Aug",
+        "done": "Read ADR guide.",
+        "hours": 3,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-08-21",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-08-22"
+      },
+      {
+        "period": "2026-08-24",
+        "periodLabel": "Week of 24 Aug",
+        "done": "Drafted ADR for topology caching.",
+        "hours": 6,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-08-28",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "Strong options section — add the rollback plan.",
+        "verifiedAt": "2026-08-29"
+      },
+      {
+        "period": "2026-08-31",
+        "periodLabel": "Week of 31 Aug",
+        "done": "Ran the design review.",
+        "hours": 4,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-04",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-05"
+      },
+      {
+        "period": "2026-09-07",
+        "periodLabel": "Week of 7 Sept",
+        "done": "Spike on lazy loading; wrote up results.",
+        "hours": 8,
+        "conf": 4,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-11",
+        "status": "Verified",
+        "reviewer": "Sara Khan",
+        "revRole": "Mentor",
+        "comment": "",
+        "verifiedAt": "2026-09-12"
+      }
+    ],
+    "acks": {
+      "as:1": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-09-17"
+      }
+    },
+    "attempt": 1,
+    "assignedAt": "2026-08-14",
+    "end": "2026-09-13",
+    "assess": {
+      "date": "2026-09-16",
+      "type": "Presentation",
+      "score": 88,
+      "pass": 70,
+      "result": "Pass",
+      "notes": "Presented the topology caching ADR: clear options, trade-offs and a rollback plan; spike data backed the decision.",
+      "by": "Sara Khan",
+      "byRole": "Mentor",
+      "at": "2026-09-16"
+    },
+    "final": {
+      "mentor": {
+        "rating": 4.5,
+        "good": "Owns the decision end-to-end and backs it with data.",
+        "improve": "Bring product in earlier.",
+        "by": "Sara Khan",
+        "at": "2026-09-18"
+      }
+    },
+    "sessions": [
+      {
+        "id": "seta69fv0",
+        "date": "2026-08-19",
+        "dur": 45,
+        "mode": "In person",
+        "topics": "ADR structure and options",
+        "next": "Draft the options section",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-08-19"
+      },
+      {
+        "id": "seta69fv1",
+        "date": "2026-08-26",
+        "dur": 45,
+        "mode": "In person",
+        "topics": "Running a design review",
+        "next": "Book the review with product",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-08-26"
+      },
+      {
+        "id": "seta69fv2",
+        "date": "2026-09-02",
+        "dur": 45,
+        "mode": "In person",
+        "topics": "ADR structure and options",
+        "next": "Draft the options section",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-02"
+      },
+      {
+        "id": "seta69fv3",
+        "date": "2026-09-09",
+        "dur": 45,
+        "mode": "In person",
+        "topics": "Running a design review",
+        "next": "Book the review with product",
+        "by": "Sara Khan",
+        "blocker": false,
+        "at": "2026-09-09"
+      }
+    ],
+    "asks": [],
+    "meet": "Weekly"
+  },
+  {
+    "id": "ta7ib8",
+    "plan": {
+      "id": "tp5",
+      "name": "Code review & PR standard",
+      "forRole": "Anyone below the PR or review-comment target",
+      "weeks": 2,
+      "desc": "Write PRs and review comments to the team standard (TFS and GitHub).",
+      "targets": [
+        "Collaboration",
+        "Discipline"
+      ],
+      "checkpoints": [
+        7
+      ],
+      "cadence": "Weekly",
+      "passMark": 70,
+      "assessType": "Code review",
+      "modules": [
+        {
+          "id": "mpbvtpu",
+          "title": "Read the PR standard and comment standard",
+          "type": "Reading",
+          "week": 1,
+          "hours": 1,
+          "res": "Pulse · Pull requests → PR standard"
+        },
+        {
+          "id": "mo4nvjb",
+          "title": "Rewrite 5 old PR titles and descriptions",
+          "type": "Hands-on task",
+          "week": 1,
+          "hours": 2,
+          "res": ""
+        },
+        {
+          "id": "mas8gk3",
+          "title": "Review 5 PRs with labelled comments and reasons",
+          "type": "Hands-on task",
+          "week": 2,
+          "hours": 4,
+          "res": ""
+        },
+        {
+          "id": "m8efk0d",
+          "title": "Pair review with mentor",
+          "type": "Shadowing",
+          "week": 2,
+          "hours": 2,
+          "res": ""
+        }
+      ]
+    },
+    "pid": "dp",
+    "mentor": "u-am",
+    "start": "2026-09-07",
+    "status": "Active",
+    "done": {
+      "mpbvtpu": {
+        "at": "2026-09-08",
+        "note": ""
+      },
+      "mo4nvjb": {
+        "at": "2026-09-11",
+        "note": ""
+      },
+      "mas8gk3": {
+        "at": "2026-09-14",
+        "note": ""
+      },
+      "m8efk0d": {
+        "at": "2026-09-17",
+        "note": ""
+      }
+    },
+    "by": "Rahul Nair",
+    "updates": [
+      {
+        "period": "2026-09-07",
+        "periodLabel": "Week of 7 Sept",
+        "done": "Rewrote PR titles for NetFlow work.",
+        "hours": 3,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-11",
+        "status": "Verified",
+        "reviewer": "Arjun Mehta",
+        "revRole": "Mentor",
+        "comment": "Titles are perfect now.",
+        "verifiedAt": "2026-09-12"
+      },
+      {
+        "period": "2026-09-14",
+        "periodLabel": "Week of 14 Sept",
+        "done": "Reviewed 6 PRs with labelled comments.",
+        "hours": 5,
+        "conf": 3,
+        "blockers": "",
+        "next": "",
+        "submittedAt": "2026-09-18",
+        "status": "Verified",
+        "reviewer": "Arjun Mehta",
+        "revRole": "Mentor",
+        "comment": "Great reasons on each suggestion.",
+        "verifiedAt": "2026-09-19"
+      }
+    ],
+    "acks": {
+      "ci:2026-09-07": {
+        "st": "Agreed",
+        "comment": "",
+        "at": "2026-09-15"
+      }
+    },
+    "attempt": 1,
+    "assignedAt": "2026-09-04",
+    "end": "2026-09-20",
+    "assess": {
+      "date": "2026-09-22",
+      "type": "Code review",
+      "score": 91,
+      "pass": 70,
+      "result": "Pass",
+      "notes": "Reviewed 3 PRs: every comment labelled with a reason; caught a missing test.",
+      "by": "Arjun Mehta",
+      "byRole": "Mentor",
+      "at": "2026-09-22"
+    },
+    "final": {
+      "mentor": {
+        "rating": 4.5,
+        "good": "Model review comments; kind and specific.",
+        "improve": "Faster first review.",
+        "by": "Arjun Mehta",
+        "at": "2026-09-24"
+      },
+      "manager": {
+        "rating": 4.5,
+        "good": "PR standard at 91% this month.",
+        "improve": "Coach Neha and Kiran on comments.",
+        "decision": "Completed",
+        "reason": "",
+        "by": "Rahul Nair",
+        "at": "2026-09-25"
+      }
+    },
+    "sessions": [
+      {
+        "id": "seta7ib80",
+        "date": "2026-09-10",
+        "dur": 30,
+        "mode": "Video",
+        "topics": "Review comment labels and reasons",
+        "next": "Review 6 PRs this week",
+        "by": "Arjun Mehta",
+        "blocker": false,
+        "at": "2026-09-10"
+      },
+      {
+        "id": "seta7ib81",
+        "date": "2026-09-17",
+        "dur": 30,
+        "mode": "Video",
+        "topics": "First-review speed",
+        "next": "Review within 24 h",
+        "by": "Arjun Mehta",
+        "blocker": false,
+        "at": "2026-09-17"
+      }
+    ],
+    "asks": [],
+    "meet": "Weekly"
+  }
+]

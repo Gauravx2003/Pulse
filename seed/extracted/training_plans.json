@@ -1,0 +1,337 @@
+[
+  {
+    "id": "tp1",
+    "name": "Software Engineer onboarding",
+    "forRole": "Trainee / new Software Engineer",
+    "weeks": 12,
+    "desc": "From laptop setup to shipping a small feature on the Platform team.",
+    "targets": [
+      "Adaptability",
+      "Discipline",
+      "Collaboration"
+    ],
+    "checkpoints": [
+      14,
+      30,
+      60,
+      90
+    ],
+    "modules": [
+      {
+        "id": "mxvlzb8",
+        "title": "Laptop, accounts and access (Jira, GitHub, Slack)",
+        "type": "Hands-on task",
+        "week": 1,
+        "hours": 4,
+        "res": "IT onboarding checklist"
+      },
+      {
+        "id": "m7uvg5l",
+        "title": "Company, product and customer overview",
+        "type": "Course",
+        "week": 1,
+        "hours": 3,
+        "res": "LMS · Motadata 101"
+      },
+      {
+        "id": "mog5qlw",
+        "title": "Codebase walkthrough with mentor",
+        "type": "Shadowing",
+        "week": 1,
+        "hours": 6,
+        "res": ""
+      },
+      {
+        "id": "md7ivg1",
+        "title": "Jira workflow & daily updates (Discipline)",
+        "type": "Course",
+        "week": 2,
+        "hours": 2,
+        "res": "Confluence · How we use Jira"
+      },
+      {
+        "id": "mb82vf5",
+        "title": "Git, branching and code-review standards",
+        "type": "Reading",
+        "week": 2,
+        "hours": 3,
+        "res": "Engineering handbook"
+      },
+      {
+        "id": "mch11s8",
+        "title": "First bug fix with mentor",
+        "type": "Hands-on task",
+        "week": 3,
+        "hours": 10,
+        "res": ""
+      },
+      {
+        "id": "myyh1ka",
+        "title": "Observability basics: metrics, logs, traces",
+        "type": "Course",
+        "week": 4,
+        "hours": 6,
+        "res": "LMS · Observability 1"
+      },
+      {
+        "id": "ml81vci",
+        "title": "On-call shadowing (1 week)",
+        "type": "Shadowing",
+        "week": 6,
+        "hours": 8,
+        "res": ""
+      },
+      {
+        "id": "moivt1t",
+        "title": "Ship a small feature end-to-end",
+        "type": "Hands-on task",
+        "week": 8,
+        "hours": 30,
+        "res": ""
+      },
+      {
+        "id": "m46s13o",
+        "title": "Present your feature at the team demo",
+        "type": "Meeting",
+        "week": 10,
+        "hours": 2,
+        "res": ""
+      },
+      {
+        "id": "mhqbpju",
+        "title": "90-day technical assessment",
+        "type": "Assessment",
+        "week": 12,
+        "hours": 3,
+        "res": "Mentor + manager panel"
+      }
+    ],
+    "cadence": "Weekly",
+    "passMark": 70,
+    "assessType": "Practical task"
+  },
+  {
+    "id": "tp2",
+    "name": "QA engineer onboarding",
+    "forRole": "Trainee / new QA Engineer",
+    "weeks": 8,
+    "desc": "Test strategy, automation framework and release process.",
+    "targets": [
+      "Problem Solving",
+      "Discipline"
+    ],
+    "checkpoints": [
+      14,
+      30,
+      60
+    ],
+    "modules": [
+      {
+        "id": "mwtdw39",
+        "title": "Product tour and test environments",
+        "type": "Course",
+        "week": 1,
+        "hours": 4,
+        "res": ""
+      },
+      {
+        "id": "mlunrsu",
+        "title": "Test case design techniques",
+        "type": "Course",
+        "week": 2,
+        "hours": 6,
+        "res": "LMS · Test design"
+      },
+      {
+        "id": "myuwh3d",
+        "title": "Automation framework walkthrough",
+        "type": "Shadowing",
+        "week": 3,
+        "hours": 6,
+        "res": ""
+      },
+      {
+        "id": "m2ld2zv",
+        "title": "Automate 10 regression cases",
+        "type": "Hands-on task",
+        "week": 5,
+        "hours": 20,
+        "res": ""
+      },
+      {
+        "id": "mxvgd2u",
+        "title": "Release sign-off shadowing",
+        "type": "Shadowing",
+        "week": 6,
+        "hours": 4,
+        "res": ""
+      },
+      {
+        "id": "mh8z3vi",
+        "title": "60-day assessment",
+        "type": "Assessment",
+        "week": 8,
+        "hours": 2,
+        "res": ""
+      }
+    ],
+    "cadence": "Weekly",
+    "passMark": 70,
+    "assessType": "Practical task"
+  },
+  {
+    "id": "tp3",
+    "name": "Jira discipline refresher",
+    "forRole": "Anyone with Discipline below 3.5",
+    "weeks": 2,
+    "desc": "Short plan to build the daily-update habit and proactive re-planning.",
+    "targets": [
+      "Discipline",
+      "Agility in Execution"
+    ],
+    "checkpoints": [
+      10
+    ],
+    "modules": [
+      {
+        "id": "m1mrbj3",
+        "title": "How Discipline is measured (a–g)",
+        "type": "Reading",
+        "week": 1,
+        "hours": 1,
+        "res": "Pulse · Culture values → Discipline"
+      },
+      {
+        "id": "mcfxl68",
+        "title": "Split large tickets into ≤ 2-day pieces",
+        "type": "Hands-on task",
+        "week": 1,
+        "hours": 2,
+        "res": ""
+      },
+      {
+        "id": "mdnjubz",
+        "title": "Daily update habit — 10 working days streak",
+        "type": "Hands-on task",
+        "week": 2,
+        "hours": 1,
+        "res": ""
+      },
+      {
+        "id": "mvmgtmy",
+        "title": "Re-plan due dates before they pass",
+        "type": "Hands-on task",
+        "week": 2,
+        "hours": 1,
+        "res": ""
+      }
+    ],
+    "cadence": "Daily",
+    "passMark": 70,
+    "assessType": "Practical task"
+  },
+  {
+    "id": "tp4",
+    "name": "Ownership & decision making",
+    "forRole": "Engineer II → Senior track",
+    "weeks": 4,
+    "desc": "Write ADRs, run a design review and own an outcome.",
+    "targets": [
+      "Outcome Ownership",
+      "Decision Making",
+      "Risk Appetite"
+    ],
+    "checkpoints": [
+      14,
+      28
+    ],
+    "modules": [
+      {
+        "id": "mz99kdp",
+        "title": "Writing good ADRs",
+        "type": "Course",
+        "week": 1,
+        "hours": 2,
+        "res": "Engineering handbook · ADRs"
+      },
+      {
+        "id": "mue55rp",
+        "title": "Author one ADR for a real decision",
+        "type": "Hands-on task",
+        "week": 2,
+        "hours": 6,
+        "res": ""
+      },
+      {
+        "id": "mkd824r",
+        "title": "Run a design review",
+        "type": "Meeting",
+        "week": 3,
+        "hours": 2,
+        "res": ""
+      },
+      {
+        "id": "mgwmjgs",
+        "title": "Propose and run one spike / experiment",
+        "type": "Hands-on task",
+        "week": 4,
+        "hours": 8,
+        "res": ""
+      }
+    ],
+    "cadence": "Weekly",
+    "passMark": 70,
+    "assessType": "Presentation"
+  },
+  {
+    "id": "tp5",
+    "name": "Code review & PR standard",
+    "forRole": "Anyone below the PR or review-comment target",
+    "weeks": 2,
+    "desc": "Write PRs and review comments to the team standard (TFS and GitHub).",
+    "targets": [
+      "Collaboration",
+      "Discipline"
+    ],
+    "checkpoints": [
+      7
+    ],
+    "cadence": "Weekly",
+    "passMark": 70,
+    "assessType": "Code review",
+    "modules": [
+      {
+        "id": "mpbvtpu",
+        "title": "Read the PR standard and comment standard",
+        "type": "Reading",
+        "week": 1,
+        "hours": 1,
+        "res": "Pulse · Pull requests → PR standard"
+      },
+      {
+        "id": "mo4nvjb",
+        "title": "Rewrite 5 old PR titles and descriptions",
+        "type": "Hands-on task",
+        "week": 1,
+        "hours": 2,
+        "res": ""
+      },
+      {
+        "id": "mas8gk3",
+        "title": "Review 5 PRs with labelled comments and reasons",
+        "type": "Hands-on task",
+        "week": 2,
+        "hours": 4,
+        "res": ""
+      },
+      {
+        "id": "m8efk0d",
+        "title": "Pair review with mentor",
+        "type": "Shadowing",
+        "week": 2,
+        "hours": 2,
+        "res": ""
+      }
+    ]
+  }
+]

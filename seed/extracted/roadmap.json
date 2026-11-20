@@ -1,0 +1,43 @@
+[
+  {
+    "person": "ps",
+    "st": "done",
+    "title": "Joined Platform team · Engineer II",
+    "when": "Jan 2025",
+    "note": "Done"
+  },
+  {
+    "person": "ps",
+    "st": "done",
+    "title": "Owned alerting service end-to-end",
+    "when": "Q2 2025",
+    "note": "Done",
+    "value": "Outcome Ownership"
+  },
+  {
+    "person": "ps",
+    "st": "now",
+    "title": "Lead a cross-team epic (tenant rate limiting)",
+    "when": "Q3–Q4 2026",
+    "prog": 62,
+    "note": "On track",
+    "value": "Decision Making",
+    "link": "PLAT-2231, PLAT-2201"
+  },
+  {
+    "person": "ps",
+    "st": "next",
+    "title": "Mentor 2 engineers · run design reviews",
+    "when": "Q1 2027",
+    "prog": 15,
+    "note": "Planned",
+    "value": "Collaboration"
+  },
+  {
+    "person": "ps",
+    "st": "next",
+    "title": "Promotion review: Senior Engineer (L4)",
+    "when": "Apr 2027",
+    "note": "Target"
+  }
+]

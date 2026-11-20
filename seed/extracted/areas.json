@@ -1,0 +1,26 @@
+[
+  {
+    "name": "ingestion"
+  },
+  {
+    "name": "alerts"
+  },
+  {
+    "name": "quota"
+  },
+  {
+    "name": "topology"
+  },
+  {
+    "name": "netflow"
+  },
+  {
+    "name": "collector"
+  },
+  {
+    "name": "ui"
+  },
+  {
+    "name": "ci"
+  }
+]

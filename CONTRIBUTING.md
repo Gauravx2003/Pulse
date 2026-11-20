@@ -43,6 +43,17 @@ Backend code must follow the "Vert.x & Java Coding Standards" in `design.md` dec
 - `JsonObject`/`JsonArray` instead of DTO classes
 - SQL lives in repository classes
 
+**Data access (task 1.6): never write your own.** Every repository extends
+`com.pulse.platform.db.BaseRepository` and is built from `ModuleContext.sql()` (a `SqlExecutor`):
+
+- `queryList` / `queryOne` / `execute` with `$1, $2` placeholders and a `Tuple`; rows come back as
+  `JsonObject` (uuid, dates and times as ISO strings, numeric as `BigDecimal`, jsonb as JSON).
+- `sql.inTransaction(tx -> ...)`: build the repositories you need from `tx` so all statements share
+  one transaction.
+- List endpoints use `ListQuery` and `page(query, ctx.queryParams())`: declare allowed filters and
+  sorts, add fixed conditions with `where("col = ?", value)`; unknown parameters are rejected and the
+  page size is capped (default 50, max 200). See the Javadoc of `BaseRepository` and `ListQuery`.
+
 ## Branches and merging
 
 - **One branch per track:** `track-1`, `track-2`, `track-3`. Short-lived feature branches off your track branch are fine.

@@ -1,0 +1,119 @@
+[
+  {
+    "id": "jira",
+    "mk": "JI",
+    "name": "Jira Software",
+    "desc": "Sprints, issues, worklogs, status history, comments",
+    "state": "ok",
+    "status": "Connected · synced 4 min ago",
+    "feeds": "Tasks, staleness, days assigned, utilization, Delivery, Quality"
+  },
+  {
+    "id": "gh",
+    "mk": "GH",
+    "name": "GitHub",
+    "desc": "PRs, reviews, commits linked by issue key",
+    "state": "ok",
+    "status": "Connected · synced 12 min ago",
+    "feeds": "Last activity, review contribution, Agility, Collaboration"
+  },
+  {
+    "id": "tfs",
+    "mk": "TF",
+    "name": "Microsoft TFS (Azure DevOps Server)",
+    "desc": "Pull requests, reviewers, review threads, builds and linked work items (on-premises)",
+    "state": "ok",
+    "status": "Connected · synced 9 min ago",
+    "feeds": "Pull requests, PR standard, review comment quality, Discipline (g), Collaboration"
+  },
+  {
+    "id": "cf",
+    "mk": "CF",
+    "name": "Confluence",
+    "desc": "Design docs, ADRs, RCAs authored",
+    "state": "ok",
+    "status": "Connected",
+    "feeds": "Decision Making, Problem Solving evidence"
+  },
+  {
+    "id": "sl",
+    "mk": "SL",
+    "name": "Slack",
+    "desc": "/kudos tagged by value; stale-task nudges",
+    "state": "accent",
+    "status": "Token expires in 3 days",
+    "feeds": "Culture evidence, nudges, weekly digest"
+  },
+  {
+    "id": "gc",
+    "mk": "GC",
+    "name": "Google Calendar",
+    "desc": "Full-day OOO and meeting load",
+    "state": "ok",
+    "status": "Connected",
+    "feeds": "Capacity"
+  },
+  {
+    "id": "hr",
+    "mk": "HR",
+    "name": "HRMS (Keka)",
+    "desc": "Holidays, approved leave, reporting lines, levels",
+    "state": "danger",
+    "status": "Sync failed · 401 Unauthorized",
+    "feeds": "Capacity, org structure"
+  },
+  {
+    "id": "pd",
+    "mk": "PD",
+    "name": "PagerDuty",
+    "desc": "On-call shifts and incidents",
+    "state": "",
+    "status": "Not connected",
+    "feeds": "Capacity, Resilience evidence"
+  },
+  {
+    "id": "az",
+    "mk": "AZ",
+    "name": "Azure DevOps",
+    "desc": "Boards and pipelines (Jira alternative)",
+    "state": "",
+    "status": "Not connected",
+    "feeds": "Same as Jira"
+  },
+  {
+    "id": "gl",
+    "mk": "GL",
+    "name": "GitLab",
+    "desc": "Merge requests and CI",
+    "state": "",
+    "status": "Not connected",
+    "feeds": "Same as GitHub"
+  },
+  {
+    "id": "ms",
+    "mk": "MT",
+    "name": "Microsoft Teams",
+    "desc": "Kudos and nudges (Slack alternative)",
+    "state": "",
+    "status": "Not connected",
+    "feeds": "Culture evidence, nudges"
+  },
+  {
+    "id": "zd",
+    "mk": "ZD",
+    "name": "Zendesk",
+    "desc": "Tickets resolved, CSAT",
+    "state": "",
+    "status": "Not connected",
+    "feeds": "Customer impact"
+  },
+  {
+    "id": "ci",
+    "mk": "CI",
+    "name": "GitHub Actions",
+    "desc": "Deployments and failed changes",
+    "state": "",
+    "status": "Not connected",
+    "feeds": "Team DORA metrics"
+  }
+]

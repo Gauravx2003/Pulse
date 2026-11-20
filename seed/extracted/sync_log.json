@@ -1,0 +1,38 @@
+[
+  {
+    "time": "15:21",
+    "tool": "Microsoft TFS",
+    "message": "GET /_apis/git/pullrequests?status=all → 38 PRs, 112 threads",
+    "outcome": "ok"
+  },
+  {
+    "time": "15:26",
+    "tool": "Jira",
+    "message": "Webhook jira:issue_updated · PLAT-2240",
+    "outcome": "ok"
+  },
+  {
+    "time": "15:14",
+    "tool": "GitHub",
+    "message": "PR #818 approved → PLAT-2245",
+    "outcome": "ok"
+  },
+  {
+    "time": "15:02",
+    "tool": "HRMS (Keka)",
+    "message": "GET /v1/leave → 401 Unauthorized",
+    "outcome": "danger"
+  },
+  {
+    "time": "14:20",
+    "tool": "Jira",
+    "message": "Worklog 4h · PLAT-2205",
+    "outcome": "ok"
+  },
+  {
+    "time": "09:00",
+    "tool": "Jira",
+    "message": "Nightly reconcile: 41 issues, 0 conflicts",
+    "outcome": "ok"
+  }
+]

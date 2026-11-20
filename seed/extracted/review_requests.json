@@ -1,0 +1,2601 @@
+[
+  {
+    "id": "r1",
+    "cycle": "c0",
+    "subject": "ps",
+    "reviewer": "u-ps",
+    "group": "self",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        5,
+        3,
+        4,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "I follow through on incidents until the root cause is fixed.",
+      "start": "Split big tickets earlier and update Jira daily."
+    },
+    "at": "2026-09-27"
+  },
+  {
+    "id": "r2",
+    "cycle": "c0",
+    "subject": "ps",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        4,
+        3,
+        4,
+        3,
+        4,
+        3,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Owns problems end-to-end and communicates risk early.",
+      "start": "Update Jira daily; several tickets sat idle this sprint."
+    },
+    "at": "2026-09-20"
+  },
+  {
+    "id": "r3",
+    "cycle": "c0",
+    "subject": "ps",
+    "reviewer": "u-am",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        5,
+        4,
+        3,
+        3,
+        5,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Reviews my PRs the same day and explains the why.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-21"
+  },
+  {
+    "id": "r4",
+    "cycle": "c0",
+    "subject": "ps",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        5,
+        3,
+        4,
+        3,
+        5,
+        5,
+        3
+      ],
+      "notes": {},
+      "keep": "Great at breaking down gnarly ingestion bugs.",
+      "start": "Propose experiments more often instead of the safe path."
+    },
+    "at": "2026-09-22"
+  },
+  {
+    "id": "r5",
+    "cycle": "c0",
+    "subject": "ps",
+    "reviewer": "u-kr",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        4,
+        3,
+        4,
+        4,
+        5,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Share context in the channel, not only in DMs."
+    },
+    "at": "2026-09-23"
+  },
+  {
+    "id": "r6",
+    "cycle": "c0",
+    "subject": "ps",
+    "reviewer": "u-mi",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        4,
+        null,
+        4,
+        4,
+        4,
+        null,
+        4
+      ],
+      "notes": {},
+      "keep": "Explains technical trade-offs in plain language for product decisions.",
+      "start": "Give product earlier heads-up when estimates slip."
+    },
+    "at": "2026-09-24"
+  },
+  {
+    "id": "r7",
+    "cycle": "c0",
+    "subject": "ps",
+    "reviewer": "u-av",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        4,
+        3,
+        4,
+        3,
+        4,
+        3,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Responds fast when customers escalate — the support team trusts her fixes.",
+      "start": "Loop QA in before the demo, not after."
+    },
+    "at": "2026-09-25"
+  },
+  {
+    "id": "r8",
+    "cycle": "c1",
+    "subject": "ps",
+    "reviewer": "u-ps",
+    "group": "self",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        5,
+        4,
+        3,
+        3,
+        5,
+        4,
+        5
+      ],
+      "notes": {},
+      "keep": "I follow through on incidents until the root cause is fixed.",
+      "start": "Split big tickets earlier and update Jira daily."
+    },
+    "at": "2026-09-26"
+  },
+  {
+    "id": "r9",
+    "cycle": "c1",
+    "subject": "ps",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Draft",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        5,
+        2,
+        4,
+        3,
+        5,
+        5,
+        3
+      ],
+      "notes": {},
+      "keep": "Owns problems end-to-end and communicates risk early.",
+      "start": "Update Jira daily; several tickets sat idle this sprint."
+    },
+    "at": null
+  },
+  {
+    "id": "r10",
+    "cycle": "c1",
+    "subject": "ps",
+    "reviewer": "u-am",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Priya Shah",
+    "answers": {
+      "scores": [
+        5,
+        4,
+        3,
+        4,
+        3,
+        5,
+        3,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-22"
+  },
+  {
+    "id": "r11",
+    "cycle": "c1",
+    "subject": "ps",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Priya Shah",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        5,
+        4,
+        3,
+        3,
+        5,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Reviews my PRs the same day and explains the why.",
+      "start": "Propose experiments more often instead of the safe path."
+    },
+    "at": "2026-09-23"
+  },
+  {
+    "id": "r12",
+    "cycle": "c1",
+    "subject": "ps",
+    "reviewer": "u-kr",
+    "group": "peer",
+    "status": "Approved",
+    "by": "Priya Shah",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r13",
+    "cycle": "c1",
+    "subject": "ps",
+    "reviewer": "u-mi",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "Priya Shah",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        4,
+        null,
+        4,
+        3,
+        5,
+        3,
+        3
+      ],
+      "notes": {},
+      "keep": "Responds fast when customers escalate — the support team trusts her fixes.",
+      "start": "Give product earlier heads-up when estimates slip."
+    },
+    "at": "2026-09-25"
+  },
+  {
+    "id": "r14",
+    "cycle": "c1",
+    "subject": "ps",
+    "reviewer": "u-av",
+    "group": "cross",
+    "status": "Approved",
+    "by": "Priya Shah",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r15",
+    "cycle": "c1",
+    "subject": "ps",
+    "reviewer": "u-kv",
+    "group": "cross",
+    "status": "Approved",
+    "by": "Priya Shah",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r16",
+    "cycle": "c0",
+    "subject": "am",
+    "reviewer": "u-am",
+    "group": "self",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        5,
+        5,
+        5,
+        3,
+        4,
+        5,
+        4,
+        5
+      ],
+      "notes": {},
+      "keep": "I follow through on incidents until the root cause is fixed.",
+      "start": "Split big tickets earlier and update Jira daily."
+    },
+    "at": "2026-09-20"
+  },
+  {
+    "id": "r17",
+    "cycle": "c0",
+    "subject": "am",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        5,
+        5,
+        3,
+        4,
+        4,
+        5,
+        5,
+        3
+      ],
+      "notes": {},
+      "keep": "Owns problems end-to-end and communicates risk early.",
+      "start": "Update Jira daily; several tickets sat idle this sprint."
+    },
+    "at": "2026-09-21"
+  },
+  {
+    "id": "r18",
+    "cycle": "c0",
+    "subject": "am",
+    "reviewer": "u-ps",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        5,
+        5,
+        4,
+        4,
+        4,
+        5,
+        5,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Great at breaking down gnarly ingestion bugs.",
+      "start": "Share context in the channel, not only in DMs."
+    },
+    "at": "2026-09-22"
+  },
+  {
+    "id": "r19",
+    "cycle": "c0",
+    "subject": "am",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        5,
+        4,
+        4,
+        4,
+        4,
+        5,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-23"
+  },
+  {
+    "id": "r20",
+    "cycle": "c0",
+    "subject": "am",
+    "reviewer": "u-dp",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        4,
+        4,
+        5,
+        5,
+        3,
+        4,
+        4,
+        4,
+        5
+      ],
+      "notes": {},
+      "keep": "Reviews my PRs the same day and explains the why.",
+      "start": "Propose experiments more often instead of the safe path."
+    },
+    "at": "2026-09-21"
+  },
+  {
+    "id": "r21",
+    "cycle": "c0",
+    "subject": "am",
+    "reviewer": "u-mi",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        5,
+        5,
+        3,
+        4,
+        4,
+        5,
+        null,
+        3
+      ],
+      "notes": {},
+      "keep": "Explains technical trade-offs in plain language for product decisions.",
+      "start": "Loop QA in before the demo, not after."
+    },
+    "at": "2026-09-22"
+  },
+  {
+    "id": "r22",
+    "cycle": "c0",
+    "subject": "am",
+    "reviewer": "u-rd",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        5,
+        3,
+        null,
+        4,
+        4,
+        5,
+        null,
+        4
+      ],
+      "notes": {},
+      "keep": "Responds fast when customers escalate — the support team trusts her fixes.",
+      "start": "Give product earlier heads-up when estimates slip."
+    },
+    "at": "2026-09-23"
+  },
+  {
+    "id": "r23",
+    "cycle": "c1",
+    "subject": "am",
+    "reviewer": "u-am",
+    "group": "self",
+    "status": "Approved",
+    "by": "System",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r24",
+    "cycle": "c1",
+    "subject": "am",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        4,
+        4,
+        4,
+        4,
+        5,
+        4,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Owns problems end-to-end and communicates risk early.",
+      "start": "Update Jira daily; several tickets sat idle this sprint."
+    },
+    "at": "2026-09-25"
+  },
+  {
+    "id": "r25",
+    "cycle": "c1",
+    "subject": "am",
+    "reviewer": "u-ps",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Arjun Mehta",
+    "answers": {
+      "scores": [
+        4,
+        4,
+        4,
+        5,
+        5,
+        3,
+        4,
+        4,
+        4,
+        5
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-26"
+  },
+  {
+    "id": "r26",
+    "cycle": "c1",
+    "subject": "am",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Approved",
+    "by": "Arjun Mehta",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r27",
+    "cycle": "c1",
+    "subject": "am",
+    "reviewer": "u-dp",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Arjun Mehta",
+    "answers": {
+      "scores": [
+        5,
+        5,
+        5,
+        4,
+        4,
+        4,
+        5,
+        5,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Great at breaking down gnarly ingestion bugs.",
+      "start": "Share context in the channel, not only in DMs."
+    },
+    "at": "2026-09-20"
+  },
+  {
+    "id": "r28",
+    "cycle": "c1",
+    "subject": "am",
+    "reviewer": "u-mi",
+    "group": "cross",
+    "status": "Approved",
+    "by": "Arjun Mehta",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r29",
+    "cycle": "c1",
+    "subject": "am",
+    "reviewer": "u-rd",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "Arjun Mehta",
+    "answers": {
+      "scores": [
+        5,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        4,
+        null,
+        4
+      ],
+      "notes": {},
+      "keep": "Explains technical trade-offs in plain language for product decisions.",
+      "start": "Loop QA in before the demo, not after."
+    },
+    "at": "2026-09-22"
+  },
+  {
+    "id": "r30",
+    "cycle": "c0",
+    "subject": "nj",
+    "reviewer": "u-nj",
+    "group": "self",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        3,
+        5,
+        4,
+        4,
+        3,
+        4,
+        4,
+        4,
+        4,
+        3
+      ],
+      "notes": {},
+      "keep": "I follow through on incidents until the root cause is fixed.",
+      "start": "Split big tickets earlier and update Jira daily."
+    },
+    "at": "2026-09-20"
+  },
+  {
+    "id": "r31",
+    "cycle": "c0",
+    "subject": "nj",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        3,
+        5,
+        4,
+        3,
+        3,
+        4,
+        4,
+        5,
+        3,
+        3
+      ],
+      "notes": {},
+      "keep": "Owns problems end-to-end and communicates risk early.",
+      "start": "Update Jira daily; several tickets sat idle this sprint."
+    },
+    "at": "2026-09-21"
+  },
+  {
+    "id": "r32",
+    "cycle": "c0",
+    "subject": "nj",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        3,
+        3,
+        5,
+        4,
+        3,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Reviews my PRs the same day and explains the why.",
+      "start": "Propose experiments more often instead of the safe path."
+    },
+    "at": "2026-09-22"
+  },
+  {
+    "id": "r33",
+    "cycle": "c0",
+    "subject": "nj",
+    "reviewer": "u-ps",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        4,
+        3,
+        4,
+        4,
+        5,
+        3,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Great at breaking down gnarly ingestion bugs.",
+      "start": "Share context in the channel, not only in DMs."
+    },
+    "at": "2026-09-23"
+  },
+  {
+    "id": "r34",
+    "cycle": "c0",
+    "subject": "nj",
+    "reviewer": "u-kr",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        3,
+        4,
+        4,
+        4,
+        3,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-24"
+  },
+  {
+    "id": "r35",
+    "cycle": "c0",
+    "subject": "nj",
+    "reviewer": "u-av",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        3,
+        4,
+        3,
+        4,
+        3,
+        4,
+        4,
+        3
+      ],
+      "notes": {},
+      "keep": "Responds fast when customers escalate — the support team trusts her fixes.",
+      "start": "Give product earlier heads-up when estimates slip."
+    },
+    "at": "2026-09-25"
+  },
+  {
+    "id": "r36",
+    "cycle": "c0",
+    "subject": "nj",
+    "reviewer": "u-kv",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        3,
+        5,
+        4,
+        3,
+        null,
+        4,
+        4,
+        4,
+        3,
+        3
+      ],
+      "notes": {},
+      "keep": "Explains technical trade-offs in plain language for product decisions.",
+      "start": "Loop QA in before the demo, not after."
+    },
+    "at": "2026-09-26"
+  },
+  {
+    "id": "r37",
+    "cycle": "c1",
+    "subject": "nj",
+    "reviewer": "u-nj",
+    "group": "self",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        3,
+        4,
+        5,
+        4,
+        3,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "I follow through on incidents until the root cause is fixed.",
+      "start": "Split big tickets earlier and update Jira daily."
+    },
+    "at": "2026-09-27"
+  },
+  {
+    "id": "r38",
+    "cycle": "c1",
+    "subject": "nj",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Approved",
+    "by": "System",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r39",
+    "cycle": "c1",
+    "subject": "nj",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Approved",
+    "by": "Neha Joshi",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r40",
+    "cycle": "c1",
+    "subject": "nj",
+    "reviewer": "u-ps",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Neha Joshi",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        3,
+        3,
+        4,
+        4,
+        5,
+        3,
+        3
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-27"
+  },
+  {
+    "id": "r41",
+    "cycle": "c1",
+    "subject": "nj",
+    "reviewer": "u-kr",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Neha Joshi",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        3,
+        3,
+        5,
+        4,
+        3,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Reviews my PRs the same day and explains the why.",
+      "start": "Propose experiments more often instead of the safe path."
+    },
+    "at": "2026-09-20"
+  },
+  {
+    "id": "r42",
+    "cycle": "c1",
+    "subject": "nj",
+    "reviewer": "u-av",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "Neha Joshi",
+    "answers": {
+      "scores": [
+        4,
+        4,
+        3,
+        3,
+        3,
+        5,
+        3,
+        4,
+        null,
+        4
+      ],
+      "notes": {},
+      "keep": "Responds fast when customers escalate — the support team trusts her fixes.",
+      "start": "Give product earlier heads-up when estimates slip."
+    },
+    "at": "2026-09-21"
+  },
+  {
+    "id": "r43",
+    "cycle": "c1",
+    "subject": "nj",
+    "reviewer": "u-kv",
+    "group": "cross",
+    "status": "Approved",
+    "by": "Neha Joshi",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r44",
+    "cycle": "c0",
+    "subject": "kr",
+    "reviewer": "u-kr",
+    "group": "self",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        5,
+        3,
+        4,
+        4,
+        4,
+        5,
+        3
+      ],
+      "notes": {},
+      "keep": "I follow through on incidents until the root cause is fixed.",
+      "start": "Split big tickets earlier and update Jira daily."
+    },
+    "at": "2026-09-23"
+  },
+  {
+    "id": "r45",
+    "cycle": "c0",
+    "subject": "kr",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        3,
+        3,
+        4,
+        4,
+        4,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Owns problems end-to-end and communicates risk early.",
+      "start": "Update Jira daily; several tickets sat idle this sprint."
+    },
+    "at": "2026-09-24"
+  },
+  {
+    "id": "r46",
+    "cycle": "c0",
+    "subject": "kr",
+    "reviewer": "u-dp",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        4,
+        3,
+        4,
+        5,
+        3,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-25"
+  },
+  {
+    "id": "r47",
+    "cycle": "c0",
+    "subject": "kr",
+    "reviewer": "u-am",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        4,
+        3,
+        4,
+        4,
+        4,
+        3,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Reviews my PRs the same day and explains the why.",
+      "start": "Propose experiments more often instead of the safe path."
+    },
+    "at": "2026-09-26"
+  },
+  {
+    "id": "r48",
+    "cycle": "c0",
+    "subject": "kr",
+    "reviewer": "u-nj",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        4,
+        4,
+        4,
+        3,
+        4,
+        4,
+        4,
+        5
+      ],
+      "notes": {},
+      "keep": "Great at breaking down gnarly ingestion bugs.",
+      "start": "Share context in the channel, not only in DMs."
+    },
+    "at": "2026-09-27"
+  },
+  {
+    "id": "r49",
+    "cycle": "c0",
+    "subject": "kr",
+    "reviewer": "u-rd",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        4,
+        4,
+        3,
+        3,
+        4,
+        4,
+        null,
+        3
+      ],
+      "notes": {},
+      "keep": "Explains technical trade-offs in plain language for product decisions.",
+      "start": "Loop QA in before the demo, not after."
+    },
+    "at": "2026-09-20"
+  },
+  {
+    "id": "r50",
+    "cycle": "c0",
+    "subject": "kr",
+    "reviewer": "u-av",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        4,
+        3,
+        4,
+        4,
+        3,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Explains technical trade-offs in plain language for product decisions.",
+      "start": "Loop QA in before the demo, not after."
+    },
+    "at": "2026-09-26"
+  },
+  {
+    "id": "r51",
+    "cycle": "c1",
+    "subject": "kr",
+    "reviewer": "u-kr",
+    "group": "self",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "I follow through on incidents until the root cause is fixed.",
+      "start": "Split big tickets earlier and update Jira daily."
+    },
+    "at": "2026-09-27"
+  },
+  {
+    "id": "r52",
+    "cycle": "c1",
+    "subject": "kr",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        4,
+        4,
+        4,
+        3,
+        4,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Owns problems end-to-end and communicates risk early.",
+      "start": "Update Jira daily; several tickets sat idle this sprint."
+    },
+    "at": "2026-09-20"
+  },
+  {
+    "id": "r53",
+    "cycle": "c1",
+    "subject": "kr",
+    "reviewer": "u-dp",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Kiran Rao",
+    "answers": {
+      "scores": [
+        4,
+        4,
+        4,
+        5,
+        3,
+        3,
+        4,
+        4,
+        5,
+        3
+      ],
+      "notes": {},
+      "keep": "Reviews my PRs the same day and explains the why.",
+      "start": "Propose experiments more often instead of the safe path."
+    },
+    "at": "2026-09-21"
+  },
+  {
+    "id": "r54",
+    "cycle": "c1",
+    "subject": "kr",
+    "reviewer": "u-am",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Kiran Rao",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        3,
+        3,
+        4,
+        4,
+        4,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Great at breaking down gnarly ingestion bugs.",
+      "start": "Share context in the channel, not only in DMs."
+    },
+    "at": "2026-09-22"
+  },
+  {
+    "id": "r55",
+    "cycle": "c1",
+    "subject": "kr",
+    "reviewer": "u-nj",
+    "group": "peer",
+    "status": "Approved",
+    "by": "Kiran Rao",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r56",
+    "cycle": "c1",
+    "subject": "kr",
+    "reviewer": "u-rd",
+    "group": "cross",
+    "status": "Approved",
+    "by": "Kiran Rao",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r57",
+    "cycle": "c1",
+    "subject": "kr",
+    "reviewer": "u-av",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "Kiran Rao",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        4,
+        4,
+        null,
+        3,
+        3,
+        4,
+        null,
+        4
+      ],
+      "notes": {},
+      "keep": "Responds fast when customers escalate — the support team trusts her fixes.",
+      "start": "Give product earlier heads-up when estimates slip."
+    },
+    "at": "2026-09-25"
+  },
+  {
+    "id": "r58",
+    "cycle": "c0",
+    "subject": "dp",
+    "reviewer": "u-dp",
+    "group": "self",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        5,
+        3,
+        4,
+        4,
+        5,
+        5,
+        3
+      ],
+      "notes": {},
+      "keep": "I follow through on incidents until the root cause is fixed.",
+      "start": "Split big tickets earlier and update Jira daily."
+    },
+    "at": "2026-09-26"
+  },
+  {
+    "id": "r59",
+    "cycle": "c0",
+    "subject": "dp",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        3,
+        3,
+        4,
+        4,
+        5,
+        3,
+        3
+      ],
+      "notes": {},
+      "keep": "Owns problems end-to-end and communicates risk early.",
+      "start": "Update Jira daily; several tickets sat idle this sprint."
+    },
+    "at": "2026-09-27"
+  },
+  {
+    "id": "r60",
+    "cycle": "c0",
+    "subject": "dp",
+    "reviewer": "u-kr",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        4,
+        3,
+        4,
+        4,
+        5,
+        3,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Great at breaking down gnarly ingestion bugs.",
+      "start": "Share context in the channel, not only in DMs."
+    },
+    "at": "2026-09-25"
+  },
+  {
+    "id": "r61",
+    "cycle": "c0",
+    "subject": "dp",
+    "reviewer": "u-nj",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-26"
+  },
+  {
+    "id": "r62",
+    "cycle": "c0",
+    "subject": "dp",
+    "reviewer": "u-am",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        4,
+        3,
+        4,
+        4,
+        5,
+        4,
+        3
+      ],
+      "notes": {},
+      "keep": "Reviews my PRs the same day and explains the why.",
+      "start": "Propose experiments more often instead of the safe path."
+    },
+    "at": "2026-09-27"
+  },
+  {
+    "id": "r63",
+    "cycle": "c0",
+    "subject": "dp",
+    "reviewer": "u-rd",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        3,
+        null,
+        4,
+        4,
+        5,
+        3,
+        3
+      ],
+      "notes": {},
+      "keep": "Explains technical trade-offs in plain language for product decisions.",
+      "start": "Loop QA in before the demo, not after."
+    },
+    "at": "2026-09-20"
+  },
+  {
+    "id": "r64",
+    "cycle": "c0",
+    "subject": "dp",
+    "reviewer": "u-sm",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        3,
+        3,
+        4,
+        4,
+        3,
+        null,
+        3
+      ],
+      "notes": {},
+      "keep": "Responds fast when customers escalate — the support team trusts her fixes.",
+      "start": "Give product earlier heads-up when estimates slip."
+    },
+    "at": "2026-09-21"
+  },
+  {
+    "id": "r65",
+    "cycle": "c1",
+    "subject": "dp",
+    "reviewer": "u-dp",
+    "group": "self",
+    "status": "Approved",
+    "by": "System",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r66",
+    "cycle": "c1",
+    "subject": "dp",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Approved",
+    "by": "System",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r67",
+    "cycle": "c1",
+    "subject": "dp",
+    "reviewer": "u-kr",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Dev Patel",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        4,
+        4,
+        3,
+        4,
+        4,
+        5,
+        4,
+        3
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-24"
+  },
+  {
+    "id": "r68",
+    "cycle": "c1",
+    "subject": "dp",
+    "reviewer": "u-nj",
+    "group": "peer",
+    "status": "Approved",
+    "by": "Dev Patel",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r69",
+    "cycle": "c1",
+    "subject": "dp",
+    "reviewer": "u-am",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Dev Patel",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Great at breaking down gnarly ingestion bugs.",
+      "start": "Share context in the channel, not only in DMs."
+    },
+    "at": "2026-09-26"
+  },
+  {
+    "id": "r70",
+    "cycle": "c1",
+    "subject": "dp",
+    "reviewer": "u-rd",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "Dev Patel",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        3,
+        4,
+        null,
+        3,
+        3,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Explains technical trade-offs in plain language for product decisions.",
+      "start": "Loop QA in before the demo, not after."
+    },
+    "at": "2026-09-24"
+  },
+  {
+    "id": "r71",
+    "cycle": "c1",
+    "subject": "dp",
+    "reviewer": "u-sm",
+    "group": "cross",
+    "status": "Approved",
+    "by": "Dev Patel",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r72",
+    "cycle": "c0",
+    "subject": "sk",
+    "reviewer": "u-sk",
+    "group": "self",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        5,
+        5,
+        4,
+        4,
+        4,
+        4,
+        5,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "I follow through on incidents until the root cause is fixed.",
+      "start": "Split big tickets earlier and update Jira daily."
+    },
+    "at": "2026-09-26"
+  },
+  {
+    "id": "r73",
+    "cycle": "c0",
+    "subject": "sk",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        4,
+        4,
+        4,
+        5,
+        3,
+        4,
+        4,
+        5,
+        5
+      ],
+      "notes": {},
+      "keep": "Owns problems end-to-end and communicates risk early.",
+      "start": "Update Jira daily; several tickets sat idle this sprint."
+    },
+    "at": "2026-09-27"
+  },
+  {
+    "id": "r74",
+    "cycle": "c0",
+    "subject": "sk",
+    "reviewer": "u-am",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        5,
+        5,
+        3,
+        4,
+        4,
+        5,
+        5,
+        4
+      ],
+      "notes": {},
+      "keep": "Reviews my PRs the same day and explains the why.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-20"
+  },
+  {
+    "id": "r75",
+    "cycle": "c0",
+    "subject": "sk",
+    "reviewer": "u-ps",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        5,
+        4,
+        4,
+        4,
+        4,
+        5,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Great at breaking down gnarly ingestion bugs.",
+      "start": "Propose experiments more often instead of the safe path."
+    },
+    "at": "2026-09-21"
+  },
+  {
+    "id": "r76",
+    "cycle": "c0",
+    "subject": "sk",
+    "reviewer": "u-kr",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        5,
+        4,
+        4,
+        4,
+        4,
+        5,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Share context in the channel, not only in DMs."
+    },
+    "at": "2026-09-22"
+  },
+  {
+    "id": "r77",
+    "cycle": "c0",
+    "subject": "sk",
+    "reviewer": "u-kv",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        4,
+        4,
+        4,
+        null,
+        4,
+        3,
+        4,
+        null,
+        4
+      ],
+      "notes": {},
+      "keep": "Responds fast when customers escalate — the support team trusts her fixes.",
+      "start": "Loop QA in before the demo, not after."
+    },
+    "at": "2026-09-23"
+  },
+  {
+    "id": "r78",
+    "cycle": "c0",
+    "subject": "sk",
+    "reviewer": "u-sm",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        4,
+        4,
+        4,
+        5
+      ],
+      "notes": {},
+      "keep": "Explains technical trade-offs in plain language for product decisions.",
+      "start": "Give product earlier heads-up when estimates slip."
+    },
+    "at": "2026-09-24"
+  },
+  {
+    "id": "r79",
+    "cycle": "c1",
+    "subject": "sk",
+    "reviewer": "u-sk",
+    "group": "self",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        5,
+        5,
+        3,
+        4,
+        4,
+        5,
+        5,
+        4
+      ],
+      "notes": {},
+      "keep": "I follow through on incidents until the root cause is fixed.",
+      "start": "Split big tickets earlier and update Jira daily."
+    },
+    "at": "2026-09-25"
+  },
+  {
+    "id": "r80",
+    "cycle": "c1",
+    "subject": "sk",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "System",
+    "answers": {
+      "scores": [
+        5,
+        5,
+        4,
+        4,
+        4,
+        4,
+        5,
+        4,
+        4,
+        4
+      ],
+      "notes": {},
+      "keep": "Owns problems end-to-end and communicates risk early.",
+      "start": "Update Jira daily; several tickets sat idle this sprint."
+    },
+    "at": "2026-09-23"
+  },
+  {
+    "id": "r81",
+    "cycle": "c1",
+    "subject": "sk",
+    "reviewer": "u-am",
+    "group": "peer",
+    "status": "Approved",
+    "by": "Sara Khan",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r82",
+    "cycle": "c1",
+    "subject": "sk",
+    "reviewer": "u-ps",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Sara Khan",
+    "answers": {
+      "scores": [
+        4,
+        4,
+        4,
+        5,
+        5,
+        3,
+        4,
+        5,
+        5,
+        5
+      ],
+      "notes": {},
+      "keep": "Always willing to pair when someone is stuck.",
+      "start": "Share context in the channel, not only in DMs."
+    },
+    "at": "2026-09-25"
+  },
+  {
+    "id": "r83",
+    "cycle": "c1",
+    "subject": "sk",
+    "reviewer": "u-kr",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Sara Khan",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        5,
+        5,
+        3,
+        4,
+        4,
+        5,
+        5,
+        4
+      ],
+      "notes": {},
+      "keep": "Reviews my PRs the same day and explains the why.",
+      "start": "Flag blockers sooner."
+    },
+    "at": "2026-09-26"
+  },
+  {
+    "id": "r84",
+    "cycle": "c1",
+    "subject": "sk",
+    "reviewer": "u-kv",
+    "group": "cross",
+    "status": "Approved",
+    "by": "Sara Khan",
+    "answers": null,
+    "at": null
+  },
+  {
+    "id": "r85",
+    "cycle": "c1",
+    "subject": "sk",
+    "reviewer": "u-sm",
+    "group": "cross",
+    "status": "Submitted",
+    "by": "Sara Khan",
+    "answers": {
+      "scores": [
+        5,
+        5,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        null,
+        4
+      ],
+      "notes": {},
+      "keep": "Explains technical trade-offs in plain language for product decisions.",
+      "start": "Give product earlier heads-up when estimates slip."
+    },
+    "at": "2026-09-20"
+  },
+  {
+    "id": "r86",
+    "cycle": "ct-ta2x9h-14",
+    "subject": "an",
+    "reviewer": "u-an",
+    "group": "self",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        2,
+        3,
+        4,
+        2,
+        3,
+        4,
+        2,
+        3
+      ],
+      "notes": {},
+      "keep": "Asks good questions and picks up the codebase fast.",
+      "start": "Update Jira every day, not only when done."
+    },
+    "at": "2026-08-19",
+    "label": "Day 14 checkpoint"
+  },
+  {
+    "id": "r87",
+    "cycle": "ct-ta2x9h-14",
+    "subject": "an",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        4,
+        2,
+        3,
+        4,
+        2,
+        3,
+        4,
+        2,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Asks good questions and picks up the codebase fast.",
+      "start": "Update Jira every day, not only when done."
+    },
+    "at": "2026-08-19",
+    "label": "Day 14 checkpoint"
+  },
+  {
+    "id": "r88",
+    "cycle": "ct-ta2x9h-14",
+    "subject": "an",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        2,
+        3,
+        4,
+        2,
+        3,
+        4,
+        2,
+        3,
+        4,
+        2
+      ],
+      "notes": {},
+      "keep": "Asks good questions and picks up the codebase fast.",
+      "start": "Update Jira every day, not only when done."
+    },
+    "at": "2026-08-19",
+    "label": "Day 14 checkpoint"
+  },
+  {
+    "id": "r89",
+    "cycle": "ct-ta2x9h-30",
+    "subject": "an",
+    "reviewer": "u-an",
+    "group": "self",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        2,
+        3,
+        4,
+        2,
+        3,
+        4,
+        2,
+        3
+      ],
+      "notes": {},
+      "keep": "Owns small fixes end-to-end now.",
+      "start": "Speak up earlier when stuck for more than half a day."
+    },
+    "at": "2026-09-04",
+    "label": "Day 30 checkpoint"
+  },
+  {
+    "id": "r90",
+    "cycle": "ct-ta2x9h-30",
+    "subject": "an",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        4,
+        2,
+        3,
+        4,
+        2,
+        3,
+        4,
+        2,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Owns small fixes end-to-end now.",
+      "start": "Speak up earlier when stuck for more than half a day."
+    },
+    "at": "2026-09-04",
+    "label": "Day 30 checkpoint"
+  },
+  {
+    "id": "r91",
+    "cycle": "ct-ta2x9h-30",
+    "subject": "an",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        2,
+        3,
+        4,
+        2,
+        3,
+        4,
+        2,
+        3,
+        4,
+        2
+      ],
+      "notes": {},
+      "keep": "Owns small fixes end-to-end now.",
+      "start": "Speak up earlier when stuck for more than half a day."
+    },
+    "at": "2026-09-04",
+    "label": "Day 30 checkpoint"
+  },
+  {
+    "id": "r92",
+    "cycle": "ct-ta2x9h-60",
+    "subject": "an",
+    "reviewer": "u-an",
+    "group": "self",
+    "status": "Approved",
+    "by": "Training plan",
+    "answers": null,
+    "at": null,
+    "label": "Day 60 checkpoint"
+  },
+  {
+    "id": "r93",
+    "cycle": "ct-ta2x9h-60",
+    "subject": "an",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Approved",
+    "by": "Training plan",
+    "answers": null,
+    "at": null,
+    "label": "Day 60 checkpoint"
+  },
+  {
+    "id": "r94",
+    "cycle": "ct-ta2x9h-60",
+    "subject": "an",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Approved",
+    "by": "Training plan",
+    "answers": null,
+    "at": null,
+    "label": "Day 60 checkpoint"
+  },
+  {
+    "id": "r95",
+    "cycle": "ct-ta1kk9-14",
+    "subject": "rk",
+    "reviewer": "u-rk",
+    "group": "self",
+    "status": "Approved",
+    "by": "Training plan",
+    "answers": null,
+    "at": null,
+    "label": "Day 14 checkpoint"
+  },
+  {
+    "id": "r96",
+    "cycle": "ct-ta1kk9-14",
+    "subject": "rk",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Approved",
+    "by": "Training plan",
+    "answers": null,
+    "at": null,
+    "label": "Day 14 checkpoint"
+  },
+  {
+    "id": "r97",
+    "cycle": "ct-ta1kk9-14",
+    "subject": "rk",
+    "reviewer": "u-ps",
+    "group": "peer",
+    "status": "Approved",
+    "by": "Training plan",
+    "answers": null,
+    "at": null,
+    "label": "Day 14 checkpoint"
+  },
+  {
+    "id": "r98",
+    "cycle": "ct-ta4ewq-7",
+    "subject": "an",
+    "reviewer": "u-an",
+    "group": "self",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Labels every comment and is polite.",
+      "start": "Always add the “because”."
+    },
+    "at": "2026-08-25",
+    "label": "Day 7 checkpoint"
+  },
+  {
+    "id": "r99",
+    "cycle": "ct-ta4ewq-7",
+    "subject": "an",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5
+      ],
+      "notes": {},
+      "keep": "Labels every comment and is polite.",
+      "start": "Always add the “because”."
+    },
+    "at": "2026-08-25",
+    "label": "Day 7 checkpoint"
+  },
+  {
+    "id": "r100",
+    "cycle": "ct-ta4ewq-7",
+    "subject": "an",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Labels every comment and is polite.",
+      "start": "Always add the “because”."
+    },
+    "at": "2026-08-25",
+    "label": "Day 7 checkpoint"
+  },
+  {
+    "id": "r101",
+    "cycle": "ct-ta69fv-14",
+    "subject": "kr",
+    "reviewer": "u-kr",
+    "group": "self",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5
+      ],
+      "notes": {},
+      "keep": "Frames options clearly.",
+      "start": "Decide faster once data is in."
+    },
+    "at": "2026-09-01",
+    "label": "Day 14 checkpoint"
+  },
+  {
+    "id": "r102",
+    "cycle": "ct-ta69fv-14",
+    "subject": "kr",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3
+      ],
+      "notes": {},
+      "keep": "Frames options clearly.",
+      "start": "Decide faster once data is in."
+    },
+    "at": "2026-09-01",
+    "label": "Day 14 checkpoint"
+  },
+  {
+    "id": "r103",
+    "cycle": "ct-ta69fv-14",
+    "subject": "kr",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Frames options clearly.",
+      "start": "Decide faster once data is in."
+    },
+    "at": "2026-09-01",
+    "label": "Day 14 checkpoint"
+  },
+  {
+    "id": "r104",
+    "cycle": "ct-ta69fv-28",
+    "subject": "kr",
+    "reviewer": "u-kr",
+    "group": "self",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5
+      ],
+      "notes": {},
+      "keep": "Ran a calm, well-timed design review.",
+      "start": "Share the ADR earlier with product."
+    },
+    "at": "2026-09-15",
+    "label": "Day 28 checkpoint"
+  },
+  {
+    "id": "r105",
+    "cycle": "ct-ta69fv-28",
+    "subject": "kr",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3
+      ],
+      "notes": {},
+      "keep": "Ran a calm, well-timed design review.",
+      "start": "Share the ADR earlier with product."
+    },
+    "at": "2026-09-15",
+    "label": "Day 28 checkpoint"
+  },
+  {
+    "id": "r106",
+    "cycle": "ct-ta69fv-28",
+    "subject": "kr",
+    "reviewer": "u-sk",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Ran a calm, well-timed design review.",
+      "start": "Share the ADR earlier with product."
+    },
+    "at": "2026-09-15",
+    "label": "Day 28 checkpoint"
+  },
+  {
+    "id": "r107",
+    "cycle": "ct-ta7ib8-7",
+    "subject": "dp",
+    "reviewer": "u-dp",
+    "group": "self",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5
+      ],
+      "notes": {},
+      "keep": "Clear, kind review comments.",
+      "start": "Review within 24 h."
+    },
+    "at": "2026-09-15",
+    "label": "Day 7 checkpoint"
+  },
+  {
+    "id": "r108",
+    "cycle": "ct-ta7ib8-7",
+    "subject": "dp",
+    "reviewer": "u-rn",
+    "group": "manager",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3
+      ],
+      "notes": {},
+      "keep": "Clear, kind review comments.",
+      "start": "Review within 24 h."
+    },
+    "at": "2026-09-15",
+    "label": "Day 7 checkpoint"
+  },
+  {
+    "id": "r109",
+    "cycle": "ct-ta7ib8-7",
+    "subject": "dp",
+    "reviewer": "u-am",
+    "group": "peer",
+    "status": "Submitted",
+    "by": "Training plan",
+    "answers": {
+      "scores": [
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4,
+        5,
+        3,
+        4
+      ],
+      "notes": {},
+      "keep": "Clear, kind review comments.",
+      "start": "Review within 24 h."
+    },
+    "at": "2026-09-15",
+    "label": "Day 7 checkpoint"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "person": "ps",
+    "hours_per_day": 6.8
+  },
+  {
+    "person": "am",
+    "hours_per_day": 6.2
+  },
+  {
+    "person": "nj",
+    "hours_per_day": 4.4
+  },
+  {
+    "person": "kr",
+    "hours_per_day": 6.1
+  },
+  {
+    "person": "dp",
+    "hours_per_day": 6
+  },
+  {
+    "person": "sk",
+    "hours_per_day": 7.2
+  }
+]

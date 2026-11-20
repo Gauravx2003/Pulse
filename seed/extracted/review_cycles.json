@@ -1,0 +1,280 @@
+[
+  {
+    "id": "c0",
+    "name": "Q2 2026 360° review",
+    "q": "Q2 2026",
+    "status": "Published",
+    "due": "2026-07-10",
+    "dept": "Engineering · Platform",
+    "groups": {
+      "self": 1,
+      "manager": 1,
+      "peer": [
+        3,
+        5
+      ],
+      "cross": [
+        2,
+        4
+      ]
+    },
+    "anonMin": 3,
+    "w": {
+      "manager": 40,
+      "peer": 25,
+      "cross": 15,
+      "self": 20
+    }
+  },
+  {
+    "id": "c1",
+    "name": "Q3 2026 360° review",
+    "q": "Q3 2026",
+    "status": "In progress",
+    "due": "2026-10-09",
+    "dept": "Engineering · Platform",
+    "groups": {
+      "self": 1,
+      "manager": 1,
+      "peer": [
+        3,
+        5
+      ],
+      "cross": [
+        2,
+        4
+      ]
+    },
+    "anonMin": 3,
+    "w": {
+      "manager": 40,
+      "peer": 25,
+      "cross": 15,
+      "self": 20
+    }
+  },
+  {
+    "id": "ct-ta2x9h-14",
+    "kind": "training",
+    "name": "Anjali · Software Engineer onboarding · Day 14",
+    "q": "",
+    "status": "Completed",
+    "due": "2026-08-17",
+    "dept": "",
+    "groups": {
+      "self": 1,
+      "manager": 1,
+      "peer": [
+        1,
+        3
+      ],
+      "cross": [
+        0,
+        2
+      ]
+    },
+    "anonMin": 1,
+    "w": {
+      "manager": 50,
+      "peer": 30,
+      "cross": 0,
+      "self": 20
+    }
+  },
+  {
+    "id": "ct-ta2x9h-30",
+    "kind": "training",
+    "name": "Anjali · Software Engineer onboarding · Day 30",
+    "q": "",
+    "status": "Completed",
+    "due": "2026-09-02",
+    "dept": "",
+    "groups": {
+      "self": 1,
+      "manager": 1,
+      "peer": [
+        1,
+        3
+      ],
+      "cross": [
+        0,
+        2
+      ]
+    },
+    "anonMin": 1,
+    "w": {
+      "manager": 50,
+      "peer": 30,
+      "cross": 0,
+      "self": 20
+    }
+  },
+  {
+    "id": "ct-ta2x9h-60",
+    "kind": "training",
+    "name": "Anjali · Software Engineer onboarding · Day 60",
+    "q": "",
+    "status": "Training",
+    "due": "2026-10-02",
+    "dept": "",
+    "groups": {
+      "self": 1,
+      "manager": 1,
+      "peer": [
+        1,
+        3
+      ],
+      "cross": [
+        0,
+        2
+      ]
+    },
+    "anonMin": 1,
+    "w": {
+      "manager": 50,
+      "peer": 30,
+      "cross": 0,
+      "self": 20
+    }
+  },
+  {
+    "id": "ct-ta1kk9-14",
+    "kind": "training",
+    "name": "Rohit · Software Engineer onboarding · Day 14",
+    "q": "",
+    "status": "Training",
+    "due": "2026-09-28",
+    "dept": "",
+    "groups": {
+      "self": 1,
+      "manager": 1,
+      "peer": [
+        1,
+        3
+      ],
+      "cross": [
+        0,
+        2
+      ]
+    },
+    "anonMin": 1,
+    "w": {
+      "manager": 50,
+      "peer": 30,
+      "cross": 0,
+      "self": 20
+    }
+  },
+  {
+    "id": "ct-ta4ewq-7",
+    "kind": "training",
+    "name": "Anjali · Code review & PR standard · Day 7",
+    "q": "",
+    "status": "Completed",
+    "due": "2026-08-24",
+    "dept": "",
+    "groups": {
+      "self": 1,
+      "manager": 1,
+      "peer": [
+        1,
+        3
+      ],
+      "cross": [
+        0,
+        2
+      ]
+    },
+    "anonMin": 1,
+    "w": {
+      "manager": 50,
+      "peer": 30,
+      "cross": 0,
+      "self": 20
+    }
+  },
+  {
+    "id": "ct-ta69fv-14",
+    "kind": "training",
+    "name": "Kiran · Ownership & decision making · Day 14",
+    "q": "",
+    "status": "Completed",
+    "due": "2026-08-31",
+    "dept": "",
+    "groups": {
+      "self": 1,
+      "manager": 1,
+      "peer": [
+        1,
+        3
+      ],
+      "cross": [
+        0,
+        2
+      ]
+    },
+    "anonMin": 1,
+    "w": {
+      "manager": 50,
+      "peer": 30,
+      "cross": 0,
+      "self": 20
+    }
+  },
+  {
+    "id": "ct-ta69fv-28",
+    "kind": "training",
+    "name": "Kiran · Ownership & decision making · Day 28",
+    "q": "",
+    "status": "Completed",
+    "due": "2026-09-14",
+    "dept": "",
+    "groups": {
+      "self": 1,
+      "manager": 1,
+      "peer": [
+        1,
+        3
+      ],
+      "cross": [
+        0,
+        2
+      ]
+    },
+    "anonMin": 1,
+    "w": {
+      "manager": 50,
+      "peer": 30,
+      "cross": 0,
+      "self": 20
+    }
+  },
+  {
+    "id": "ct-ta7ib8-7",
+    "kind": "training",
+    "name": "Dev · Code review & PR standard · Day 7",
+    "q": "",
+    "status": "Completed",
+    "due": "2026-09-14",
+    "dept": "",
+    "groups": {
+      "self": 1,
+      "manager": 1,
+      "peer": [
+        1,
+        3
+      ],
+      "cross": [
+        0,
+        2
+      ]
+    },
+    "anonMin": 1,
+    "w": {
+      "manager": 50,
+      "peer": 30,
+      "cross": 0,
+      "self": 20
+    }
+  }
+]

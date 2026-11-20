@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Admin",
+    "built_in": true,
+    "description": "HR / system admin — everything",
+    "permissions": [
+      "self.view",
+      "team.view",
+      "all.view",
+      "okr.own",
+      "okr.team",
+      "oneonone",
+      "effort.confirm",
+      "reviews.calibrate",
+      "users.team",
+      "users.all",
+      "roles.manage",
+      "integrations.manage",
+      "rules.manage",
+      "review360.give",
+      "review360.manage",
+      "appraisal.manage",
+      "appraisal.approve",
+      "training.manage",
+      "attendance.upload"
+    ]
+  },
+  {
+    "name": "Manager",
+    "built_in": true,
+    "description": "People manager — own team",
+    "permissions": [
+      "self.view",
+      "team.view",
+      "okr.own",
+      "okr.team",
+      "oneonone",
+      "effort.confirm",
+      "reviews.calibrate",
+      "users.team",
+      "review360.give",
+      "review360.manage",
+      "appraisal.manage",
+      "training.manage"
+    ]
+  },
+  {
+    "name": "Employee",
+    "built_in": true,
+    "description": "Individual contributor — own data only",
+    "permissions": [
+      "self.view",
+      "okr.own",
+      "oneonone",
+      "review360.give"
+    ]
+  }
+]

@@ -1,0 +1,545 @@
+[
+  {
+    "tool": "jira",
+    "methods": {
+      "API token": [
+        [
+          "site",
+          "Jira site URL",
+          "url",
+          "https://your-company.atlassian.net",
+          1,
+          "Your Jira Cloud address"
+        ],
+        [
+          "email",
+          "Service account email",
+          "email",
+          "pulse-bot@company.com",
+          1,
+          "Account that owns the token; needs Browse projects on the boards"
+        ],
+        [
+          "token",
+          "API token",
+          "secret",
+          "Paste the token",
+          1,
+          "Create at id.atlassian.com → Security → API tokens"
+        ]
+      ],
+      "OAuth 2.0 (3LO)": [
+        [
+          "site",
+          "Jira site URL",
+          "url",
+          "https://your-company.atlassian.net",
+          1,
+          ""
+        ],
+        [
+          "clientId",
+          "Client ID",
+          "text",
+          "From developer.atlassian.com",
+          1,
+          ""
+        ],
+        [
+          "clientSecret",
+          "Client secret",
+          "secret",
+          "",
+          1,
+          "Stored encrypted; never shown again"
+        ]
+      ]
+    },
+    "scopes": [
+      "read:jira-work",
+      "read:jira-user",
+      "read:sprint:jira-software",
+      "write:jira-work (reassign only)"
+    ],
+    "rotateDays": 90
+  },
+  {
+    "tool": "gh",
+    "methods": {
+      "GitHub App": [
+        [
+          "org",
+          "Organization",
+          "text",
+          "your-org",
+          1,
+          "GitHub organization login"
+        ],
+        [
+          "appId",
+          "App ID",
+          "text",
+          "123456",
+          1,
+          ""
+        ],
+        [
+          "installId",
+          "Installation ID",
+          "text",
+          "7654321",
+          1,
+          "Settings → Installed GitHub Apps → Configure → ID in the URL"
+        ],
+        [
+          "key",
+          "Private key (.pem)",
+          "textarea",
+          "-----BEGIN RSA PRIVATE KEY-----",
+          1,
+          "Paste the whole key file"
+        ]
+      ],
+      "Personal access token": [
+        [
+          "org",
+          "Organization",
+          "text",
+          "your-org",
+          1,
+          ""
+        ],
+        [
+          "token",
+          "Fine-grained token",
+          "secret",
+          "github_pat_…",
+          1,
+          "Read-only: contents, pull requests, metadata"
+        ]
+      ]
+    },
+    "scopes": [
+      "pull_requests:read",
+      "contents:read",
+      "metadata:read"
+    ],
+    "rotateDays": 365
+  },
+  {
+    "tool": "cf",
+    "methods": {
+      "API token": [
+        [
+          "site",
+          "Confluence URL",
+          "url",
+          "https://your-company.atlassian.net/wiki",
+          1,
+          ""
+        ],
+        [
+          "email",
+          "Service account email",
+          "email",
+          "pulse-bot@company.com",
+          1,
+          ""
+        ],
+        [
+          "token",
+          "API token",
+          "secret",
+          "",
+          1,
+          ""
+        ]
+      ]
+    },
+    "scopes": [
+      "read:confluence-content.summary",
+      "read:confluence-space.summary"
+    ],
+    "rotateDays": 90
+  },
+  {
+    "tool": "sl",
+    "methods": {
+      "Slack app (bot token)": [
+        [
+          "workspace",
+          "Workspace",
+          "text",
+          "your-company.slack.com",
+          1,
+          ""
+        ],
+        [
+          "token",
+          "Bot token",
+          "secret",
+          "xoxb-…",
+          1,
+          "OAuth & Permissions → Bot User OAuth Token"
+        ],
+        [
+          "signing",
+          "Signing secret",
+          "secret",
+          "",
+          1,
+          "Basic Information → App Credentials"
+        ]
+      ]
+    },
+    "scopes": [
+      "chat:write",
+      "commands",
+      "users:read.email",
+      "reactions:read"
+    ],
+    "rotateDays": 90
+  },
+  {
+    "tool": "gc",
+    "methods": {
+      "Service account": [
+        [
+          "domain",
+          "Google Workspace domain",
+          "text",
+          "company.com",
+          1,
+          ""
+        ],
+        [
+          "sa",
+          "Service account JSON key",
+          "textarea",
+          "{ \"type\": \"service_account\", … }",
+          1,
+          "Needs domain-wide delegation for calendar.readonly"
+        ]
+      ]
+    },
+    "scopes": [
+      "calendar.readonly"
+    ],
+    "rotateDays": 365
+  },
+  {
+    "tool": "hr",
+    "methods": {
+      "API client": [
+        [
+          "url",
+          "Keka base URL",
+          "url",
+          "https://your-company.keka.com",
+          1,
+          ""
+        ],
+        [
+          "clientId",
+          "Client ID",
+          "text",
+          "",
+          1,
+          ""
+        ],
+        [
+          "clientSecret",
+          "Client secret",
+          "secret",
+          "",
+          1,
+          ""
+        ],
+        [
+          "apiKey",
+          "API key",
+          "secret",
+          "",
+          1,
+          "Keka → Settings → Integrations → API access"
+        ]
+      ]
+    },
+    "scopes": [
+      "employees.read",
+      "leave.read",
+      "holidays.read"
+    ],
+    "rotateDays": 180
+  },
+  {
+    "tool": "pd",
+    "methods": {
+      "REST API key": [
+        [
+          "sub",
+          "PagerDuty subdomain",
+          "text",
+          "your-company",
+          1,
+          ""
+        ],
+        [
+          "token",
+          "Read-only API key",
+          "secret",
+          "",
+          1,
+          "Integrations → API Access Keys → read-only"
+        ]
+      ]
+    },
+    "scopes": [
+      "read-only"
+    ],
+    "rotateDays": 365
+  },
+  {
+    "tool": "az",
+    "methods": {
+      "Personal access token": [
+        [
+          "org",
+          "Organization URL",
+          "url",
+          "https://dev.azure.com/your-org",
+          1,
+          ""
+        ],
+        [
+          "token",
+          "PAT",
+          "secret",
+          "",
+          1,
+          "Work items (read), Code (read)"
+        ]
+      ]
+    },
+    "scopes": [
+      "vso.work",
+      "vso.code"
+    ],
+    "rotateDays": 90
+  },
+  {
+    "tool": "gl",
+    "methods": {
+      "Access token": [
+        [
+          "url",
+          "GitLab URL",
+          "url",
+          "https://gitlab.com",
+          1,
+          ""
+        ],
+        [
+          "group",
+          "Group",
+          "text",
+          "your-group",
+          1,
+          ""
+        ],
+        [
+          "token",
+          "Group access token",
+          "secret",
+          "glpat-…",
+          1,
+          "read_api"
+        ]
+      ]
+    },
+    "scopes": [
+      "read_api"
+    ],
+    "rotateDays": 365
+  },
+  {
+    "tool": "ms",
+    "methods": {
+      "Azure AD app": [
+        [
+          "tenant",
+          "Tenant ID",
+          "text",
+          "",
+          1,
+          ""
+        ],
+        [
+          "clientId",
+          "Client ID",
+          "text",
+          "",
+          1,
+          ""
+        ],
+        [
+          "clientSecret",
+          "Client secret",
+          "secret",
+          "",
+          1,
+          ""
+        ]
+      ]
+    },
+    "scopes": [
+      "ChannelMessage.Send",
+      "User.Read.All"
+    ],
+    "rotateDays": 180
+  },
+  {
+    "tool": "zd",
+    "methods": {
+      "API token": [
+        [
+          "sub",
+          "Zendesk subdomain",
+          "text",
+          "your-company",
+          1,
+          ""
+        ],
+        [
+          "email",
+          "Agent email",
+          "email",
+          "",
+          1,
+          ""
+        ],
+        [
+          "token",
+          "API token",
+          "secret",
+          "",
+          1,
+          "Admin Center → Apps and integrations → Zendesk API"
+        ]
+      ]
+    },
+    "scopes": [
+      "tickets:read",
+      "satisfaction_ratings:read"
+    ],
+    "rotateDays": 365
+  },
+  {
+    "tool": "ci",
+    "methods": {
+      "Use GitHub App": [
+        [
+          "repo",
+          "Repositories",
+          "text",
+          "your-org/* ",
+          1,
+          "Uses the GitHub App credentials"
+        ],
+        [
+          "workflow",
+          "Deploy workflow name",
+          "text",
+          "deploy.yml",
+          1,
+          ""
+        ]
+      ]
+    },
+    "scopes": [
+      "actions:read",
+      "deployments:read"
+    ],
+    "rotateDays": 365
+  },
+  {
+    "tool": "tfs",
+    "methods": {
+      "Personal access token": [
+        [
+          "url",
+          "Collection URL",
+          "url",
+          "https://tfs.your-company.local/tfs/DefaultCollection",
+          1,
+          "Server URL including the collection name"
+        ],
+        [
+          "project",
+          "Team project",
+          "text",
+          "NMS",
+          1,
+          "Project whose repositories Pulse reads"
+        ],
+        [
+          "token",
+          "Personal access token",
+          "secret",
+          "",
+          1,
+          "User settings → Security → Personal access tokens · scopes: Code (read), Work items (read), Build (read)"
+        ]
+      ],
+      "Windows service account (NTLM)": [
+        [
+          "url",
+          "Collection URL",
+          "url",
+          "https://tfs.your-company.local/tfs/DefaultCollection",
+          1,
+          ""
+        ],
+        [
+          "project",
+          "Team project",
+          "text",
+          "NMS",
+          1,
+          ""
+        ],
+        [
+          "domain",
+          "Domain",
+          "text",
+          "CORP",
+          1,
+          ""
+        ],
+        [
+          "user",
+          "Username",
+          "text",
+          "svc-pulse",
+          1,
+          "Read-only account in the Project Readers group"
+        ],
+        [
+          "password",
+          "Password",
+          "secret",
+          "",
+          1,
+          ""
+        ]
+      ]
+    },
+    "scopes": [
+      "vso.code (read)",
+      "vso.work (read)",
+      "vso.build (read)",
+      "Pull request threads (read)"
+    ],
+    "rotateDays": 90
+  }
+]

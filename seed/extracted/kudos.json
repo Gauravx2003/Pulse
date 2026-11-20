@@ -1,0 +1,23 @@
+[
+  {
+    "from": "Arjun Mehta",
+    "to": "Priya Shah",
+    "v": "Collaboration",
+    "text": "Reviewed my quota service PR the same day and caught a race condition.",
+    "when": "18 Sep"
+  },
+  {
+    "from": "Sara Khan",
+    "to": "Priya Shah",
+    "v": "Resilience",
+    "text": "Stayed calm through the Saturday ingestion incident.",
+    "when": "8 Sep"
+  },
+  {
+    "from": "Priya Shah",
+    "to": "Neha Joshi",
+    "v": "Adaptability",
+    "text": "Picked up the trap filter work mid-sprint without missing a beat.",
+    "when": "24 Sep"
+  }
+]

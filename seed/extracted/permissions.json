@@ -1,0 +1,97 @@
+[
+  {
+    "key": "self.view",
+    "area": "My work",
+    "description": "View own overview, sprint, effort, culture, road map, reviews"
+  },
+  {
+    "key": "team.view",
+    "area": "People",
+    "description": "View direct reports, team utilization and team effort"
+  },
+  {
+    "key": "all.view",
+    "area": "People",
+    "description": "View every person in the organisation"
+  },
+  {
+    "key": "okr.own",
+    "area": "OKRs",
+    "description": "Create, update and delete own OKRs"
+  },
+  {
+    "key": "okr.team",
+    "area": "OKRs",
+    "description": "Manage team OKRs and OKRs of visible people"
+  },
+  {
+    "key": "oneonone",
+    "area": "Feedback",
+    "description": "1:1 notes and kudos"
+  },
+  {
+    "key": "effort.confirm",
+    "area": "Reviews",
+    "description": "Confirm or reject extra-mile points"
+  },
+  {
+    "key": "reviews.calibrate",
+    "area": "Reviews",
+    "description": "Submit reviews and see team calibration"
+  },
+  {
+    "key": "users.team",
+    "area": "Admin",
+    "description": "Add, edit and remove employees in own team"
+  },
+  {
+    "key": "users.all",
+    "area": "Admin",
+    "description": "Manage every user and assign any role"
+  },
+  {
+    "key": "roles.manage",
+    "area": "Admin",
+    "description": "Create roles and edit permissions"
+  },
+  {
+    "key": "integrations.manage",
+    "area": "Admin",
+    "description": "Connect and configure integrations"
+  },
+  {
+    "key": "rules.manage",
+    "area": "Admin",
+    "description": "Change rules, thresholds and weights"
+  },
+  {
+    "key": "review360.give",
+    "area": "360 reviews",
+    "description": "Give 360° feedback when asked (self, peer, cross-department)"
+  },
+  {
+    "key": "review360.manage",
+    "area": "360 reviews",
+    "description": "Approve nominations, track progress and see results for visible people; with users.all, run cycles"
+  },
+  {
+    "key": "appraisal.manage",
+    "area": "Appraisal",
+    "description": "See the appraisal dashboard and propose increments for visible people"
+  },
+  {
+    "key": "appraisal.approve",
+    "area": "Appraisal",
+    "description": "Approve increments, release letters and set appraisal standards"
+  },
+  {
+    "key": "training.manage",
+    "area": "Training",
+    "description": "Create, edit, delete and assign training plans; request checkpoint reviews"
+  },
+  {
+    "key": "attendance.upload",
+    "area": "Attendance",
+    "description": "Upload monthly attendance and the holiday calendar"
+  }
+]

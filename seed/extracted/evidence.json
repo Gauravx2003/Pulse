@@ -1,0 +1,50 @@
+[
+  {
+    "v": "Outcome Ownership",
+    "from": "Rahul Nair (manager)",
+    "when": "12 Sep",
+    "text": "Followed up on the alerting rollout for two weeks after release and fixed the noisy-rule issue before customers reported it."
+  },
+  {
+    "v": "Collaboration",
+    "from": "Kudos · Arjun Mehta",
+    "when": "18 Sep",
+    "text": "Reviewed my quota service PR the same day and caught a race condition."
+  },
+  {
+    "v": "Collaboration",
+    "from": "Kudos · Neha Joshi",
+    "when": "22 Sep",
+    "text": "Paired with me for an hour on the trap filter tests."
+  },
+  {
+    "v": "Problem Solving",
+    "from": "Peer 360",
+    "when": "Q3",
+    "text": "Found the root cause of tenant 42 ingestion drops across three services."
+  },
+  {
+    "v": "Agility in Execution",
+    "from": "Rahul Nair (manager)",
+    "when": "1:1 · 15 Sep",
+    "text": "Several issues sit in progress for days without updates; break them into smaller pieces."
+  },
+  {
+    "v": "Risk Appetite",
+    "from": "Peer 360",
+    "when": "Q3",
+    "text": "Prefers proven approaches; could propose a spike for the v2 schema migration."
+  },
+  {
+    "v": "Moral & Ethics",
+    "from": "Peer 360",
+    "when": "Q3",
+    "text": "Always flags when an estimate is slipping — very transparent."
+  },
+  {
+    "v": "Resilience",
+    "from": "Kudos · Sara Khan",
+    "when": "8 Sep",
+    "text": "Stayed calm through the Saturday ingestion incident and wrote a clear timeline."
+  }
+]

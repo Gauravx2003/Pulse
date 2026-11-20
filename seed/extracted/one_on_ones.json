@@ -1,0 +1,28 @@
+[
+  {
+    "person": "ps",
+    "date": "15 Sep 2026",
+    "notes": "Discussed epic scope; agreed Priya drives the rate-limit design. Action: split PLAT-2217 into smaller issues.",
+    "actions": [
+      [
+        "Split PLAT-2217 into 2–3 issues",
+        false
+      ],
+      [
+        "Draft ADR for per-tenant limits",
+        true
+      ]
+    ]
+  },
+  {
+    "person": "ps",
+    "date": "1 Sep 2026",
+    "notes": "Growth: mentoring goal for Q1. Workload felt high after incident.",
+    "actions": [
+      [
+        "Pick a mentee with Rahul",
+        true
+      ]
+    ]
+  }
+]

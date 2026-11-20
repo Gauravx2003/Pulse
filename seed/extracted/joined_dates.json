@@ -1,0 +1,34 @@
+[
+  {
+    "person": "ps",
+    "joined_on": "2025-01-06"
+  },
+  {
+    "person": "am",
+    "joined_on": "2023-04-10"
+  },
+  {
+    "person": "nj",
+    "joined_on": "2026-02-02"
+  },
+  {
+    "person": "kr",
+    "joined_on": "2024-06-17"
+  },
+  {
+    "person": "dp",
+    "joined_on": "2024-09-02"
+  },
+  {
+    "person": "sk",
+    "joined_on": "2022-11-14"
+  },
+  {
+    "person": "rk",
+    "joined_on": "2026-09-14"
+  },
+  {
+    "person": "an",
+    "joined_on": "2026-08-03"
+  }
+]

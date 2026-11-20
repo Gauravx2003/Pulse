@@ -1,0 +1,229 @@
+[
+  {
+    "id": "o1",
+    "owner": "ps",
+    "level": "Individual",
+    "q": "Q3 2026",
+    "obj": "Make ingestion safe for noisy tenants",
+    "epic": "PLAT-2231",
+    "value": "Outcome Ownership",
+    "krs": [
+      {
+        "t": "Per-tenant rate limiting live for all tenants",
+        "s": 0,
+        "g": 100,
+        "c": 70,
+        "u": "%"
+      },
+      {
+        "t": "Ingestion p95 latency under load",
+        "s": 900,
+        "g": 400,
+        "c": 520,
+        "u": "ms"
+      },
+      {
+        "t": "Tenant-caused incidents",
+        "s": 4,
+        "g": 0,
+        "c": 1,
+        "u": "incidents"
+      }
+    ]
+  },
+  {
+    "id": "o2",
+    "owner": "ps",
+    "level": "Individual",
+    "q": "Q3 2026",
+    "obj": "Grow as a technical lead",
+    "epic": "",
+    "value": "Decision Making",
+    "krs": [
+      {
+        "t": "ADRs authored and accepted",
+        "s": 0,
+        "g": 2,
+        "c": 1,
+        "u": "ADRs"
+      },
+      {
+        "t": "Design reviews run",
+        "s": 0,
+        "g": 3,
+        "c": 2,
+        "u": "reviews"
+      }
+    ]
+  },
+  {
+    "id": "o3",
+    "owner": "team",
+    "team": "Platform",
+    "level": "Team",
+    "q": "Q3 2026",
+    "obj": "Reliable, predictable Platform delivery",
+    "epic": "",
+    "value": "Agility in Execution",
+    "krs": [
+      {
+        "t": "Sprint commitment met",
+        "s": 70,
+        "g": 90,
+        "c": 84,
+        "u": "%"
+      },
+      {
+        "t": "Stale issues share",
+        "s": 35,
+        "g": 15,
+        "c": 22,
+        "u": "%"
+      },
+      {
+        "t": "Change failure rate",
+        "s": 18,
+        "g": 8,
+        "c": 11,
+        "u": "%"
+      }
+    ]
+  },
+  {
+    "id": "o4",
+    "owner": "am",
+    "level": "Individual",
+    "q": "Q3 2026",
+    "obj": "Ship tenant quota enforcement",
+    "epic": "PLAT-2201",
+    "value": "Outcome Ownership",
+    "krs": [
+      {
+        "t": "Quota service in production",
+        "s": 0,
+        "g": 1,
+        "c": 0,
+        "u": "launch"
+      },
+      {
+        "t": "Quota breaches auto-throttled",
+        "s": 0,
+        "g": 95,
+        "c": 60,
+        "u": "%"
+      }
+    ]
+  },
+  {
+    "id": "o5",
+    "owner": "nj",
+    "level": "Individual",
+    "q": "Q3 2026",
+    "obj": "Own the trap-filter module",
+    "epic": "",
+    "value": "Problem Solving",
+    "krs": [
+      {
+        "t": "Unit test coverage",
+        "s": 35,
+        "g": 80,
+        "c": 62,
+        "u": "%"
+      },
+      {
+        "t": "Bugs fixed without reopen",
+        "s": 0,
+        "g": 6,
+        "c": 4,
+        "u": "bugs"
+      }
+    ]
+  },
+  {
+    "id": "o6",
+    "owner": "ps",
+    "level": "Individual",
+    "q": "Q4 2026",
+    "obj": "Mentor two engineers",
+    "epic": "",
+    "value": "Collaboration",
+    "krs": [
+      {
+        "t": "Mentees with agreed growth plan",
+        "s": 0,
+        "g": 2,
+        "c": 0,
+        "u": "people"
+      }
+    ]
+  },
+  {
+    "id": "o7",
+    "owner": "ps",
+    "level": "Individual",
+    "q": "Q1 2026",
+    "obj": "Stabilise the alerting service",
+    "epic": "PLAT-1880",
+    "value": "Outcome Ownership",
+    "krs": [
+      {
+        "t": "Alert false positives",
+        "s": 30,
+        "g": 10,
+        "c": 12,
+        "u": "%"
+      },
+      {
+        "t": "Alerting incidents",
+        "s": 5,
+        "g": 1,
+        "c": 1,
+        "u": "incidents"
+      }
+    ]
+  },
+  {
+    "id": "o8",
+    "owner": "ps",
+    "level": "Individual",
+    "q": "Q2 2026",
+    "obj": "Own alerting end-to-end",
+    "epic": "PLAT-1990",
+    "value": "Outcome Ownership",
+    "krs": [
+      {
+        "t": "On-call runbooks written",
+        "s": 0,
+        "g": 4,
+        "c": 4,
+        "u": "runbooks"
+      },
+      {
+        "t": "Median alert latency",
+        "s": 90,
+        "g": 30,
+        "c": 38,
+        "u": "s"
+      }
+    ]
+  },
+  {
+    "id": "o9",
+    "owner": "team",
+    "team": "Platform",
+    "level": "Team",
+    "q": "Q2 2026",
+    "obj": "Cut sprint carry-over",
+    "epic": "",
+    "value": "Discipline",
+    "krs": [
+      {
+        "t": "Carry-over issues per sprint",
+        "s": 9,
+        "g": 3,
+        "c": 4,
+        "u": "issues"
+      }
+    ]
+  }
+]

@@ -1,0 +1,279 @@
+[
+  {
+    "key": "staleDays",
+    "value": 2
+  },
+  {
+    "key": "focus",
+    "value": 6
+  },
+  {
+    "key": "under",
+    "value": 60
+  },
+  {
+    "key": "healthy",
+    "value": 85
+  },
+  {
+    "key": "over",
+    "value": 120
+  },
+  {
+    "key": "notStartedPct",
+    "value": 40
+  },
+  {
+    "key": "weights",
+    "value": {
+      "delivery": 35,
+      "quality": 15,
+      "culture": 25,
+      "okr": 15,
+      "growth": 10
+    }
+  },
+  {
+    "key": "nudge",
+    "value": true
+  },
+  {
+    "key": "excludeBots",
+    "value": true
+  },
+  {
+    "key": "vw",
+    "value": [
+      15,
+      10,
+      10,
+      10,
+      5,
+      5,
+      10,
+      10,
+      5,
+      10,
+      10
+    ]
+  },
+  {
+    "key": "d5",
+    "value": 95
+  },
+  {
+    "key": "d4",
+    "value": 85
+  },
+  {
+    "key": "d3",
+    "value": 70
+  },
+  {
+    "key": "d2",
+    "value": 50
+  },
+  {
+    "key": "dayHours",
+    "value": 8
+  },
+  {
+    "key": "monthCap",
+    "value": 6
+  },
+  {
+    "key": "bonusPerPoint",
+    "value": 0.05
+  },
+  {
+    "key": "bonusCap",
+    "value": 0.3
+  },
+  {
+    "key": "unplannedAlert",
+    "value": 30
+  },
+  {
+    "key": "pts",
+    "value": {
+      "midsprint": 1,
+      "incident": 2,
+      "takeover": 1,
+      "untracked": 1,
+      "help": 1,
+      "reviews": 0.5,
+      "support": 1,
+      "proactivefix": 1.5,
+      "visit": 1.5,
+      "visitDay": 0.5,
+      "visitWeekend": 1,
+      "visitEsc": 0.5,
+      "visitCsat": 1
+    }
+  },
+  {
+    "key": "visitCap",
+    "value": 8
+  },
+  {
+    "key": "prTitle",
+    "value": "^[A-Z]+-\\d+ (feat|fix|refactor|perf|test|docs|chore)(\\([a-z0-9-]+\\))?: \\S.{8,70}[^.]$"
+  },
+  {
+    "key": "prMaxLines",
+    "value": 400
+  },
+  {
+    "key": "prMinAppr",
+    "value": 2
+  },
+  {
+    "key": "prCmtMin",
+    "value": 20
+  },
+  {
+    "key": "prSla",
+    "value": 24
+  },
+  {
+    "key": "prTarget",
+    "value": 85
+  },
+  {
+    "key": "prItem",
+    "value": true
+  },
+  {
+    "key": "prDesc",
+    "value": true
+  },
+  {
+    "key": "prThreads",
+    "value": true
+  },
+  {
+    "key": "trWa",
+    "value": 40
+  },
+  {
+    "key": "trWm",
+    "value": 20
+  },
+  {
+    "key": "trWg",
+    "value": 20
+  },
+  {
+    "key": "trWc",
+    "value": 10
+  },
+  {
+    "key": "trWp",
+    "value": 10
+  },
+  {
+    "key": "trPass",
+    "value": 70
+  },
+  {
+    "key": "trAssessDays",
+    "value": 3
+  },
+  {
+    "key": "trSignDays",
+    "value": 5
+  },
+  {
+    "key": "dataShare",
+    "value": 40
+  },
+  {
+    "key": "att",
+    "value": {
+      "officeDays": 3,
+      "notice": 2,
+      "noticeLong": 7,
+      "lateAfter": "10:30",
+      "grace": 3,
+      "inCulture": true
+    }
+  },
+  {
+    "key": "appraisal",
+    "value": {
+      "w": {
+        "perf": 50,
+        "r360": 20,
+        "mgr": 20,
+        "disc": 10
+      },
+      "max": 20,
+      "budget": 12,
+      "minMonths": 6,
+      "bands": [
+        {
+          "min": 4.5,
+          "lo": 15,
+          "hi": 20,
+          "name": "Outstanding",
+          "tone": "ok"
+        },
+        {
+          "min": 4,
+          "lo": 10,
+          "hi": 15,
+          "name": "Exceeds",
+          "tone": "ok"
+        },
+        {
+          "min": 3.5,
+          "lo": 7,
+          "hi": 10,
+          "name": "Strong",
+          "tone": "brand"
+        },
+        {
+          "min": 3,
+          "lo": 4,
+          "hi": 7,
+          "name": "Meets",
+          "tone": "brand"
+        },
+        {
+          "min": 2.5,
+          "lo": 0,
+          "hi": 3,
+          "name": "Developing",
+          "tone": "accent"
+        },
+        {
+          "min": 0,
+          "lo": 0,
+          "hi": 0,
+          "name": "Below expectations",
+          "tone": "danger"
+        }
+      ]
+    }
+  },
+  {
+    "key": "valueWeightsDefault",
+    "value": [
+      15,
+      10,
+      10,
+      10,
+      5,
+      5,
+      10,
+      10,
+      5,
+      10,
+      10
+    ]
+  },
+  {
+    "key": "prTitlePattern",
+    "value": "^[A-Z]+-\\d+ (feat|fix|refactor|perf|test|docs|chore)(\\([a-z0-9-]+\\))?: \\S.{8,70}[^.]$"
+  }
+]

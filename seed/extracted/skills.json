@@ -1,0 +1,38 @@
+[
+  {
+    "person": "ps",
+    "skill": "System design",
+    "level": 3,
+    "target": 4
+  },
+  {
+    "person": "ps",
+    "skill": "Go / backend",
+    "level": 4,
+    "target": 4
+  },
+  {
+    "person": "ps",
+    "skill": "Observability",
+    "level": 4,
+    "target": 4
+  },
+  {
+    "person": "ps",
+    "skill": "Mentoring",
+    "level": 2,
+    "target": 4
+  },
+  {
+    "person": "ps",
+    "skill": "Technical writing",
+    "level": 3,
+    "target": 3
+  },
+  {
+    "person": "ps",
+    "skill": "Stakeholder comms",
+    "level": 2,
+    "target": 3
+  }
+]

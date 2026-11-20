@@ -1,0 +1,177 @@
+[
+  {
+    "name": "Outcome Ownership",
+    "order": 0,
+    "description": "Finishes work end-to-end, follows up without reminders, owns mistakes.",
+    "signals": [
+      "Commitment met %",
+      "Carry-over issues",
+      "Post-release follow-ups"
+    ],
+    "anchors": [
+      "Needs reminders to finish committed work",
+      "Delivers most commitments; some follow-up gaps",
+      "Delivers committed work end-to-end and follows up after release",
+      "Owns results beyond own tickets; closes gaps proactively",
+      "Owns the business result; closes gaps nobody assigned"
+    ]
+  },
+  {
+    "name": "Moral & Ethics",
+    "order": 1,
+    "description": "Honest reporting, data privacy, responsible AI use.",
+    "signals": [
+      "360 ratings only — never scored from tool data"
+    ],
+    "anchors": [
+      "Status updates not reliable",
+      "Mostly transparent; occasionally hides slips",
+      "Honest status, credits others, follows policy",
+      "Raises risks and mistakes early, protects data",
+      "Raises uncomfortable truths early; a model of integrity"
+    ]
+  },
+  {
+    "name": "Decision Making",
+    "order": 2,
+    "description": "Timely, data-based decisions with clear reasoning.",
+    "signals": [
+      "ADRs / design docs authored",
+      "Time blocked \"waiting for decision\""
+    ],
+    "anchors": [
+      "Avoids or delays decisions",
+      "Decides with prompting",
+      "Makes timely decisions within role, with reasoning",
+      "Frames options and trade-offs, documents them",
+      "Decisions hold up; others adopt their framing"
+    ]
+  },
+  {
+    "name": "Problem Solving",
+    "order": 3,
+    "description": "Finds root causes, not quick patches.",
+    "signals": [
+      "Root-cause fixes (no reopen)",
+      "RCA documents"
+    ],
+    "anchors": [
+      "Patches symptoms",
+      "Solves well-defined problems",
+      "Breaks problems down and fixes root cause",
+      "Solves ambiguous, cross-component problems",
+      "Solves problems others were stuck on; shares the method"
+    ]
+  },
+  {
+    "name": "Risk Appetite",
+    "order": 4,
+    "description": "Proposes and owns new ideas, experiments responsibly.",
+    "signals": [
+      "Spikes / experiments run",
+      "Risks logged in planning"
+    ],
+    "anchors": [
+      "Avoids anything new",
+      "Tries new things only when asked",
+      "Tries new approaches with a fallback plan",
+      "Runs experiments; flags risks early in planning",
+      "Takes calculated bets that move the product"
+    ]
+  },
+  {
+    "name": "Adaptability",
+    "order": 5,
+    "description": "Learns new tools and processes (including AI) and applies them.",
+    "signals": [
+      "Mid-sprint scope absorbed",
+      "New areas picked up"
+    ],
+    "anchors": [
+      "Struggles with changed priorities",
+      "Adjusts slowly to change",
+      "Adjusts to priority changes without losing quality",
+      "Picks up new domains quickly",
+      "Helps the team re-plan and keeps morale during change"
+    ]
+  },
+  {
+    "name": "Agility in Execution",
+    "order": 6,
+    "description": "Delivers fast WITH quality.",
+    "signals": [
+      "Stale ratio",
+      "Median PR size",
+      "Cycle time"
+    ],
+    "anchors": [
+      "Work stalls without follow-up",
+      "Moves work forward irregularly",
+      "Moves work daily, small increments",
+      "Ships small and often, unblocks others",
+      "Sets the team pace; removes delivery friction"
+    ]
+  },
+  {
+    "name": "Collaboration",
+    "order": 7,
+    "description": "Helps others, shares knowledge.",
+    "signals": [
+      "Reviews given",
+      "Kudos received",
+      "Cross-team issues"
+    ],
+    "anchors": [
+      "Works in isolation",
+      "Helps when asked",
+      "Shares context, reviews others, responsive",
+      "Builds bridges across teams",
+      "Others seek them out; multiplies the team"
+    ]
+  },
+  {
+    "name": "Resilience",
+    "order": 8,
+    "description": "Steady performance under pressure, recovers from setbacks.",
+    "signals": [
+      "Incident participation",
+      "Quality in Over sprints"
+    ],
+    "anchors": [
+      "Effectiveness drops under pressure",
+      "Recovers slowly after setbacks",
+      "Stays effective under pressure and after setbacks",
+      "Steady during incidents and crunch",
+      "Steadies the whole team through hard periods"
+    ]
+  },
+  {
+    "name": "Resourcefulness",
+    "order": 9,
+    "description": "Achieves results with limited resources, uses AI smartly.",
+    "signals": [
+      "Internal tools / scripts shared",
+      "Docs written"
+    ],
+    "anchors": [
+      "Blocked without ideal tools",
+      "Finds workarounds with help",
+      "Finds a way with available tools and people",
+      "Builds reusable tools / docs",
+      "Creates assets that save the whole team time"
+    ]
+  },
+  {
+    "name": "Discipline",
+    "order": 10,
+    "description": "Keeps Jira/tasks updated daily and accurately, follows agreed processes, raises delays early.",
+    "signals": null,
+    "anchors": [
+      "Below 50% daily updates — manager must chase for updates",
+      "50–69% daily updates, frequent stale tickets, dates changed after deadline",
+      "70–84% daily updates, some stale tickets, sometimes updates dates late",
+      "85–94% daily updates, rare stale tickets, mostly proactive",
+      "95%+ daily updates, no stale tickets, always re-plans before the due date"
+    ]
+  }
+]

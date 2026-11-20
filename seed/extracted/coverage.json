@@ -1,0 +1,87 @@
+[
+  {
+    "area": "ingestion",
+    "person": "ps",
+    "count": 9
+  },
+  {
+    "area": "ingestion",
+    "person": "am",
+    "count": 3
+  },
+  {
+    "area": "ingestion",
+    "person": "sk",
+    "count": 2
+  },
+  {
+    "area": "alerts",
+    "person": "ps",
+    "count": 6
+  },
+  {
+    "area": "alerts",
+    "person": "nj",
+    "count": 2
+  },
+  {
+    "area": "quota",
+    "person": "am",
+    "count": 11
+  },
+  {
+    "area": "topology",
+    "person": "kr",
+    "count": 8
+  },
+  {
+    "area": "topology",
+    "person": "dp",
+    "count": 1
+  },
+  {
+    "area": "netflow",
+    "person": "dp",
+    "count": 10
+  },
+  {
+    "area": "collector",
+    "person": "sk",
+    "count": 7
+  },
+  {
+    "area": "collector",
+    "person": "kr",
+    "count": 3
+  },
+  {
+    "area": "collector",
+    "person": "dp",
+    "count": 2
+  },
+  {
+    "area": "ui",
+    "person": "nj",
+    "count": 5
+  },
+  {
+    "area": "ui",
+    "person": "ps",
+    "count": 2
+  },
+  {
+    "area": "ci",
+    "person": "kr",
+    "count": 3
+  },
+  {
+    "area": "ci",
+    "person": "sk",
+    "count": 4
+  },
+  {
+    "area": "ci",
+    "person": "am",
+    "count": 2
+  }
+]

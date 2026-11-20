@@ -22,6 +22,11 @@ jobs:
         run: scripts/check-migration-versions.sh
       - name: CODEOWNERS covers every module
         run: scripts/check-codeowners.sh
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Seed extraction is reproducible and matches the prototype
+        run: node --test seed/extract.test.mjs
 
   backend:
     name: Backend build and tests

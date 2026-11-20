@@ -1,0 +1,641 @@
+[
+  {
+    "id": "x1",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "midsprint",
+    "ref": "PLAT-2271",
+    "title": "Investigate tenant 42 dropped traps",
+    "by": "Rahul Nair · manager",
+    "how": "Jira changelog: Sprint field set to Sprint 43 on 22 Sep 11:04 (sprint started 21 Sep)",
+    "date": "2026-09-22",
+    "hours": 8,
+    "done": false,
+    "src": "Jira",
+    "values": [
+      "Adaptability",
+      "Problem Solving"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "x2",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "midsprint",
+    "ref": "PLAT-2263",
+    "title": "Add p95 latency to ingestion dashboard",
+    "by": "Meera Iyer · product",
+    "how": "Jira changelog: added to Sprint 43 on 22 Sep 15:40",
+    "date": "2026-09-22",
+    "hours": 5,
+    "done": true,
+    "src": "Jira",
+    "values": [
+      "Adaptability",
+      "Agility in Execution"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "x3",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "incident",
+    "ref": "INC-311",
+    "title": "Saturday ingestion outage — hotfix",
+    "by": "PagerDuty · on-call page",
+    "how": "PagerDuty incident 12 Sep 09:12 + GitHub PR #790 merged 12 Sep 13:05 (weekend)",
+    "date": "2026-09-12",
+    "hours": 6,
+    "done": true,
+    "src": "PagerDuty + GitHub",
+    "values": [
+      "Resilience",
+      "Outcome Ownership"
+    ],
+    "state": "confirmed"
+  },
+  {
+    "id": "x4",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "takeover",
+    "ref": "PLAT-2190",
+    "title": "Collector config reload (from Kiran Rao)",
+    "by": "Rahul Nair · manager",
+    "how": "Jira changelog: assignee Kiran Rao → Priya Shah on 10 Sep",
+    "date": "2026-09-10",
+    "hours": 7,
+    "done": true,
+    "src": "Jira",
+    "values": [
+      "Collaboration",
+      "Outcome Ownership"
+    ],
+    "state": "confirmed"
+  },
+  {
+    "id": "x5",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "untracked",
+    "ref": "PR #805",
+    "title": "CI cache script — build time 14 → 6 min",
+    "by": "Self-initiated",
+    "how": "GitHub PR merged 17 Sep with no Jira key in branch, title or commits",
+    "date": "2026-09-17",
+    "hours": 4,
+    "done": true,
+    "src": "GitHub",
+    "values": [
+      "Resourcefulness"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "x6",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "reviews",
+    "ref": "14 PRs",
+    "title": "Code reviews on teammates’ PRs",
+    "by": "Team",
+    "how": "GitHub: 14 reviews on PRs authored by others, median turnaround 3 h",
+    "date": "2026-09-30",
+    "hours": 5,
+    "done": true,
+    "src": "GitHub",
+    "values": [
+      "Collaboration"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "x7",
+    "pid": "ps",
+    "month": "2026-08",
+    "kind": "midsprint",
+    "ref": "PLAT-2150",
+    "title": "Customer escalation: SNMP v2 timeout",
+    "by": "Rahul Nair · manager",
+    "how": "Added to Sprint 41 on 26 Aug",
+    "date": "2026-08-26",
+    "hours": 9,
+    "done": true,
+    "src": "Jira",
+    "values": [
+      "Adaptability",
+      "Problem Solving"
+    ],
+    "state": "confirmed"
+  },
+  {
+    "id": "x8",
+    "pid": "ps",
+    "month": "2026-08",
+    "kind": "help",
+    "ref": "PLAT-2141",
+    "title": "Paired on Neha’s trap filter bug",
+    "by": "Neha Joshi · teammate",
+    "how": "GitHub: 3 commits by Priya on branch PLAT-2141 (assignee Neha)",
+    "date": "2026-08-19",
+    "hours": 3,
+    "done": true,
+    "src": "GitHub",
+    "values": [
+      "Collaboration"
+    ],
+    "state": "confirmed"
+  },
+  {
+    "id": "x9",
+    "pid": "ps",
+    "month": "2026-07",
+    "kind": "untracked",
+    "ref": "PR #702",
+    "title": "Grafana dashboard for tenant quotas",
+    "by": "Self-initiated",
+    "how": "GitHub PR with no Jira key",
+    "date": "2026-07-15",
+    "hours": 5,
+    "done": true,
+    "src": "GitHub",
+    "values": [
+      "Resourcefulness"
+    ],
+    "state": "confirmed"
+  },
+  {
+    "id": "x10",
+    "pid": "sk",
+    "month": "2026-09",
+    "kind": "incident",
+    "ref": "INC-311",
+    "title": "Saturday ingestion outage — incident lead",
+    "by": "PagerDuty · on-call page",
+    "how": "PagerDuty incident commander 12 Sep",
+    "date": "2026-09-12",
+    "hours": 5,
+    "done": true,
+    "src": "PagerDuty",
+    "values": [
+      "Resilience",
+      "Decision Making"
+    ],
+    "state": "confirmed"
+  },
+  {
+    "id": "x11",
+    "pid": "sk",
+    "month": "2026-09",
+    "kind": "midsprint",
+    "ref": "PLAT-2247",
+    "title": "On-call runbook: ingestion outage",
+    "by": "Rahul Nair · manager",
+    "how": "Added to Sprint 43 on 23 Sep",
+    "date": "2026-09-23",
+    "hours": 2,
+    "done": false,
+    "src": "Jira",
+    "values": [
+      "Outcome Ownership"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "x12",
+    "pid": "sk",
+    "month": "2026-09",
+    "kind": "help",
+    "ref": "PLAT-2266",
+    "title": "Mentored Neha on trap filter tests",
+    "by": "Rahul Nair · manager",
+    "how": "GitHub: 9 review comments on PR #811 (assignee Neha)",
+    "date": "2026-09-24",
+    "hours": 3,
+    "done": true,
+    "src": "GitHub",
+    "values": [
+      "Collaboration"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "x13",
+    "pid": "am",
+    "month": "2026-09",
+    "kind": "midsprint",
+    "ref": "PLAT-2244",
+    "title": "Design review: event bus v2",
+    "by": "Meera Iyer · product",
+    "how": "Added to Sprint 43 on 23 Sep",
+    "date": "2026-09-23",
+    "hours": 8,
+    "done": false,
+    "src": "Jira",
+    "values": [
+      "Decision Making"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "x14",
+    "pid": "am",
+    "month": "2026-09",
+    "kind": "reviews",
+    "ref": "11 PRs",
+    "title": "Code reviews on teammates’ PRs",
+    "by": "Team",
+    "how": "GitHub: 11 reviews, median turnaround 5 h",
+    "date": "2026-09-30",
+    "hours": 4,
+    "done": true,
+    "src": "GitHub",
+    "values": [
+      "Collaboration"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "x15",
+    "pid": "kr",
+    "month": "2026-09",
+    "kind": "takeover",
+    "ref": "PLAT-2238",
+    "title": "Flow collector memory leak (from Dev Patel)",
+    "by": "Rahul Nair · manager",
+    "how": "Assignee Dev Patel → Kiran Rao on 23 Sep (Dev on leave)",
+    "date": "2026-09-23",
+    "hours": 4,
+    "done": false,
+    "src": "Jira",
+    "values": [
+      "Collaboration",
+      "Problem Solving"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "x16",
+    "pid": "kr",
+    "month": "2026-08",
+    "kind": "incident",
+    "ref": "INC-298",
+    "title": "Weekend topology outage",
+    "by": "PagerDuty · on-call page",
+    "how": "PagerDuty 8 Aug + PR #744",
+    "date": "2026-08-08",
+    "hours": 2,
+    "done": true,
+    "src": "PagerDuty + GitHub",
+    "values": [
+      "Resilience"
+    ],
+    "state": "confirmed"
+  },
+  {
+    "id": "x17",
+    "pid": "dp",
+    "month": "2026-09",
+    "kind": "untracked",
+    "ref": "PR #799",
+    "title": "Load-test harness for NetFlow",
+    "by": "Self-initiated",
+    "how": "GitHub PR with no Jira key",
+    "date": "2026-09-18",
+    "hours": 6,
+    "done": true,
+    "src": "GitHub",
+    "values": [
+      "Resourcefulness",
+      "Risk Appetite"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "x18",
+    "pid": "nj",
+    "month": "2026-09",
+    "kind": "midsprint",
+    "ref": "PLAT-2266",
+    "title": "Add unit tests for trap filters",
+    "by": "Sara Khan · senior",
+    "how": "Added to Sprint 43 on 24 Sep",
+    "date": "2026-09-24",
+    "hours": 3,
+    "done": false,
+    "src": "Jira",
+    "values": [
+      "Adaptability"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "vis-VIS-101",
+    "pid": "am",
+    "month": "2026-07",
+    "kind": "visit",
+    "ref": "VIS-101",
+    "title": "Demo / POC · Stark Logistics (Delhi)",
+    "by": "Sana Mirza · account manager",
+    "how": "Visit report submitted 24 Jul · 14 h on site + 5 h travel · CSAT 4.5/5 recorded by Sana Mirza",
+    "date": "2026-07-22",
+    "hours": 19,
+    "done": true,
+    "src": "Customer visit",
+    "values": [
+      "Collaboration",
+      "Risk Appetite"
+    ],
+    "state": "confirmed",
+    "vid": "VIS-101"
+  },
+  {
+    "id": "vis-VIS-102",
+    "pid": "ps",
+    "month": "2026-08",
+    "kind": "visit",
+    "ref": "VIS-102",
+    "title": "Health check · Globex Bank (Bengaluru)",
+    "by": "Sana Mirza · account manager",
+    "how": "Visit report submitted 21 Aug · 8 h on site + 4 h travel · CSAT 4/5 recorded by Sana Mirza",
+    "date": "2026-08-20",
+    "hours": 12,
+    "done": true,
+    "src": "Customer visit",
+    "values": [
+      "Outcome Ownership",
+      "Collaboration"
+    ],
+    "state": "confirmed",
+    "vid": "VIS-102"
+  },
+  {
+    "id": "vis-VIS-103",
+    "pid": "sk",
+    "month": "2026-09",
+    "kind": "visit",
+    "ref": "VIS-103",
+    "title": "Escalation · Umbrella Health (Hyderabad)",
+    "by": "Kavya Rao · support lead",
+    "how": "Visit report submitted 8 Sept · 20 h on site + 5 h travel · CSAT 5/5 recorded by Kavya Rao",
+    "date": "2026-09-05",
+    "hours": 25,
+    "done": true,
+    "src": "Customer visit",
+    "values": [
+      "Resilience",
+      "Problem Solving",
+      "Outcome Ownership"
+    ],
+    "state": "pending",
+    "vid": "VIS-103"
+  },
+  {
+    "id": "vis-VIS-104",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "visit",
+    "ref": "VIS-104",
+    "title": "Troubleshooting · Acme Retail (Mumbai)",
+    "by": "Kavya Rao · support lead",
+    "how": "Visit report submitted 17 Sept · 16 h on site + 6 h travel · CSAT 5/5 recorded by Kavya Rao",
+    "date": "2026-09-15",
+    "hours": 22,
+    "done": true,
+    "src": "Customer visit",
+    "values": [
+      "Problem Solving",
+      "Outcome Ownership"
+    ],
+    "state": "confirmed",
+    "vid": "VIS-104"
+  },
+  {
+    "id": "vis-VIS-105",
+    "pid": "dp",
+    "month": "2026-09",
+    "kind": "visit",
+    "ref": "VIS-105",
+    "title": "Deployment / installation · Globex Bank (Bengaluru)",
+    "by": "Sana Mirza · account manager",
+    "how": "Visit report submitted 19 Sept · 14 h on site + 4 h travel · customer feedback pending from Sana Mirza",
+    "date": "2026-09-17",
+    "hours": 18,
+    "done": true,
+    "src": "Customer visit",
+    "values": [
+      "Outcome Ownership",
+      "Adaptability"
+    ],
+    "state": "pending",
+    "vid": "VIS-105"
+  },
+  {
+    "id": "sup-SUP-8812",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "support",
+    "ref": "SUP-8812",
+    "title": "Traps missing after upgrade to 8.2 (Acme Retail)",
+    "by": "Self-picked from support queue",
+    "how": "Zendesk / Jira Service Management: Self-picked from queue · CSAT 5/5",
+    "date": "2026-09-16",
+    "hours": 3,
+    "done": true,
+    "src": "Support desk",
+    "values": [
+      "Outcome Ownership",
+      "Collaboration"
+    ],
+    "state": "confirmed"
+  },
+  {
+    "id": "sup-SUP-8840",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "support",
+    "ref": "SUP-8840",
+    "title": "Tenant 42 dashboard loads slowly (Globex Bank)",
+    "by": "Kavya Rao · support lead",
+    "how": "Zendesk / Jira Service Management: Assigned by Kavya Rao · support lead · CSAT 4/5",
+    "date": "2026-09-22",
+    "hours": 2,
+    "done": true,
+    "src": "Support desk",
+    "values": [
+      "Collaboration"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "sup-SUP-8805",
+    "pid": "sk",
+    "month": "2026-09",
+    "kind": "support",
+    "ref": "SUP-8805",
+    "title": "Failover not triggered in DR test (Umbrella Health)",
+    "by": "Kavya Rao · support lead",
+    "how": "Zendesk / Jira Service Management: Assigned by Kavya Rao · support lead · CSAT 5/5",
+    "date": "2026-09-08",
+    "hours": 4,
+    "done": true,
+    "src": "Support desk",
+    "values": [
+      "Collaboration"
+    ],
+    "state": "confirmed"
+  },
+  {
+    "id": "sup-SUP-8850",
+    "pid": "sk",
+    "month": "2026-09",
+    "kind": "support",
+    "ref": "SUP-8850",
+    "title": "Collector CPU spikes at night (Acme Retail)",
+    "by": "Self-picked from support queue",
+    "how": "Zendesk / Jira Service Management: Self-picked from queue · CSAT 4/5",
+    "date": "2026-09-24",
+    "hours": 2,
+    "done": true,
+    "src": "Support desk",
+    "values": [
+      "Outcome Ownership",
+      "Collaboration"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "sup-SUP-8822",
+    "pid": "am",
+    "month": "2026-09",
+    "kind": "support",
+    "ref": "SUP-8822",
+    "title": "Webhook signature mismatch (Stark Logistics)",
+    "by": "Self-picked from support queue",
+    "how": "Zendesk / Jira Service Management: Self-picked from queue · CSAT 5/5",
+    "date": "2026-09-17",
+    "hours": 2,
+    "done": true,
+    "src": "Support desk",
+    "values": [
+      "Outcome Ownership",
+      "Collaboration"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "sup-SUP-8831",
+    "pid": "kr",
+    "month": "2026-09",
+    "kind": "support",
+    "ref": "SUP-8831",
+    "title": "Topology export times out (Wayne Media)",
+    "by": "Kavya Rao · support lead",
+    "how": "Zendesk / Jira Service Management: Assigned by Kavya Rao · support lead · CSAT 4/5",
+    "date": "2026-09-19",
+    "hours": 1.5,
+    "done": true,
+    "src": "Support desk",
+    "values": [
+      "Collaboration"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "sup-SUP-8845",
+    "pid": "dp",
+    "month": "2026-09",
+    "kind": "support",
+    "ref": "SUP-8845",
+    "title": "Agent shows offline but is sending data (Globex Bank)",
+    "by": "Self-picked from support queue",
+    "how": "Zendesk / Jira Service Management: Self-picked from queue · CSAT 5/5",
+    "date": "2026-09-23",
+    "hours": 2,
+    "done": true,
+    "src": "Support desk",
+    "values": [
+      "Outcome Ownership",
+      "Collaboration"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "fix-BUG-4070",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "proactivefix",
+    "ref": "BUG-4070",
+    "title": "Webhook retry double-sends events (code by Arjun Mehta)",
+    "by": "Self-assigned from bug backlog",
+    "how": "Jira: self-assigned 14 Sept, resolved 15 Sept; bug linked to PR #760 · PLAT-2209",
+    "date": "2026-09-15",
+    "hours": 3,
+    "done": true,
+    "src": "Jira + GitHub",
+    "values": [
+      "Problem Solving",
+      "Collaboration"
+    ],
+    "state": "confirmed"
+  },
+  {
+    "id": "fix-BUG-4061",
+    "pid": "sk",
+    "month": "2026-09",
+    "kind": "proactivefix",
+    "ref": "BUG-4061",
+    "title": "Topology map misses isolated nodes (code by Kiran Rao)",
+    "by": "Self-assigned from bug backlog",
+    "how": "Jira: self-assigned 10 Sept, resolved 11 Sept; bug linked to PR #731 · PLAT-2160",
+    "date": "2026-09-11",
+    "hours": 3,
+    "done": true,
+    "src": "Jira + GitHub",
+    "values": [
+      "Problem Solving",
+      "Collaboration"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "fix-BUG-4083",
+    "pid": "ps",
+    "month": "2026-09",
+    "kind": "proactivefix",
+    "ref": "BUG-4083",
+    "title": "NetFlow template cache never evicted (code by Dev Patel)",
+    "by": "Self-assigned from bug backlog",
+    "how": "Jira: self-assigned 23 Sept, resolved 24 Sept; bug linked to PR #752 · PLAT-2190",
+    "date": "2026-09-24",
+    "hours": 3,
+    "done": true,
+    "src": "Jira + GitHub",
+    "values": [
+      "Problem Solving",
+      "Collaboration"
+    ],
+    "state": "pending"
+  },
+  {
+    "id": "fix-BUG-4092",
+    "pid": "am",
+    "month": "2026-09",
+    "kind": "proactivefix",
+    "ref": "BUG-4092",
+    "title": "Duplicate traps after collector restart (code by Neha Joshi)",
+    "by": "Self-assigned from bug backlog",
+    "how": "Jira: self-assigned 21 Sept, resolved 22 Sept; bug linked to PR #768",
+    "date": "2026-09-22",
+    "hours": 3,
+    "done": true,
+    "src": "Jira + GitHub",
+    "values": [
+      "Problem Solving",
+      "Collaboration"
+    ],
+    "state": "pending"
+  }
+]

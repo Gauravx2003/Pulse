@@ -1,0 +1,128 @@
+[
+  {
+    "person": "ps",
+    "target": 0.79,
+    "replan": [
+      3,
+      2
+    ],
+    "status": [
+      2,
+      14
+    ],
+    "logSame": 64,
+    "bulk": 3,
+    "block": [
+      2,
+      4
+    ],
+    "dod": 90,
+    "review": 100,
+    "standup": 85
+  },
+  {
+    "person": "am",
+    "target": 0.97,
+    "replan": [
+      5,
+      0
+    ],
+    "status": [
+      0,
+      11
+    ],
+    "logSame": 92,
+    "bulk": 0,
+    "block": [
+      3,
+      3
+    ],
+    "dod": 100,
+    "review": 100,
+    "standup": 95
+  },
+  {
+    "person": "nj",
+    "target": 0.88,
+    "replan": [
+      2,
+      1
+    ],
+    "status": [
+      1,
+      8
+    ],
+    "logSame": 70,
+    "bulk": 2,
+    "block": [
+      1,
+      2
+    ],
+    "dod": 85,
+    "review": 100,
+    "standup": 100
+  },
+  {
+    "person": "kr",
+    "target": 0.84,
+    "replan": [
+      3,
+      1
+    ],
+    "status": [
+      1,
+      10
+    ],
+    "logSame": 78,
+    "bulk": 1,
+    "block": [
+      2,
+      3
+    ],
+    "dod": 90,
+    "review": 95,
+    "standup": 90
+  },
+  {
+    "person": "dp",
+    "target": 0.91,
+    "replan": [
+      2,
+      0
+    ],
+    "status": [
+      0,
+      7
+    ],
+    "logSame": 88,
+    "bulk": 0,
+    "block": [
+      1,
+      1
+    ],
+    "dod": 95,
+    "review": 100,
+    "standup": 80
+  },
+  {
+    "person": "sk",
+    "target": 0.95,
+    "replan": [
+      4,
+      1
+    ],
+    "status": [
+      1,
+      12
+    ],
+    "logSame": 85,
+    "bulk": 1,
+    "block": [
+      4,
+      4
+    ],
+    "dod": 100,
+    "review": 100,
+    "standup": 95
+  }
+]

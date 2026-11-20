@@ -1,0 +1,298 @@
+[
+  {
+    "id": "n32-t8ieh",
+    "uid": "u-rk",
+    "req": null,
+    "go": "training",
+    "kind": "training",
+    "read": false,
+    "at": "2026-09-28",
+    "text": "Your training plan “Software Engineer onboarding” has 2 modules due this week"
+  },
+  {
+    "id": "n31-r97",
+    "uid": "u-ps",
+    "req": "r97",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-26",
+    "text": "Share 360° feedback on Rohit Kulkarni · Rohit · Software Engineer onboarding · Day 14 · due 28 Sept"
+  },
+  {
+    "id": "n30-r96",
+    "uid": "u-rn",
+    "req": "r96",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-25",
+    "text": "Share 360° feedback on Rohit Kulkarni (manager review) · Rohit · Software Engineer onboarding · Day 14 · due 28 Sept"
+  },
+  {
+    "id": "n29-r95",
+    "uid": "u-rk",
+    "req": "r95",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-24",
+    "text": "Complete your self-review · Rohit · Software Engineer onboarding · Day 14 · due 28 Sept"
+  },
+  {
+    "id": "n28-r94",
+    "uid": "u-sk",
+    "req": "r94",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-23",
+    "text": "Share 360° feedback on Anjali Nair · Anjali · Software Engineer onboarding · Day 60 · due 2 Oct"
+  },
+  {
+    "id": "n27-r93",
+    "uid": "u-rn",
+    "req": "r93",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-22",
+    "text": "Share 360° feedback on Anjali Nair (manager review) · Anjali · Software Engineer onboarding · Day 60 · due 2 Oct"
+  },
+  {
+    "id": "n26-r92",
+    "uid": "u-an",
+    "req": "r92",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-21",
+    "text": "Complete your self-review · Anjali · Software Engineer onboarding · Day 60 · due 2 Oct"
+  },
+  {
+    "id": "n25-r84",
+    "uid": "u-kv",
+    "req": "r84",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-22",
+    "text": "Share 360° feedback on Sara Khan · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n24-r81",
+    "uid": "u-am",
+    "req": "r81",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-25",
+    "text": "Share 360° feedback on Sara Khan · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n23-r71",
+    "uid": "u-sm",
+    "req": "r71",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-24",
+    "text": "Share 360° feedback on Dev Patel · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n22-r68",
+    "uid": "u-nj",
+    "req": "r68",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-24",
+    "text": "Share 360° feedback on Dev Patel · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n21-r66",
+    "uid": "u-rn",
+    "req": "r66",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-22",
+    "text": "Share 360° feedback on Dev Patel (manager review) · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n20-r65",
+    "uid": "u-dp",
+    "req": "r65",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-21",
+    "text": "Complete your self-review · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n19-r56",
+    "uid": "u-rd",
+    "req": "r56",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-21",
+    "text": "Share 360° feedback on Kiran Rao · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n18-r55",
+    "uid": "u-nj",
+    "req": "r55",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-26",
+    "text": "Share 360° feedback on Kiran Rao · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n17-r43",
+    "uid": "u-kv",
+    "req": "r43",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-23",
+    "text": "Share 360° feedback on Neha Joshi · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n16-r39",
+    "uid": "u-sk",
+    "req": "r39",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-22",
+    "text": "Share 360° feedback on Neha Joshi · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n15-r38",
+    "uid": "u-rn",
+    "req": "r38",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-21",
+    "text": "Share 360° feedback on Neha Joshi (manager review) · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n14-r28",
+    "uid": "u-mi",
+    "req": "r28",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-26",
+    "text": "Share 360° feedback on Arjun Mehta · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n13-r26",
+    "uid": "u-sk",
+    "req": "r26",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-24",
+    "text": "Share 360° feedback on Arjun Mehta · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n12-r23",
+    "uid": "u-am",
+    "req": "r23",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-21",
+    "text": "Complete your self-review · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n11-r15",
+    "uid": "u-kv",
+    "req": "r15",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-22",
+    "text": "Share 360° feedback on Priya Shah · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n10-r14",
+    "uid": "u-av",
+    "req": "r14",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-21",
+    "text": "Share 360° feedback on Priya Shah · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n9-r12",
+    "uid": "u-kr",
+    "req": "r12",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-25",
+    "text": "Share 360° feedback on Priya Shah · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n8-r9",
+    "uid": "u-rn",
+    "req": "r9",
+    "kind": "seed",
+    "read": false,
+    "at": "2026-09-24",
+    "text": "Share 360° feedback on Priya Shah (manager review) · Q3 2026 360° review · due 9 Oct"
+  },
+  {
+    "id": "n7-tr1ze",
+    "uid": "u-sk",
+    "req": null,
+    "go": "training",
+    "kind": "training",
+    "read": false,
+    "at": "2026-09-28",
+    "text": "Assessment due: Neha Joshi · Jira discipline refresher (attempt 2)"
+  },
+  {
+    "id": "n6-tgzjw",
+    "uid": "u-rn",
+    "req": null,
+    "go": "training",
+    "kind": "training",
+    "read": false,
+    "at": "2026-09-28",
+    "text": "Manager review due: Kiran Rao · Ownership & decision making"
+  },
+  {
+    "id": "n5-t8avy",
+    "uid": "u-dp",
+    "req": null,
+    "go": "training",
+    "kind": "training",
+    "read": false,
+    "at": "2026-09-28",
+    "text": "Your final feedback for Code review & PR standard is ready — please review and sign off"
+  },
+  {
+    "id": "n4-vemud",
+    "uid": "u-am",
+    "req": null,
+    "go": "visits",
+    "kind": "visit",
+    "read": false,
+    "at": "2026-09-28",
+    "text": "Visit report due: Wayne Media (24 Sept – 25 Sept)"
+  },
+  {
+    "id": "n3-ve8oy",
+    "uid": "u-rn",
+    "req": null,
+    "go": "visits",
+    "kind": "visit",
+    "read": false,
+    "at": "2026-09-28",
+    "text": "Verify Dev Patel’s visit to Globex Bank · +2 pts pending"
+  },
+  {
+    "id": "n2-vtvha",
+    "uid": "u-sm",
+    "req": null,
+    "go": "visits",
+    "kind": "visit",
+    "read": false,
+    "at": "2026-09-28",
+    "text": "Record customer feedback: Dev Patel visited Globex Bank (17 Sept – 18 Sept)"
+  },
+  {
+    "id": "n1-vdsx4",
+    "uid": "u-rn",
+    "req": null,
+    "go": "visits",
+    "kind": "visit",
+    "read": false,
+    "at": "2026-09-28",
+    "text": "Verify Sara Khan’s visit to Umbrella Health · +6 pts pending"
+  }
+]

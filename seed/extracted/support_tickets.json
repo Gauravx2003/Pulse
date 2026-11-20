@@ -1,0 +1,122 @@
+[
+  {
+    "key": "SUP-8812",
+    "title": "Traps missing after upgrade to 8.2",
+    "cust": "Acme Retail",
+    "pri": "High",
+    "pid": "ps",
+    "how": "Self-picked from queue",
+    "hours": 3,
+    "status": "Resolved",
+    "date": "2026-09-16",
+    "csat": 5
+  },
+  {
+    "key": "SUP-8840",
+    "title": "Tenant 42 dashboard loads slowly",
+    "cust": "Globex Bank",
+    "pri": "Medium",
+    "pid": "ps",
+    "how": "Assigned by Kavya Rao · support lead",
+    "hours": 2,
+    "status": "Resolved",
+    "date": "2026-09-22",
+    "csat": 4
+  },
+  {
+    "key": "SUP-8861",
+    "title": "How are API quotas counted?",
+    "cust": "Initech",
+    "pri": "Low",
+    "pid": "ps",
+    "how": "Self-picked from queue",
+    "hours": 1,
+    "status": "Open",
+    "date": "2026-09-28",
+    "csat": null
+  },
+  {
+    "key": "SUP-8805",
+    "title": "Failover not triggered in DR test",
+    "cust": "Umbrella Health",
+    "pri": "High",
+    "pid": "sk",
+    "how": "Assigned by Kavya Rao · support lead",
+    "hours": 4,
+    "status": "Resolved",
+    "date": "2026-09-08",
+    "csat": 5
+  },
+  {
+    "key": "SUP-8850",
+    "title": "Collector CPU spikes at night",
+    "cust": "Acme Retail",
+    "pri": "Medium",
+    "pid": "sk",
+    "how": "Self-picked from queue",
+    "hours": 2,
+    "status": "Resolved",
+    "date": "2026-09-24",
+    "csat": 4
+  },
+  {
+    "key": "SUP-8822",
+    "title": "Webhook signature mismatch",
+    "cust": "Stark Logistics",
+    "pri": "Medium",
+    "pid": "am",
+    "how": "Self-picked from queue",
+    "hours": 2,
+    "status": "Resolved",
+    "date": "2026-09-17",
+    "csat": 5
+  },
+  {
+    "key": "SUP-8831",
+    "title": "Topology export times out",
+    "cust": "Wayne Media",
+    "pri": "Low",
+    "pid": "kr",
+    "how": "Assigned by Kavya Rao · support lead",
+    "hours": 1.5,
+    "status": "Resolved",
+    "date": "2026-09-19",
+    "csat": 4
+  },
+  {
+    "key": "SUP-8845",
+    "title": "Agent shows offline but is sending data",
+    "cust": "Globex Bank",
+    "pri": "Medium",
+    "pid": "dp",
+    "how": "Self-picked from queue",
+    "hours": 2,
+    "status": "Resolved",
+    "date": "2026-09-23",
+    "csat": 5
+  },
+  {
+    "key": "SUP-8870",
+    "title": "SNMP v3 auth failing for one device family",
+    "cust": "Initech",
+    "pri": "High",
+    "pid": null,
+    "how": "Unassigned · in support queue",
+    "hours": 0,
+    "status": "Open",
+    "date": "2026-09-28",
+    "csat": null
+  },
+  {
+    "key": "SUP-8872",
+    "title": "Alert emails delayed by 10 min",
+    "cust": "Stark Logistics",
+    "pri": "Medium",
+    "pid": null,
+    "how": "Unassigned · in support queue",
+    "hours": 0,
+    "status": "Open",
+    "date": "2026-09-29",
+    "csat": null
+  }
+]

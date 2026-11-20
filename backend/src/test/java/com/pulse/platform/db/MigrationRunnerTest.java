@@ -1,74 +1,41 @@
 package com.pulse.platform.db;
 
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static com.pulse.platform.db.ScriptCatalogTest.PEOPLE;
 import static com.pulse.platform.db.ScriptCatalogTest.PLATFORM;
 import static com.pulse.platform.db.ScriptCatalogTest.WORK;
+import static com.pulse.platform.db.TestDb.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Runs the fixture migrations and seeds of three "tracks" against a real PostgreSQL, each test in
- * its own throw-away schema. Connection settings are the usual {@code DB_*} variables (see
- * {@link Db}); the test is skipped when no database is reachable, unless {@code PULSE_REQUIRE_DB=true}
- * (set in CI), in which case it fails.
+ * its own throw-away schema ({@link TestDb}).
  */
 class MigrationRunnerTest {
 
-    private Vertx vertx;
-    private PgPool admin;
+    private TestDb db;
     private PgPool pool;
-    private String schema;
-    private boolean schemaCreated;
 
     @BeforeEach
     void setUp() throws Exception {
-        vertx = Vertx.vertx();
-        PgConnectOptions options = Db.connectOptions(new JsonObject());
-        admin = PgPool.pool(vertx, options, new PoolOptions().setMaxSize(1));
-        schema = "mig_test_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-        try {
-            await(admin.query("CREATE SCHEMA " + schema).execute());
-            schemaCreated = true;
-        } catch (Exception e) {
-            String reason = "No PostgreSQL reachable with DB_* settings: " + e.getMessage();
-            if ("true".equals(System.getenv("PULSE_REQUIRE_DB"))) {
-                throw new IllegalStateException(reason, e); // CI must not skip these tests
-            }
-            Assumptions.assumeTrue(false, reason);
-        }
-        pool = PgPool.pool(vertx, new PgConnectOptions(options).addProperty("search_path", schema),
-                new PoolOptions().setMaxSize(2));
+        db = TestDb.open();
+        pool = db.ownerPool();
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        try {
-            if (pool != null) {
-                await(pool.close());
-            }
-            if (schemaCreated) {
-                await(admin.query("DROP SCHEMA IF EXISTS " + schema + " CASCADE").execute());
-            }
-        } finally {
-            await(admin.close());
-            await(vertx.close());
+        if (db != null) {
+            db.close();
         }
     }
 
@@ -124,7 +91,7 @@ class MigrationRunnerTest {
                 SqlScript.parse(SqlScript.Kind.MIGRATION, "work", "x/V200__broken.sql", "SELEC nonsense;")));
         Exception e = assertThrows(Exception.class, () -> await(MigrationRunner.migrate(pool, broken)));
         assertTrue(e.getMessage().contains("V200"), e.getMessage());
-        assertEquals(0L, count("SELECT count(*) FROM pg_tables WHERE schemaname = '" + schema + "'"));
+        assertEquals(0L, count("SELECT count(*) FROM pg_tables WHERE schemaname = '" + db.schema + "'"));
     }
 
     private List<String> appliedOrder() throws Exception {
@@ -137,9 +104,5 @@ class MigrationRunnerTest {
 
     private long count(String sql) throws Exception {
         return await(pool.query(sql).execute()).iterator().next().getLong(0);
-    }
-
-    private static <T> T await(io.vertx.core.Future<T> future) throws Exception {
-        return future.toCompletionStage().toCompletableFuture().get(20, TimeUnit.SECONDS);
     }
 }

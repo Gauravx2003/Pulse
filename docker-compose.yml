@@ -34,6 +34,8 @@ services:
       DB_NAME: pulse
       DB_USER: pulse
       DB_PASSWORD: pulse_secret_dev
+      PULSE_PROFILE: development
+      PULSE_DEMO_SEED: "true"
     ports:
       - "8088:8088"
     depends_on:

@@ -13,6 +13,10 @@ context: |
     Future.all(...) and .compose(...), not nested callbacks. Transactions use pool.withTransaction(conn -> ...).
   - Route failures go through ctx.fail(statusCode, exception) to one central FailureHandler that
     returns the standard JSON error contract (400, 403, 404, 409, 422).
+  - No POJOs or DTO classes: pass io.vertx.core.json.JsonObject and JsonArray directly between repositories, services, 
+    CalcService, and HTTP handlers (ctx.json(...)). Do not create model/dto/entity Java beans.
+  - Generalized Data Access Layer: Do not write raw PgPool boilerplate or ad-hoc SQL strings inside HTTP handlers or services. Route all DB calls through a shared 
+    BaseRepository/SqlExecutor helper (providing queryList, queryOne, execute, and dynamic filter/pagination builder) returning JsonArray/JsonObject, with SQL isolated in Repository classes.
 
 rules:
   tasks:
@@ -22,6 +26,7 @@ operations:
   apply:
     guidance:
       - Before writing code, re-read the Vert.x & Java Coding Standards in design.md. Reject and fix any code that blocks the event loop, deploys extra verticles, uses non-reactive DB access, or bypasses the central FailureHandler.
+      - Reject and replace any POJO/DTO/entity classes with Vert.x JsonObject and JsonArray.
 
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.

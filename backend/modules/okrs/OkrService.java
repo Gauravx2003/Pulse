@@ -297,7 +297,7 @@ public class OkrService
 
     // ------------------------------------------------------------------ permissions
 
-    private Future<Boolean> canView(JsonObject actor, JsonObject objective)
+    Future<Boolean> canView(JsonObject actor, JsonObject objective)
     {
         if ("Team".equals(objective.getString("level")))
         {
@@ -311,7 +311,7 @@ public class OkrService
      * The prototype's {@code canEditOkr}: okr.team with all.view edits everything; Team objectives need
      * okr.team; own objectives need okr.own; another visible person's objectives need okr.team.
      */
-    private Future<Boolean> canEdit(JsonObject actor, JsonObject objective)
+    Future<Boolean> canEdit(JsonObject actor, JsonObject objective)
     {
         if (has(actor, ALL_VIEW) && has(actor, OKR_TEAM))
         {
@@ -338,7 +338,7 @@ public class OkrService
         return visible(actor, owner);
     }
 
-    private Future<Boolean> visible(JsonObject actor, String personId)
+    Future<Boolean> visible(JsonObject actor, String personId)
     {
         if (personId != null && personId.equals(actor.getString("personId")))
         {
@@ -348,7 +348,7 @@ public class OkrService
         return canSeePerson.apply(actor, personId);
     }
 
-    private static boolean has(JsonObject actor, String permission)
+    static boolean has(JsonObject actor, String permission)
     {
         JsonArray granted = actor.getJsonArray("permissions");
 
@@ -519,7 +519,7 @@ public class OkrService
         return out;
     }
 
-    private static List<JsonObject> validateKeyResults(Object value)
+    static List<JsonObject> validateKeyResults(Object value)
     {
         if (!(value instanceof JsonArray array) || array.isEmpty() || array.size() > MAX_KEY_RESULTS)
         {
@@ -585,7 +585,7 @@ public class OkrService
     /**
      * The string at {@code key}, or {@code null} when it is missing or not a string.
      */
-    private static String str(JsonObject json, String key)
+    static String str(JsonObject json, String key)
     {
         return json.getValue(key) instanceof String s ? s : null;
     }
@@ -595,7 +595,7 @@ public class OkrService
         return quarter != null && QUARTER.matcher(quarter).matches();
     }
 
-    private static String trimmed(String value)
+    static String trimmed(String value)
     {
         if (value == null)
         {
@@ -607,7 +607,7 @@ public class OkrService
         return stripped.isEmpty() ? null : stripped;
     }
 
-    private static UUID parseId(String value)
+    static UUID parseId(String value)
     {
         if (value == null)
         {
@@ -627,7 +627,7 @@ public class OkrService
     /**
      * Maps database constraint failures to the OKR error contract; everything else passes through.
      */
-    private static <T> Future<T> translate(Throwable error)
+    static <T> Future<T> translate(Throwable error)
     {
         if (error instanceof PgException pg && UNIQUE_VIOLATION.equals(pg.getSqlState()))
         {

@@ -130,7 +130,7 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 
 ## 15. Road map
 
-- [ ] 15.1 Write migration V220 for milestones, promotion_targets and skills_matrix and the road-map seed (V220 range); verify the migration applies after V210 and a seeded road map exists for Priya.
+- [x] 15.1 Write migration V220 for milestones, promotion_targets and skills_matrix and the road-map seed (V220 range); verify the migration applies after V210 and a seeded road map exists for Priya.
 - [ ] 15.2 Implement milestones (propose and confirm), promotion readiness criteria (reading the performance index through the calc service) and the skills matrix with visibility rules; verify tests for every scenario in `growth/roadmap`.
 - [ ] 15.3 Build the Road map screen and the Add milestone modal; verify Playwright as `priya@` and `rahul@`, that a peer gets the no-access card, and the UI audit.
 

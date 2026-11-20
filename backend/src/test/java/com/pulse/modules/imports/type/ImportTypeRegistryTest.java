@@ -88,7 +88,7 @@ class ImportTypeRegistryTest
 
         assertTrue(ImportTypeRegistry.hasMode(notes, "add_only"));
 
-        assertFalse(ImportTypeRegistry.hasMode(notes, "replace_all"));
+        assertFalse(ImportTypeRegistry.hasMode(notes, "explode"));
 
         assertTrue(registry.find("missing").isEmpty());
     }

@@ -25,8 +25,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
-      - name: Seed extraction is reproducible and matches the prototype
-        run: node --test seed/extract.test.mjs
+      - name: Seed extraction and generated seed SQL are current
+        run: node --test seed/extract.test.mjs seed/build-sql.test.mjs
 
   backend:
     name: Backend build and tests

@@ -5,8 +5,20 @@
 
 ```bash
 node seed/extract.mjs          # rewrite seed/extracted/ (deterministic, safe to re-run)
-node --test seed/extract.test.mjs
+node seed/build-sql.mjs        # regenerate the base seed SQL from seed/extracted/
+node --test seed/extract.test.mjs seed/build-sql.test.mjs
 ```
+
+`build-sql.mjs` writes two seed files that the backend loads at startup (task 2.3):
+
+- `backend/src/main/resources/db/seed/S100__roles_and_rules.sql`: built-in roles with their
+  permission grants and the rule defaults as rule version 1 (every environment).
+- `backend/src/main/resources/db/seed/S110__demo_org.sql`: demo accounts (password `demo123`,
+  bcrypt cost 12 computed by pgcrypto at load time, so no hash is committed), people with level,
+  department, joined date and CTC, reporting lines, holidays, sprints and releases.
+
+They are generated: never edit them by hand. Like migrations, a seed file that has been applied
+must not change, so after a merge regenerate only into a new `S1xx` file (or reset the dev DB).
 
 - Each file is a JSON array of rows. Keyed prototype maps are flattened, for example
   `ATT[person][date]` becomes `attendance.json` rows `{person, date, st, in, out}`.

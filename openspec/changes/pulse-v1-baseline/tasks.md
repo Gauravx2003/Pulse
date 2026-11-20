@@ -123,7 +123,7 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 
 ## 14. OKRs
 
-- [ ] 14.1 Write migration V210 for objectives and key_results (quarter, level, owner or team, epic, value, start, target, current, unit, check-ins) and the OKR seed (V210 range) from `seed/extracted/`; verify the migration applies after V100 and V200 and the seeded objective count equals the prototype's.
+- [x] 14.1 Write migration V210 for objectives and key_results (quarter, level, owner or team, epic, value, start, target, current, unit, check-ins) and the OKR seed (V210 range) from `seed/extracted/`; verify the migration applies after V100 and V200 and the seeded objective count equals the prototype's.
 - [ ] 14.2 Implement the OKR service and API (CRUD, validation, progress and OKR pillar (the pillar formula lives in `calc/work/`, exposed through `CalcService`, and is compared with the oracle's pillar for every seeded person), check-ins, okr.own and okr.team permissions, signals for Progress, import and export service methods); verify tests for every scenario in `growth/okrs`.
 - [ ] 14.3 Expose the OKR import and export service interface (find owner, upsert objective, bulk check-in, list for export) for Track 3's CSV engine and register the off-track next-step provider; verify a service-level test that an update of a matching objective acts as a check-in and that Track 3's stub can call it.
 - [ ] 14.4 Build the OKR screens (cards, quarter dropdown, New and Edit modals, Check-in, delete confirmation, Import and Export entry points that link to the Data imports modal); verify Playwright as `priya@` and `rahul@` and the UI audit.

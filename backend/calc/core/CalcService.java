@@ -63,6 +63,12 @@ public final class CalcService
     /** A snapshot was stored or replaced. */
     public static final String SNAPSHOTS = "snapshots";
 
+    /** Published by the imports module after a CSV import commits: {@code {type, importId}} (task 16.2). */
+    public static final String IMPORT_COMMITTED_ADDRESS = "pulse.imports.committed";
+
+    /** Published by the imports module after an import is undone: {@code {type, importId}}. */
+    public static final String IMPORT_UNDONE_ADDRESS = "pulse.imports.undone";
+
     /** No person: the subject key of a periodic formula without a {@code person} parameter. */
     public static final String NO_SUBJECT = "_";
 
@@ -82,7 +88,7 @@ public final class CalcService
 
     private volatile LocalDate calendarDay;
 
-    private MessageConsumer<JsonObject> consumer;
+    private final List<MessageConsumer<JsonObject>> consumers = new ArrayList<>();
 
     private record Entry(Future<Object> value, Set<String> topics)
     {
@@ -95,10 +101,13 @@ public final class CalcService
         this.registry = registry;
     }
 
-    /** Listens for invalidation events on {@value #INVALIDATE_ADDRESS}; returns this. */
+    /**
+     * Listens for invalidation events on {@value #INVALIDATE_ADDRESS}, and for CSV import commits and
+     * undos, which drop the topic {@link #importTopic importTopic(type)}; returns this.
+     */
     public CalcService listen(Vertx vertx)
     {
-        consumer = vertx.eventBus().<JsonObject>consumer(INVALIDATE_ADDRESS, msg ->
+        consumers.add(vertx.eventBus().<JsonObject>consumer(INVALIDATE_ADDRESS, msg ->
         {
             JsonArray topics = msg.body() == null ? null : msg.body().getJsonArray("topics");
 
@@ -106,15 +115,34 @@ public final class CalcService
             {
                 invalidate(topics.stream().map(String::valueOf).toArray(String[]::new));
             }
-        });
+        }));
+
+        for (String address : List.of(IMPORT_COMMITTED_ADDRESS, IMPORT_UNDONE_ADDRESS))
+        {
+            consumers.add(vertx.eventBus().<JsonObject>consumer(address, msg ->
+            {
+                String type = msg.body() == null ? null : msg.body().getString("type");
+
+                if (type != null)
+                {
+                    invalidate(importTopic(type));
+                }
+            }));
+        }
 
         return this;
+    }
+
+    /** The topic a CSV import of {@code type} changes ({@code "imports.holidays"}); list it in a formula's topics. */
+    public static String importTopic(String type)
+    {
+        return "imports." + type;
     }
 
     /** Stops listening. */
     public Future<Void> close()
     {
-        return consumer == null ? Future.succeededFuture() : consumer.unregister();
+        return Future.all(consumers.stream().map(MessageConsumer::unregister).toList()).mapEmpty();
     }
 
     /** Publishes an invalidation event, e.g. after an import commit: {@code publish(vertx, "people.attendance")}. */

@@ -97,6 +97,11 @@ CalcService.publish(ctx.vertx(), CalcService.RULES);        // after a Rules & t
 Every cached result that read one of those topics, directly or through other formulas, is dropped.
 The next read recomputes it.
 
+CSV imports need no extra call. `ImportService` publishes `pulse.imports.committed` and
+`pulse.imports.undone` with the import `type`, and CalcService drops the topic
+`CalcService.importTopic(type)`, for example `imports.holidays`. A formula that reads a table filled
+by an import lists that topic, as `work.workingDays` does.
+
 ## 5. Input ports the core formulas read
 
 The core formulas (index, culture values, Discipline, training, appraisal) need data that Tracks 2

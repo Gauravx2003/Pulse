@@ -41,7 +41,8 @@ public final class WorkFormulas implements FormulaModule
     public List<Formula> formulas()
     {
         return List.of(
-                Formula.of("work.workingDays", Set.of("period"), Set.of(HOLIDAYS), WorkFormulas::workingDays));
+                Formula.of("work.workingDays", Set.of("period"), Set.of(HOLIDAYS, CalcService.importTopic("holidays")),
+                        WorkFormulas::workingDays));
     }
 
     private static Future<Object> workingDays(CalcContext ctx, JsonObject params)

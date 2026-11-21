@@ -172,6 +172,45 @@ class CalcServiceTest
         }
     }
 
+    @Test
+    void aCsvImportCommitDropsWhatReadTheImportedTable() throws Exception
+    {
+        CalcService calc = calc(TODAY).listen(db.vertx());
+
+        try
+        {
+            JsonObject june = new JsonObject().put("period", "m:2026-06");
+
+            int before = ((Number) await(calc.get("work.workingDays", june))).intValue();
+
+            await(owner.execute("INSERT INTO holidays (holiday_on, name, source) VALUES ('2026-06-10', 'Test holiday', 'test')",
+                    Tuple.tuple()));
+
+            assertEquals(before, ((Number) await(calc.get("work.workingDays", june))).intValue());
+
+            // What ImportService publishes after a Holiday calendar import commits.
+            db.vertx().eventBus().publish(CalcService.IMPORT_COMMITTED_ADDRESS,
+                    new JsonObject().put("type", "holidays").put("importId", UUID.randomUUID().toString()));
+
+            int after = before;
+
+            for (int i = 0; i < 100 && after == before; i++)
+            {
+                Thread.sleep(20);
+
+                after = ((Number) await(calc.get("work.workingDays", june))).intValue();
+            }
+
+            assertEquals(before - 1, after);
+
+            await(owner.execute("DELETE FROM holidays WHERE source = 'test'", Tuple.tuple()));
+        }
+        finally
+        {
+            await(calc.close());
+        }
+    }
+
     // ------------------------------------------------------------------ period close
 
     @Test

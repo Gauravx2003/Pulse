@@ -221,4 +221,62 @@ final class VisitRepository extends ScopedRepository
                 """,
                 Tuple.tuple());
     }
+
+    // ------------------------------------------------------------------ CSV import (task 16.3)
+
+    /** Users by lower-cased email: {@code [{id, email, name, status, personId}]}. */
+    Future<JsonArray> usersByEmail(String[] emails)
+    {
+        return queryList("""
+                SELECT u.id, lower(u.email) AS email, u.name, u.status, p.id AS "personId"
+                FROM users u LEFT JOIN people p ON p.user_id = u.id
+                WHERE lower(u.email) = ANY($1)
+                """,
+                Tuple.of((Object) emails));
+    }
+
+    /** Visits of these people that share a day with [from, to]: {@code [{id, personId, customer, from, to}]}. */
+    Future<JsonArray> overlappingAny(UUID[] personIds, LocalDate from, LocalDate to)
+    {
+        return queryList("""
+                SELECT id, person_id AS "personId", customer, from_on AS "from", to_on AS "to" FROM visits
+                WHERE person_id = ANY($1) AND from_on <= $3 AND to_on >= $2
+                """,
+                Tuple.of(personIds, from, to));
+    }
+
+    /** Planned visits added by an import ({@code source = 'csv'}); resolves to {@code {id, version}}. */
+    Future<JsonObject> insertImported(JsonObject visit, UUID createdBy)
+    {
+        return queryOne("""
+                INSERT INTO visits (person_id, customer, city, purpose, from_on, to_on, requested_by, owner_id,
+                                    reference, created_by, source)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'csv') RETURNING id, version
+                """,
+                Tuple.tuple()
+                        .addValue(UUID.fromString(visit.getString("personId")))
+                        .addValue(visit.getString("customer"))
+                        .addValue(visit.getString("city"))
+                        .addValue(visit.getString("purpose"))
+                        .addValue(LocalDate.parse(visit.getString("from")))
+                        .addValue(LocalDate.parse(visit.getString("to")))
+                        .addValue(visit.getString("requestedBy"))
+                        .addValue(UUID.fromString(visit.getString("ownerId")))
+                        .addValue(visit.getString("reference"))
+                        .addValue(createdBy));
+    }
+
+    /** Visible visits starting in [from, to] in the import layout, oldest first. */
+    Future<JsonArray> exportRows(Scope scope, LocalDate from, LocalDate to)
+    {
+        return scopedList(scope, "v.person_id", """
+                SELECT e.email AS employee_email, v.customer, v.city, v.purpose, v.from_on AS "from", v.to_on AS "to",
+                       v.requested_by, o.email AS owner_email, coalesce(v.reference, '') AS reference
+                FROM visits v JOIN people p ON p.id = v.person_id JOIN users e ON e.id = p.user_id
+                JOIN users o ON o.id = v.owner_id
+                WHERE v.from_on BETWEEN $1 AND $2 AND {scope}
+                ORDER BY v.from_on, e.email
+                """,
+                Tuple.of(from, to));
+    }
 }

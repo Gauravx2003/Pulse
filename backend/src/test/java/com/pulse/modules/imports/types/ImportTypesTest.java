@@ -49,6 +49,15 @@ class ImportTypesTest
             Q4 2026,Individual,old.contractor@pulse.demo,Hand over legacy agent,Docs written,0,5,0,docs,,
             """;
 
+    /** The prototype's visits sample: Priya's row overlaps her planned Initech visit (VIS-107, 6-7 Oct). */
+    private static final String VISITS_SAMPLE = """
+            employee_email,customer,city,purpose,from,to,requested_by,owner_email,reference
+            arjun@pulse.demo,Initech,Pune,Demo / POC,2026-10-13,2026-10-14,Sana Mirza · account manager,sana@pulse.demo,DEAL-3150
+            sara@pulse.demo,Umbrella Health,Hyderabad,Health check,2026-10-21,2026-10-21,Kavya Rao · support lead,kavya@pulse.demo,SUP-8890
+            kiran@pulse.demo,Globex Bank,Bengaluru,Troubleshooting,2026-10-08,2026-10-09,Kavya Rao · support lead,kavya@pulse.demo,SUP-8902
+            priya@pulse.demo,Acme Retail,Mumbai,Training / workshop,2026-10-06,2026-10-06,Sana Mirza · account manager,sana@pulse.demo,
+            """;
+
     private static TestApi api;
 
     private static WebClient client;
@@ -60,7 +69,8 @@ class ImportTypesTest
 
         // TestApi applies the platform scripts only; add the imports tables and the OKR schema and demo OKRs.
         for (String script : new String[] {"modules/imports/migrations/V300__imports_base.sql",
-                "modules/okrs/migrations/V210__okrs.sql", "modules/okrs/seed/S210__demo_okrs.sql"})
+                "modules/okrs/migrations/V210__okrs.sql", "modules/okrs/seed/S210__demo_okrs.sql",
+                "modules/visits/migrations/V320__visits.sql", "modules/visits/seed/S320__demo_visits.sql"})
         {
             try (InputStream in = ImportTypesTest.class.getClassLoader().getResourceAsStream(script))
             {
@@ -313,6 +323,98 @@ class ImportTypesTest
 
         // Spec "Round trip": the unchanged export checks back with no errors and nothing new.
         JsonObject checked = check(rahul, "okrs", "", csv, 200);
+
+        assertEquals(0, checked.getInteger("errors"), checked.getJsonArray("errorList").encodePrettily());
+
+        assertEquals(0, checked.getInteger("new"));
+    }
+
+    // ------------------------------------------------------------------ customer visits
+
+    @Test
+    void visitImportIsForManagersAndAdmin() throws Exception
+    {
+        RoleMatrix.assertRoleMatrix(api, "GET /api/v1/imports/visits/template", Map.of(
+                RoleMatrix.ADMIN, 200,
+                RoleMatrix.MANAGER, 200,
+                RoleMatrix.EMPLOYEE, 403,
+                RoleMatrix.PEER, 403));
+    }
+
+    @Test
+    void visitSampleChecksCommitsAndUndoes() throws Exception
+    {
+        TestApi.Session rahul = RoleMatrix.session(api, RoleMatrix.MANAGER);
+
+        long before = api.count("SELECT count(*) FROM visits");
+
+        JsonObject checked = check(rahul, "visits", "?fileName=visits.csv", VISITS_SAMPLE, 200);
+
+        assertEquals(4, checked.getInteger("rowsRead"));
+
+        assertEquals(3, checked.getInteger("ready"), checked.encodePrettily());
+
+        assertTrue(hasMessage(checked.getJsonArray("errorList"), 5, "from", "already has a visit to Initech"),
+                checked.getJsonArray("errorList").encodePrettily());
+
+        assertTrue(hasMessage(checked.getJsonArray("warningList"), 2, "from", "Visit already started"));
+
+        JsonObject committed = commit(rahul, "visits", checked);
+
+        assertEquals(before + 3, api.count("SELECT count(*) FROM visits"));
+
+        assertEquals(3, api.count("SELECT count(*) FROM visits WHERE source = 'csv'"));
+
+        undo(rahul, committed);
+
+        assertEquals(before, api.count("SELECT count(*) FROM visits"));
+    }
+
+    @Test
+    void visitRowsOverlappingInTheFileBothErrorAndNameEachOther() throws Exception
+    {
+        TestApi.Session rahul = RoleMatrix.session(api, RoleMatrix.MANAGER);
+
+        String csv = "employee_email,customer,city,purpose,from,to,requested_by,owner_email\n"
+                + "neha@pulse.demo,Initech,Pune,demo,2027-05-03,2027-05-05,Sana,sana@pulse.demo\n"
+                + "neha@pulse.demo,Globex,Pune,Escalation,2027-05-05,2027-05-06,Sana,sana@pulse.demo\n"
+                + "neha@pulse.demo,Wayne,Pune,Golf,2027-06-01,2027-06-01,Sana,sana@pulse.demo\n"
+                + "neha@pulse.demo,Stark,Pune,Escalation,2027-07-01,2027-07-15,Sana,sana@pulse.demo\n"
+                + "sana@pulse.demo,Stark,Pune,Escalation,2027-08-01,2027-08-01,Sana,sana@pulse.demo\n"
+                + "neha@pulse.demo,Stark,Pune,Escalation,2027-09-01,2027-09-01,Sana,nobody@pulse.demo\n";
+
+        JsonObject checked = check(rahul, "visits", "", csv, 200);
+
+        JsonArray errors = checked.getJsonArray("errorList");
+
+        // Spec "Overlap within file": both rows are errors that name the other line.
+        assertTrue(hasMessage(errors, 2, "from", "Overlaps line 3"), errors.encodePrettily());
+
+        assertTrue(hasMessage(errors, 3, "from", "Overlaps line 2"), errors.encodePrettily());
+
+        assertTrue(hasMessage(errors, 4, "purpose", "use Deployment / installation"));
+
+        assertTrue(hasMessage(errors, 5, "to", "at most 14 days"));
+
+        assertTrue(hasMessage(errors, 6, "employee_email", "has no performance profile"));
+
+        assertTrue(hasMessage(errors, 7, "owner_email", "No user with nobody@pulse.demo"));
+
+        assertEquals(0, checked.getInteger("ready"));
+    }
+
+    @Test
+    void visitExportChecksBackUnchanged() throws Exception
+    {
+        TestApi.Session rahul = RoleMatrix.session(api, RoleMatrix.MANAGER);
+
+        HttpResponse<Buffer> exported = api.get("/api/v1/imports/visits/export?from=2026-01-01&to=2026-12-31", rahul);
+
+        assertEquals(200, exported.statusCode(), exported.bodyAsString());
+
+        assertTrue(exported.bodyAsString().contains("Stark Logistics"), exported.bodyAsString());
+
+        JsonObject checked = check(rahul, "visits", "", exported.bodyAsString(), 200);
 
         assertEquals(0, checked.getInteger("errors"), checked.getJsonArray("errorList").encodePrettily());
 

@@ -56,7 +56,34 @@ public final class ReviewsRoutes
             .oneOf("shareTo", "none", "slack", "teams")
             .required("personId", "value", "message");
 
+    static final BodySchema CYCLE = BodySchema.object()
+            .string("name", 120)
+            .string("quarter", 10)
+            .date("dueOn")
+            .string("department", 120)
+            .integer("internalMin", 0, 20)
+            .integer("internalMax", 1, 20)
+            .integer("crossMin", 0, 20)
+            .integer("crossMax", 1, 20)
+            .integer("anonymityThreshold", 2, 10)
+            .required("name", "quarter", "dueOn");
+
+    static final BodySchema ASSIGN = BodySchema.object()
+            .uuidList("subjectIds", 100)
+            .uuidList("reviewerIds", 100)
+            .bool("includeSelf")
+            .bool("includeManager")
+            .required("subjectIds");
+
+    /** Draft or submit: scores 1–5 per rated value (null = Not observed), examples, both comments. */
+    static final BodySchema ANSWERS = answersSchema();
+
+    static final BodySchema VERSION_ONLY = BodySchema.object()
+            .integer("version", 1, Integer.MAX_VALUE);
+
     private final PolicyService policy;
+
+    private final Review360Service reviews360;
 
     private final OneOnOneService oneOnOnes;
 
@@ -67,6 +94,8 @@ public final class ReviewsRoutes
         this.policy = ctx.policy();
 
         this.oneOnOnes = new OneOnOneService(ctx);
+
+        this.reviews360 = new Review360Service(ctx);
 
         this.kudos = new KudosService(ctx);
     }
@@ -96,6 +125,89 @@ public final class ReviewsRoutes
 
         // GET /api/v1/reviews/kudos?personId=&value=&page=&pageSize=&sort=-given
         router.get("/kudos").handler(policy.requires("oneonone")).handler(this::kudosFeed);
+
+        mount360(router);
+    }
+
+    /** 360° feedback (task 20.3) under /api/v1/reviews/360. */
+    private void mount360(Router router)
+    {
+        router.get("/360/cycles").handler(policy.requiresAny("review360.give", "review360.manage"))
+                .handler(rc -> reviews360.cycles().onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
+
+        // Admin: users.all and review360.manage (spec "Cycle").
+        router.post("/360/cycles").handler(policy.requires("users.all", "review360.manage")).handler(CYCLE.handler())
+                .handler(rc -> reviews360.createCycle(PolicyService.user(rc), BodySchema.body(rc)).onSuccess(row ->
+                {
+                    rc.response().setStatusCode(201);
+
+                    rc.json(row);
+                }).onFailure(rc::fail));
+
+        router.post("/360/cycles/:id/assignments").handler(policy.requires("review360.manage")).handler(ASSIGN.handler())
+                .handler(rc -> reviews360.assign(PolicyService.user(rc), Ids.path(rc, "id"), BodySchema.body(rc), policy.request(rc))
+                        .onSuccess(rc::json).onFailure(rc::fail));
+
+        router.get("/360/cycles/:id/assignments").handler(policy.requires("review360.manage"))
+                .handler(rc -> reviews360.assignments(PolicyService.user(rc), Ids.path(rc, "id"))
+                        .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
+
+        router.get("/360/cycles/:id/progress").handler(policy.requires("review360.give"))
+                .handler(rc -> reviews360.myProgress(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.get("/360/cycles/:id/results").handler(policy.requires("review360.give"))
+                .handler(rc -> reviews360.myResults(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.get("/360/to-give").handler(policy.requires("review360.give"))
+                .handler(rc -> reviews360.toGive(PolicyService.user(rc))
+                        .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
+
+        router.get("/360/requests/:id").handler(policy.requires("review360.give"))
+                .handler(rc -> reviews360.request(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.put("/360/requests/:id").handler(policy.requires("review360.give")).handler(ANSWERS.handler())
+                .handler(rc -> answer(rc, false));
+
+        router.post("/360/requests/:id/submit").handler(policy.requires("review360.give")).handler(ANSWERS.handler())
+                .handler(rc -> answer(rc, true));
+
+        router.post("/360/requests/:id/decline").handler(policy.requires("review360.give")).handler(VERSION_ONLY.handler())
+                .handler(rc -> reviews360.decline(PolicyService.user(rc), Ids.path(rc, "id"),
+                        ExpectedVersion.of(rc, BodySchema.body(rc))).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.delete("/360/requests/:id").handler(policy.requires("review360.manage"))
+                .handler(rc -> reviews360.remove(PolicyService.user(rc), Ids.path(rc, "id"))
+                        .onSuccess(v -> rc.response().setStatusCode(204).end()).onFailure(rc::fail));
+    }
+
+    private void answer(RoutingContext rc, boolean submit)
+    {
+        JsonObject body = BodySchema.body(rc);
+
+        reviews360.answer(PolicyService.user(rc), Ids.path(rc, "id"), body, submit, ExpectedVersion.of(rc, body))
+                .onSuccess(rc::json)
+                .onFailure(rc::fail);
+    }
+
+    private static BodySchema answersSchema()
+    {
+        BodySchema scores = BodySchema.object();
+
+        BodySchema examples = BodySchema.object();
+
+        for (String value : Review360Service.RATED_VALUES)
+        {
+            scores.integer(value, 1, 5);
+
+            examples.string(value, 500);
+        }
+
+        return BodySchema.object()
+                .object("scores", scores)
+                .object("examples", examples)
+                .string("keepDoing", 2000)
+                .string("startDoing", 2000)
+                .integer("version", 1, Integer.MAX_VALUE);
     }
 
     private void list(RoutingContext rc)

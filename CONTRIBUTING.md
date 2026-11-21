@@ -34,6 +34,7 @@ Groups 23 (integration checks) and 24 (live GitHub and Jira, Phase 2) are shared
   - Migrations are **forward-only**. Never edit a file that has been merged: the runner refuses to start when an applied script's checksum changes. Add a new version instead.
   - Leave gaps (Track 2 uses V200 for the data layer, V210 for OKRs and V220 for the road map) so later fixes have room.
   - `scripts/check-migration-versions.sh` fails CI on duplicate numbers, bad names and out-of-range versions.
+  - **Demo data** (anything copied from the prototype's sample data, demo accounts) goes in seed files named `S<n>__demo_<description>.sql`. They load only with `PULSE_DEMO_SEED=true`; other seed files (reference data every installation needs) always load.
 
 Backend code must follow the "Vert.x & Java Coding Standards" in `design.md` decision 1:
 - two verticle classes only
@@ -82,8 +83,13 @@ Copy this into the PR description:
 
 ```bash
 docker compose up -d postgres          # PostgreSQL 16 on :5432 (user pulse / pulse_secret_dev)
+export PULSE_DEMO_SEED=true            # demo accounts (demo123) and demo data; never in production
 cd backend && mvn exec:java            # runs migrations + seeds, then serves :8088
 cd frontend && npm install && npm run dev
 ```
+
+Every `/api/v1` route needs a session: sign in with `POST /api/v1/auth/login` (`{"email", "password"}`), which sets the `pulse_session` cookie and returns `csrfToken`; send that token as the `X-CSRF-Token` header on every POST, PUT, PATCH and DELETE. In a handler the signed-in user is `ctx.get(SessionHandler.USER)`. Fail with `ctx.fail(status, ApiException...)`; never write error responses yourself. Behind the frontend nginx set `PULSE_TRUST_PROXY=true` so sign-in throttling sees the real client IP.
+
+`PULSE_PROFILE` is `development` (default) or `production`. Production refuses to start when `PULSE_DEMO_SEED` is on or a `@pulse.demo` account exists.
 
 The backend reads `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` and `PULSE_DB_POOL_SIZE`. Migrations run as `DB_USER`; at runtime the app switches to the role `pulse_app` (created by V100, DML only, no UPDATE or DELETE on `audit_log`). `PULSE_DB_APP_ROLE` overrides the role name. The database tests in `MigrationRunnerTest` use the same variables and are skipped when no database is reachable.

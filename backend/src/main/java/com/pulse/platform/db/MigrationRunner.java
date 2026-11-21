@@ -53,12 +53,28 @@ public final class MigrationRunner {
         return apply(pool, catalog.migrations(), Kind.MIGRATION);
     }
 
-    /** Runs pending seed files; resolves to the scripts applied by this run. */
+    /**
+     * Runs every pending seed file, demo seeds included. For tests and tools that want the full demo
+     * data set; start-up uses {@link #seed(PgPool, ScriptCatalog, boolean)} with the PULSE_DEMO_SEED flag.
+     */
     public static Future<List<SqlScript>> seed(PgPool pool, ScriptCatalog catalog) {
-        return apply(pool, catalog.seeds(), Kind.SEED);
+        return seed(pool, catalog, true);
+    }
+
+    /**
+     * Runs pending seed files; resolves to the scripts applied by this run. Demo seeds
+     * ({@code S<n>__demo_*.sql}) run only when {@code includeDemo} is true (PULSE_DEMO_SEED, task 2.4);
+     * a skipped demo seed stays pending and applies once the flag is turned on.
+     */
+    public static Future<List<SqlScript>> seed(PgPool pool, ScriptCatalog catalog, boolean includeDemo) {
+        return apply(pool, catalog.seeds(), Kind.SEED, includeDemo);
     }
 
     static Future<List<SqlScript>> apply(PgPool pool, List<SqlScript> scripts, Kind kind) {
+        return apply(pool, scripts, kind, true);
+    }
+
+    static Future<List<SqlScript>> apply(PgPool pool, List<SqlScript> scripts, Kind kind, boolean includeDemo) {
         return pool.withTransaction(conn -> conn.preparedQuery("SELECT pg_advisory_xact_lock($1)")
                 .execute(Tuple.of(LOCK_KEY))
                 .compose(locked -> conn.query(CREATE_HISTORY).execute())
@@ -70,7 +86,16 @@ public final class MigrationRunner {
                     for (Row row : rows) {
                         applied.put(row.getInteger("version"), row.getString("checksum"));
                     }
-                    List<SqlScript> pending = pendingScripts(scripts, applied, kind);
+                    List<SqlScript> pending = pendingScripts(scripts, applied, kind).stream()
+                            .filter(script -> {
+                                if (script.demo() && !includeDemo) {
+                                    log.info("Skipping demo seed {} ({}): PULSE_DEMO_SEED is off",
+                                            script.label(), script.resource());
+                                    return false;
+                                }
+                                return true;
+                            })
+                            .toList();
                     return applyInOrder(conn, pending);
                 }))
                 .onSuccess(done -> log.info("{}: {} applied, {} total", kind.label(), done.size(), scripts.size()));

@@ -34,6 +34,10 @@ services:
       DB_NAME: pulse
       DB_USER: pulse
       DB_PASSWORD: pulse_secret_dev
+      PULSE_PROFILE: development
+      PULSE_DEMO_SEED: "true"
+      PULSE_TRUST_PROXY: "true"   # requests arrive through the frontend nginx, which sets X-Real-IP
+      PULSE_APP_URL: http://localhost   # browser origin of the SPA: CORS and the Origin check on writes
     ports:
       - "8088:8088"
     depends_on:

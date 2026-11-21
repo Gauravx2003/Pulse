@@ -54,6 +54,14 @@ public final class MigrationRunner {
     }
 
     /**
+     * Runs every pending seed file, demo seeds included. For tests and tools that want the full demo
+     * data set; start-up uses {@link #seed(PgPool, ScriptCatalog, boolean)} with the PULSE_DEMO_SEED flag.
+     */
+    public static Future<List<SqlScript>> seed(PgPool pool, ScriptCatalog catalog) {
+        return seed(pool, catalog, true);
+    }
+
+    /**
      * Runs pending seed files; resolves to the scripts applied by this run. Demo seeds
      * ({@code S<n>__demo_*.sql}) run only when {@code includeDemo} is true (PULSE_DEMO_SEED, task 2.4);
      * a skipped demo seed stays pending and applies once the flag is turned on.

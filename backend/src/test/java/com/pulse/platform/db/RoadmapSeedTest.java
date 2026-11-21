@@ -75,7 +75,11 @@ class RoadmapSeedTest
     @Test
     void v220AppliesAfterV210AndItsSeedAfterThePeopleSeed()
     {
-        assertEquals(List.of(100, 200, 210, 220), migrated.stream().map(SqlScript::version).toList());
+        // other Track 1 platform migrations (V101, V102, ...) may sit between; only order and presence matter
+        List<Integer> versions = migrated.stream().map(SqlScript::version).toList();
+
+        assertEquals(versions.stream().sorted().toList(), versions, "applied in version order");
+        assertTrue(versions.containsAll(List.of(100, 200, 210, 220)), versions.toString());
 
         List<Integer> seeds = seeded.stream().map(SqlScript::version).toList();
 

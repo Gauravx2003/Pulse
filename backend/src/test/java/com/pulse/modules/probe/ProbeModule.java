@@ -1,8 +1,11 @@
 package com.pulse.modules.probe;
 
+import com.pulse.platform.db.BaseRepository;
 import com.pulse.platform.db.ListQuery;
 import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.http.BodySchema;
+import com.pulse.platform.http.ExpectedVersion;
+import com.pulse.platform.http.Ids;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import com.pulse.platform.policy.PolicyService;
@@ -32,6 +35,11 @@ public class ProbeModule implements PulseModule
             .integer("count", 0, 100)
             .stringList("tags", 3, 5)
             .required("title");
+
+    static final BodySchema NOTE = BodySchema.object()
+            .string("text", 100)
+            .integer("version", 1, Integer.MAX_VALUE)
+            .required("text");
 
     @Override
     public String id()
@@ -76,6 +84,24 @@ public class ProbeModule implements PulseModule
                     .onFailure(rc::fail);
         });
 
+        // versioned records over the test table probe_notes (task 3.8)
+        router.get("/notes/:id").handler(rc ->
+                new ProbeNotes(ctx.sql()).get(Ids.path(rc, "id"))
+                        .compose(row -> row == null
+                                ? Future.failedFuture(com.pulse.platform.http.ApiException.notFound("not_found", "Not found"))
+                                : Future.succeededFuture(row))
+                        .onSuccess(rc::json)
+                        .onFailure(rc::fail));
+
+        router.put("/notes/:id").handler(NOTE.handler()).handler(rc ->
+        {
+            JsonObject body = BodySchema.body(rc);
+
+            new ProbeNotes(ctx.sql()).update(Ids.path(rc, "id"), body.getString("text"), ExpectedVersion.of(rc, body))
+                    .onSuccess(rc::json)
+                    .onFailure(rc::fail);
+        });
+
         router.post("/echo").handler(ECHO.handler()).handler(rc -> rc.json(BodySchema.body(rc)));
 
         router.get("/boom").handler(rc ->
@@ -98,6 +124,25 @@ public class ProbeModule implements PulseModule
                 .compose(scope -> new ProbePeople(sql).one(scope, personId))
                 .onSuccess(row -> rc.json(new JsonObject().put("domain", domain).put("person", row)))
                 .onFailure(rc::fail);
+    }
+
+    /** A plain versioned table. */
+    static final class ProbeNotes extends BaseRepository
+    {
+        ProbeNotes(SqlExecutor sql)
+        {
+            super(sql);
+        }
+
+        Future<JsonObject> get(UUID id)
+        {
+            return queryOne("SELECT id, text, version FROM probe_notes WHERE id = $1", Tuple.of(id));
+        }
+
+        Future<JsonObject> update(UUID id, String text, int expectedVersion)
+        {
+            return updateVersioned("probe_notes", "text = $1", Tuple.of(text), id, expectedVersion);
+        }
     }
 
     /** A personal-data repository: every read takes the policy scope. */

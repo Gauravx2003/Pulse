@@ -142,6 +142,12 @@ public final class TestApi implements AutoCloseable
         return send(client.post(port, "localhost", path), session, body);
     }
 
+    /** PUT with the session's cookie and CSRF token. */
+    public HttpResponse<Buffer> put(String path, Session session, JsonObject body) throws Exception
+    {
+        return send(client.put(port, "localhost", path), session, body);
+    }
+
     private static HttpResponse<Buffer> send(HttpRequest<Buffer> req, Session session, JsonObject body) throws Exception
     {
         req.putHeader("X-Real-IP", newIp());

@@ -38,7 +38,15 @@ public class ApiException extends RuntimeException
         return this;
     }
 
-    /** Extra members of the error object ({@code field}, {@code retryAfter}). */
+    /** The record's version now (409 {@code version_conflict}); rendered as {@code error.currentVersion}. */
+    public ApiException currentVersion(int version)
+    {
+        details.put("currentVersion", version);
+
+        return this;
+    }
+
+    /** Extra members of the error object ({@code field}, {@code retryAfter}, {@code currentVersion}). */
     public JsonObject details()
     {
         return details;
@@ -72,6 +80,11 @@ public class ApiException extends RuntimeException
     public static ApiException forbidden(String code, String message)
     {
         return new ApiException(403, code, message);
+    }
+
+    public static ApiException conflict(String code, String message)
+    {
+        return new ApiException(409, code, message);
     }
 
     public static ApiException unprocessable(String code, String message)

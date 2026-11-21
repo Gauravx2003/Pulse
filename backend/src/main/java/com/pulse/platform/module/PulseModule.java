@@ -60,6 +60,14 @@ public interface PulseModule {
         return List.of();
     }
 
+    /**
+     * Audit events this module records beyond the platform catalogue
+     * ({@link com.pulse.platform.audit.AuditEvents}), named {@code area.action}.
+     */
+    default List<String> auditEvents() {
+        return List.of();
+    }
+
     /** Providers that contribute items to the Action Center. */
     default List<ActionProvider> actionProviders() {
         return List.of();

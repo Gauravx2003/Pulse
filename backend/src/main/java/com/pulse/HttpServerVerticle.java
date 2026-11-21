@@ -1,5 +1,7 @@
 package com.pulse;
 
+import com.pulse.platform.audit.AuditEvents;
+import com.pulse.platform.audit.AuditRoutes;
 import com.pulse.platform.auth.AuthRoutes;
 import com.pulse.platform.auth.AuthService;
 import com.pulse.platform.auth.AuthSettings;
@@ -84,7 +86,7 @@ public class HttpServerVerticle extends AbstractVerticle
 
         // Security baseline (task 3.6), in order: request id, hardening headers, CORS to the app
         // origin, Origin check on writes, per-IP limit, then the body read with a streaming size limit.
-        router.route().handler(new RequestId());
+        router.route().handler(new RequestId(authSettings.trustProxy()));
         router.route().handler(new SecurityHeaders());
         router.route().handler(CorsHandler.create()
                 .addOrigin(security.appOrigin())
@@ -96,7 +98,13 @@ public class HttpServerVerticle extends AbstractVerticle
         router.route().handler(RateLimiter.perIp(vertx, "ip", security.ipPerMinute(), 60, authSettings.trustProxy()));
         router.route().handler(LoggerHandler.create());
         router.route().handler(new BodyLimits(security));
-        router.route().failureHandler(new FailureHandler());
+        FailureHandler failures = new FailureHandler();
+
+        router.route().failureHandler(failures);
+
+        // unmatched routes and methods answer with the same JSON error contract (task 3.8)
+        router.errorHandler(404, failures);
+        router.errorHandler(405, failures);
 
         router.get("/health").handler(ctx -> ctx.json(new JsonObject()
                 .put("status", "UP")
@@ -116,6 +124,10 @@ public class HttpServerVerticle extends AbstractVerticle
 
         PolicyService policy = new PolicyService(sql, catalogue.keys(), registry.visibilityRelations(),
                 authSettings.trustProxy());
+
+        AuditEvents.register(registry.auditEvents());
+
+        AuditRoutes.mount(router, API_PREFIX, policy, sql);
 
         ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy);
 

@@ -768,7 +768,7 @@ final class AssignmentService
     }
 
     /** The assignment when the user may see it (policy scope or as its mentor), with stage and roles. */
-    private Future<JsonObject> access(JsonObject user, UUID id)
+    Future<JsonObject> access(JsonObject user, UUID id)
     {
         LocalDate today = today();
 

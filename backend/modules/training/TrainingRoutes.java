@@ -38,6 +38,14 @@ import java.util.function.BiFunction;
  * POST   /assignments/:id/acknowledgements      the trainee acknowledges one feedback item
  * POST   /assignments/:id/acknowledgements/:key/reply   the mentor replies
  * POST   /assignments/:id/discussed             a manager clears a sign-off disagreement
+ *
+ * POST   /assignments/:id/sessions              the mentor (or a manager) logs a session
+ * POST   /assignments/:id/session-requests      the trainee asks for a session
+ * GET    /mentoring/pending                     the mentor's Pending-for-you list and KPIs
+ * POST   /assignments/:id/checkpoints/:day      a manager requests the Day N checkpoint (360° form)
+ * GET    /mentors                               Mentors table (training.manage)
+ * GET    /suggestions/onboarding                joiners under 3 months without a plan (training.manage)
+ * GET    /rating?personId=                      the overall training rating
  * </pre>
  *
  * <p>Checkpoint days travel as text ({@code ["14", "30"]}) because the body schema has no list of
@@ -149,6 +157,21 @@ public final class TrainingRoutes
             .integer("version", 1, Integer.MAX_VALUE)
             .required("text");
 
+    static final BodySchema SESSION = BodySchema.object()
+            .date("heldOn")
+            .integer("durationMin", 5, 600)
+            .string("mode", 40)
+            .string("topics", 1000)
+            .string("nextSteps", 1000)
+            .bool("blocker")
+            .string("blockerNote", 1000)
+            .uuid("requestId")
+            .required("heldOn", "durationMin", "mode", "topics");
+
+    static final BodySchema SESSION_REQUEST = BodySchema.object()
+            .string("note", 500)
+            .required("note");
+
     static final BodySchema VERSION_ONLY = BodySchema.object()
             .integer("version", 1, Integer.MAX_VALUE);
 
@@ -158,6 +181,8 @@ public final class TrainingRoutes
 
     private final AssignmentService assignments;
 
+    private final MentoringService mentoring;
+
     TrainingRoutes(ModuleContext ctx)
     {
         this.policy = ctx.policy();
@@ -165,6 +190,8 @@ public final class TrainingRoutes
         this.plans = new PlanService(ctx);
 
         this.assignments = new AssignmentService(ctx);
+
+        this.mentoring = new MentoringService(ctx, assignments);
     }
 
     void mount(Router router)
@@ -256,8 +283,45 @@ public final class TrainingRoutes
                 .handler(rc -> versioned(rc, (body, version) -> assignments.reply(PolicyService.user(rc), Ids.path(rc, "id"),
                         rc.pathParam("key"), body.getString("text"), version)));
 
+        // Mentoring and managers' views (part D)
+        router.post("/assignments/:id/sessions").handler(policy.requiresAny(anyone)).handler(SESSION.handler())
+                .handler(rc -> mentoring.logSession(PolicyService.user(rc), Ids.path(rc, "id"), BodySchema.body(rc))
+                        .onSuccess(rc::json).onFailure(rc::fail));
+
+        router.post("/assignments/:id/session-requests").handler(policy.requires("self.view")).handler(SESSION_REQUEST.handler())
+                .handler(rc -> mentoring.askForSession(PolicyService.user(rc), Ids.path(rc, "id"), BodySchema.body(rc).getString("note"))
+                        .onSuccess(rc::json).onFailure(rc::fail));
+
+        router.get("/mentoring/pending").handler(policy.requiresAny(anyone))
+                .handler(rc -> mentoring.pending(PolicyService.user(rc)).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.post("/assignments/:id/checkpoints/:day").handler(policy.requires("training.manage"))
+                .handler(rc -> mentoring.requestCheckpoint(PolicyService.user(rc), Ids.path(rc, "id"), day(rc))
+                        .onSuccess(rc::json).onFailure(rc::fail));
+
+        router.get("/mentors").handler(policy.requires("training.manage"))
+                .handler(rc -> mentoring.mentors(PolicyService.user(rc))
+                        .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
+
+        router.get("/suggestions/onboarding").handler(policy.requires("training.manage"))
+                .handler(rc -> mentoring.onboardingSuggestions(PolicyService.user(rc))
+                        .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
+
         router.post("/assignments/:id/discussed").handler(policy.requires("training.manage")).handler(VERSION_ONLY.handler())
                 .handler(rc -> versioned(rc, (body, version) -> assignments.discussed(PolicyService.user(rc), Ids.path(rc, "id"), version)));
+    }
+
+    /** The checkpoint day from the path; anything else answers 404 like an unknown route. */
+    private static int day(RoutingContext rc)
+    {
+        try
+        {
+            return Integer.parseInt(rc.pathParam("day"));
+        }
+        catch (NumberFormatException e)
+        {
+            throw ApiException.notFound("not_found", "Not found");
+        }
     }
 
     /** Runs a write that needs the record's version (body {@code version} or If-Match) and answers with the result. */

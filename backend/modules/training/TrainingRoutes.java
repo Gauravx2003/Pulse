@@ -1,5 +1,6 @@
 package com.pulse.modules.training;
 
+import com.pulse.platform.http.ApiException;
 import com.pulse.platform.http.BodySchema;
 import com.pulse.platform.http.ExpectedVersion;
 import com.pulse.platform.http.Ids;
@@ -198,6 +199,21 @@ public final class TrainingRoutes
         router.get("/assignments").handler(policy.requiresAny(anyone))
                 .handler(rc -> assignments.list(PolicyService.user(rc), rc.queryParams().get("personId"))
                         .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
+
+        // GET /api/v1/training/rating?personId=: the overall training rating (calc/people)
+        router.get("/rating").handler(policy.requiresAny(anyone)).handler(rc ->
+        {
+            String personId = rc.queryParams().get("personId");
+
+            if (personId == null)
+            {
+                rc.fail(ApiException.badRequest("invalid_parameter", "Choose the person.").field("personId"));
+
+                return;
+            }
+
+            assignments.overall(PolicyService.user(rc), personId).onSuccess(rc::json).onFailure(rc::fail);
+        });
 
         router.post("/assignments").handler(policy.requires("training.manage")).handler(ASSIGN.handler())
                 .handler(rc -> assignments.assign(PolicyService.user(rc), BodySchema.body(rc)).onSuccess(rc::json).onFailure(rc::fail));

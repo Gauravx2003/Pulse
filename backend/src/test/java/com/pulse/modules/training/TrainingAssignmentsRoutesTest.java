@@ -35,7 +35,9 @@ class TrainingAssignmentsRoutesTest
     {
         api = TestApi.start(PORT, null);
 
-        for (String script : new String[] {"modules/training/migrations/V350__training.sql", "modules/training/seed/S350__demo_training.sql"})
+        // The assignment detail carries its rating, which reads the checkpoint reviews (V340, V345).
+        for (String script : new String[] {"modules/reviews/migrations/V340__review_360.sql", "modules/reviews/migrations/V345__review_cycle_kinds.sql",
+                "modules/training/migrations/V350__training.sql", "modules/training/seed/S350__demo_training.sql"})
         {
             try (InputStream in = TrainingAssignmentsRoutesTest.class.getClassLoader().getResourceAsStream(script))
             {

@@ -40,7 +40,8 @@ class Review360RoutesTest
     {
         api = TestApi.start(PORT, null);
 
-        for (String script : new String[] {"modules/reviews/migrations/V340__review_360.sql", "modules/reviews/seed/S340__demo_review_360.sql",
+        for (String script : new String[] {"modules/reviews/migrations/V340__review_360.sql",
+                "modules/reviews/migrations/V345__review_cycle_kinds.sql", "modules/reviews/seed/S340__demo_review_360.sql",
                 "modules/reviews/seed/S341__demo_review_360_unstarted.sql"})
         {
             try (InputStream in = Review360RoutesTest.class.getClassLoader().getResourceAsStream(script))

@@ -579,7 +579,7 @@ final class Review360Service
     {
         return repo.cycle(cycleId).compose(cycle ->
         {
-            if (cycle == null)
+            if (cycle == null || !"360".equals(cycle.getString("kind")))
             {
                 return Future.failedFuture(PolicyService.notFound());
             }

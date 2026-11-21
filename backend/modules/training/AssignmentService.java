@@ -1,6 +1,8 @@
 package com.pulse.modules.training;
 
+import com.pulse.calc.core.CalcService;
 import com.pulse.calc.core.TrainingRating;
+import com.pulse.calc.people.TrainingFormulas;
 import com.pulse.calc.core.WorkingDays;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.http.ApiException;
@@ -92,7 +94,8 @@ final class AssignmentService
     {
         AssignmentRepository repo = new AssignmentRepository(ctx.sql());
 
-        return access(user, id).compose(a -> Future.all(repo.checkIns(id), repo.sessions(id), repo.requests(id), repo.holidays())
+        return access(user, id).compose(a -> Future.all(repo.checkIns(id), repo.sessions(id), repo.requests(id), repo.holidays(),
+                        ctx.calc().getObject("people.trainingRating", new JsonObject().put("assignment", id.toString())))
                 .map(all ->
                 {
                     JsonArray checkIns = all.resultAt(0);
@@ -103,7 +106,8 @@ final class AssignmentService
                             .put("periods", periods(a, checkIns, holidays, today()).getJsonArray("periods"))
                             .put("sessions", all.resultAt(1))
                             .put("requests", all.resultAt(2))
-                            .put("feedbackKeys", TrainingLifecycle.feedbackKeys(a, checkIns));
+                            .put("feedbackKeys", TrainingLifecycle.feedbackKeys(a, checkIns))
+                            .put("rating", (JsonObject) all.resultAt(4));
                 }));
     }
 
@@ -264,7 +268,7 @@ final class AssignmentService
 
             // TODO(5.3): notify the trainee and the mentor.
             return chain.map(v -> new JsonObject().put("assigned", assigned).put("skipped", skipped).put("warnings", warnings));
-        });
+        }).onSuccess(v -> changed());
     }
 
     /** Edits mentor, dates, assessment window, cadence or meetings of an open assignment (managers). */
@@ -296,14 +300,14 @@ final class AssignmentService
                             : ctx.sql().inTransaction(tx -> new AssignmentRepository(tx).updateDetails(id, merged, expectedVersion)
                                     .compose(row -> AuditService.record(tx, AuditService.entry(user, UPDATED, "training_assignment",
                                             id.toString(), new JsonObject().put("personId", a.getString("personId")))))));
-        }).compose(v -> get(user, id));
+        }).compose(v -> afterWrite(user, id));
     }
 
     Future<Void> remove(JsonObject user, UUID id)
     {
         return managed(user, id).compose(a -> ctx.sql().inTransaction(tx -> new AssignmentRepository(tx).delete(id)
                 .compose(n -> AuditService.record(tx, AuditService.entry(user, REMOVED, "training_assignment", id.toString(),
-                        new JsonObject().put("personId", a.getString("personId")))))));
+                        new JsonObject().put("personId", a.getString("personId"))))))).onSuccess(v -> changed());
     }
 
     /** Ticks or unticks a module (trainee, mentor or manager) while the assignment is open. */
@@ -342,7 +346,7 @@ final class AssignmentService
             }
 
             return new AssignmentRepository(ctx.sql()).setJson(id, "module_progress", progress, expectedVersion);
-        }).compose(v -> get(user, id));
+        }).compose(v -> afterWrite(user, id));
     }
 
     // ------------------------------------------------------------------ check-ins
@@ -387,7 +391,7 @@ final class AssignmentService
                         ? Future.failedFuture(ApiException.conflict("already_verified", "This period's check-in is already verified."))
                         : Future.succeededFuture());
             });
-        }).compose(v -> get(user, id));
+        }).compose(v -> afterWrite(user, id));
     }
 
     /** The mentor or a manager verifies a check-in or marks it Needs work (comment required). */
@@ -428,7 +432,7 @@ final class AssignmentService
                                 today(), expectedVersion)
                         .compose(row -> AuditService.record(tx, AuditService.entry(user, CHECKIN_REVIEWED, "training_checkin",
                                 checkInId.toString(), new JsonObject().put("decision", decision)))))
-                        .compose(v -> get(user, assignmentId));
+                        .compose(v -> afterWrite(user, assignmentId));
             });
         });
     }
@@ -485,7 +489,7 @@ final class AssignmentService
             return ctx.sql().inTransaction(tx -> new AssignmentRepository(tx).setJson(id, "assessment", assessment, expectedVersion)
                     .compose(row -> AuditService.record(tx, AuditService.entry(user, ASSESSED, "training_assignment", id.toString(),
                             new JsonObject().put("score", score).put("result", assessment.getString("result"))))));
-        }).compose(v -> get(user, id));
+        }).compose(v -> afterWrite(user, id));
     }
 
     /**
@@ -594,7 +598,7 @@ final class AssignmentService
             finals.put("manager", review);
 
             return saveFinals(user, id, a, finals, expectedVersion);
-        }).compose(v -> get(user, id));
+        }).compose(v -> afterWrite(user, id));
     }
 
     private Future<Void> saveFinals(JsonObject user, UUID id, JsonObject a, JsonObject finals, int expectedVersion)
@@ -656,7 +660,7 @@ final class AssignmentService
             return ctx.sql().inTransaction(tx -> new AssignmentRepository(tx).signOff(id, outcome, signOff, acks, expectedVersion)
                     .compose(row -> AuditService.record(tx, AuditService.entry(user, SIGNED_OFF, "training_assignment", id.toString(),
                             new JsonObject().put("agree", agree).put("outcome", outcome)))));
-        }).compose(v -> get(user, id));
+        }).compose(v -> afterWrite(user, id));
     }
 
     /** The trainee acknowledges one feedback item, or disagrees with a comment. */
@@ -695,7 +699,7 @@ final class AssignmentService
 
                 return repo.setJson(id, "acknowledgements", acks, expectedVersion);
             });
-        }).compose(v -> get(user, id));
+        }).compose(v -> afterWrite(user, id));
     }
 
     /** The mentor replies to an acknowledgement. */
@@ -721,7 +725,7 @@ final class AssignmentService
                     .put("at", today().toString())));
 
             return new AssignmentRepository(ctx.sql()).setJson(id, "acknowledgements", acks, expectedVersion);
-        }).compose(v -> get(user, id));
+        }).compose(v -> afterWrite(user, id));
     }
 
     /** A manager marks a sign-off disagreement as discussed, which clears the flag. */
@@ -738,10 +742,30 @@ final class AssignmentService
 
             return new AssignmentRepository(ctx.sql()).setJson(id, "sign_off", signOff.copy().put("discussed", today().toString()),
                     expectedVersion);
-        }).compose(v -> get(user, id));
+        }).compose(v -> afterWrite(user, id));
     }
 
     // ------------------------------------------------------------------ access and helpers
+
+    /** A person's overall training rating (people.trainingOverall), for those who may see their training. */
+    Future<JsonObject> overall(JsonObject user, String personId)
+    {
+        return policy.requireVisible(user, personId, PolicyService.DOMAIN_TRAINING)
+                .compose(scope -> ctx.calc().getObject("people.trainingOverall", new JsonObject().put("person", personId)));
+    }
+
+    /** After a write: cached training ratings are dropped, then the fresh assignment is returned. */
+    private Future<JsonObject> afterWrite(JsonObject user, UUID id)
+    {
+        changed();
+
+        return get(user, id);
+    }
+
+    private void changed()
+    {
+        CalcService.publish(ctx.vertx(), TrainingFormulas.TRAINING);
+    }
 
     /** The assignment when the user may see it (policy scope or as its mentor), with stage and roles. */
     private Future<JsonObject> access(JsonObject user, UUID id)

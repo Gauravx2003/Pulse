@@ -100,6 +100,8 @@
                         <configuration>
                             <sources>
                                 <source>modules</source>
+                                <!-- Calculation library (design.md decision 5): calc/core, calc/work, calc/people. -->
+                                <source>calc</source>
                             </sources>
                         </configuration>
                     </execution>

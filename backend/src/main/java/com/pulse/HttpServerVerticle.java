@@ -1,5 +1,8 @@
 package com.pulse;
 
+import com.pulse.calc.core.CalcService;
+import com.pulse.calc.core.FormulaRegistry;
+import com.pulse.calc.core.PulseClock;
 import com.pulse.platform.audit.AuditEvents;
 import com.pulse.platform.audit.AuditRoutes;
 import com.pulse.platform.auth.AuthRoutes;
@@ -7,6 +10,7 @@ import com.pulse.platform.auth.AuthService;
 import com.pulse.platform.auth.AuthSettings;
 import com.pulse.platform.auth.PasswordService;
 import com.pulse.platform.auth.PermissionCatalogue;
+import com.pulse.platform.config.RuntimeProfile;
 import com.pulse.platform.db.Db;
 import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.http.BodyLimits;
@@ -45,6 +49,10 @@ public class HttpServerVerticle extends AbstractVerticle
 
     public static final String API_PREFIX = "/api/v1";
 
+    private static final long CLOSE_PERIODS_EVERY_MS = 60 * 60 * 1000L;
+
+    private CalcService calc;
+
     @Override
     public void start(Promise<Void> startPromise)
     {
@@ -64,11 +72,14 @@ public class HttpServerVerticle extends AbstractVerticle
         ClassLoader loader = getClass().getClassLoader();
 
         vertx.executeBlocking(() -> ModuleRegistry.discover(loader))
-                .compose(registry -> vertx.createHttpServer().requestHandler(buildRouter(registry)).listen(port))
+                .compose(registry -> vertx.executeBlocking(() -> FormulaRegistry.discover(loader))
+                        .compose(formulas -> vertx.createHttpServer()
+                                .requestHandler(buildRouter(registry, formulas)).listen(port)))
                 .onSuccess(http ->
                 {
                     log.info("Pulse HTTP server started on port {}", http.actualPort());
                     startPromise.complete();
+                    closePeriods();
                 })
                 .onFailure(err ->
                 {
@@ -77,7 +88,25 @@ public class HttpServerVerticle extends AbstractVerticle
                 });
     }
 
-    private Router buildRouter(ModuleRegistry registry)
+    /**
+     * Freezes the periods that ended (task 4.10): once at start, then hourly. A failure is logged and
+     * retried on the next run; it never stops the server.
+     */
+    private void closePeriods()
+    {
+        if (!config().getBoolean("calc.closePeriods", true))
+        {
+            return;
+        }
+
+        Runnable run = () -> calc.closeEndedPeriods().onFailure(e -> log.error("Closing ended periods failed", e));
+
+        run.run();
+
+        vertx.setPeriodic(CLOSE_PERIODS_EVERY_MS, id -> run.run());
+    }
+
+    private Router buildRouter(ModuleRegistry registry, FormulaRegistry formulas)
     {
         Router router = Router.router(vertx);
 
@@ -129,7 +158,9 @@ public class HttpServerVerticle extends AbstractVerticle
 
         AuditRoutes.mount(router, API_PREFIX, policy, sql);
 
-        ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy);
+        calc = new CalcService(sql, PulseClock.from(config(), RuntimeProfile.from(config())), formulas).listen(vertx);
+
+        ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy, calc);
 
         for (PulseModule module : registry.modules())
         {

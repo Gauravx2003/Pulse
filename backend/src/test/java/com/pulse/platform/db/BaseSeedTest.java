@@ -47,7 +47,7 @@ class BaseSeedTest {
         ScriptCatalog platform = ScriptCatalog.load(BaseSeedTest.class.getClassLoader(), List.of(ScriptCatalog.PLATFORM));
         await(MigrationRunner.migrate(owner, platform));
         List<SqlScript> seeded = await(MigrationRunner.seed(owner, platform, true));
-        assertEquals(List.of(100, 110), seeded.stream().map(SqlScript::version).toList());
+        assertEquals(List.of(100, 110, 120, 130), seeded.stream().map(SqlScript::version).toList());
     }
 
     @AfterAll
@@ -115,6 +115,30 @@ class BaseSeedTest {
         assertEquals(1L, count("SELECT count(*) FROM rule_versions WHERE version = 1"));
         assertEquals(0L, count("SELECT count(*) FROM rules r WHERE NOT (SELECT rule_set FROM rule_versions "
                 + "WHERE version = 1) ? r.key"));
+    }
+
+    /** Tasks 4.3 and 4.4: V110 and S120 carry the prototype's pillars, 360° ratings and culture signals. */
+    @Test
+    void performanceInputsAreSeeded() throws Exception {
+        JsonArray prototypePeople = new JsonArray(Files.readString(Path.of("..", "seed", "extracted", "people.json")));
+        int n = prototypePeople.size();
+        assertEquals((long) n, count("SELECT count(*) FROM pillars WHERE quarter = '2026-Q3'"));
+        assertEquals((long) n * 12, count("SELECT count(*) FROM culture_signals WHERE is_simulated AND quarter = '2026-Q3'"));
+        assertEquals((long) n * 11, count("SELECT count(*) FROM culture_ratings WHERE rater_group = 'Combined'"));
+        for (Object o : prototypePeople) {
+            io.vertx.core.json.JsonObject p = (io.vertx.core.json.JsonObject) o;
+            Row r = await(owner.preparedQuery("SELECT x.delivery::float8, x.quality::float8, x.okr::float8, x.growth::float8 "
+                    + "FROM pillars x JOIN people pe ON pe.id = x.person_id WHERE pe.external_id = $1")
+                    .execute(Tuple.of(p.getString("id")))).iterator().next();
+            io.vertx.core.json.JsonObject pillars = p.getJsonObject("pillars");
+            assertEquals(pillars.getDouble("delivery"), r.getDouble(0), p.getString("id"));
+            assertEquals(pillars.getDouble("quality"), r.getDouble(1), p.getString("id"));
+            assertEquals(pillars.getDouble("okr"), r.getDouble(2), p.getString("id"));
+            assertEquals(pillars.getDouble("growth"), r.getDouble(3), p.getString("id"));
+        }
+        assertEquals(4.8, await(owner.query("SELECT c.rating::float8 FROM culture_ratings c JOIN people pe ON pe.id = c.person_id "
+                + "WHERE pe.external_id = 'ps' AND c.value_name = 'Moral & Ethics' AND c.rater_group = 'Combined'")
+                .execute()).iterator().next().getDouble(0));
     }
 
     private long permissions(String role) throws Exception {

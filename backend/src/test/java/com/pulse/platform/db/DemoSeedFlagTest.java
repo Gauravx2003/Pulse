@@ -42,16 +42,17 @@ class DemoSeedFlagTest {
         assertEquals(List.of("S100"), off.stream().map(SqlScript::label).toList());
         assertEquals(0L, count("SELECT count(*) FROM users"));
         assertEquals(3L, count("SELECT count(*) FROM roles"), "base seed still loads");
-        assertEquals(0L, count("SELECT count(*) FROM pulse_schema_history WHERE kind = 'SEED' AND version = 110"));
+        assertEquals(0L, count("SELECT count(*) FROM pulse_schema_history WHERE kind = 'SEED' AND version IN (110, 120, 130)"));
+        assertEquals(0L, count("SELECT count(*) FROM pillars"));
 
         List<SqlScript> on = await(MigrationRunner.seed(owner, platform, true));
-        assertEquals(List.of("S110"), on.stream().map(SqlScript::label).toList());
+        assertEquals(List.of("S110", "S120", "S130"), on.stream().map(SqlScript::label).toList());
         assertTrue(count("SELECT count(*) FROM users WHERE email = 'hr@pulse.demo'") == 1L);
     }
 
     @Test
     void demoSeedsAreRecognisedByName() {
-        assertTrue(platform.seeds().stream().filter(SqlScript::demo).map(SqlScript::label).toList().contains("S110"));
+        assertTrue(platform.seeds().stream().filter(SqlScript::demo).map(SqlScript::label).toList().containsAll(List.of("S110", "S120", "S130")));
         assertTrue(platform.seeds().stream().filter(s -> !s.demo()).map(SqlScript::label).toList().contains("S100"));
     }
 

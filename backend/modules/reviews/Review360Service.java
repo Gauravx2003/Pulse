@@ -1,5 +1,7 @@
 package com.pulse.modules.reviews;
 
+import com.pulse.calc.core.CalcService;
+import com.pulse.calc.people.ReviewFormulas;
 import com.pulse.platform.audit.AuditEvents;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.http.ApiException;
@@ -29,10 +31,11 @@ import java.util.regex.Pattern;
  * answers from this service: a reviewer reads only their own request, the manager's assignment view
  * shows names and states but no answers, and a subject sees only counts.
  *
- * <p>Not here yet (they depend on other tasks): results with the anonymity merge, hidden strengths,
- * blind spots and weighted score (calc/people through CalcService, 4.10/4.11), the managers'
- * preliminary results, publish into culture values (4.4 / group 19), notifications and reminders
- * (5.3) and training checkpoints (task 21).
+ * <p>Results come from calc/people through CalcService ({@code people.review360Results}), which merges
+ * or hides groups under the anonymity threshold; every change publishes {@link ReviewFormulas#REVIEWS}.
+ *
+ * <p>Not here yet (they depend on other tasks): publish into culture values (4.4 / group 19),
+ * notifications and reminders (5.3) and training checkpoints (task 21).
  */
 final class Review360Service
 {
@@ -299,7 +302,7 @@ final class Review360Service
 
             // TODO(5.3): notify every new reviewer with a link that opens the form.
             return chain.map(v -> new JsonObject().put("assigned", assigned).put("skipped", skipped));
-        });
+        }).onSuccess(v -> changed());
     }
 
     /** The manager's view: reviewers and states per visible subject. */
@@ -330,7 +333,8 @@ final class Review360Service
                             .compose(n -> AuditService.record(tx, AuditService.entry(user, REQUEST_REMOVED, "review_request",
                                     requestId.toString(), new JsonObject().put("subjectId", found.getString("subjectId"))
                                             .put("group", found.getString("group"))))));
-                });
+                })
+                .onSuccess(v -> changed());
     }
 
     // ------------------------------------------------------------------ the reviewer's side
@@ -380,6 +384,12 @@ final class Review360Service
                             ? AuditService.record(tx, anonymize(AuditService.entry(auditActor(user, found), REVIEW_SUBMITTED, "review_request",
                                     id.toString(), new JsonObject().put("group", found.getString("group"))), found)).map(row)
                             : Future.succeededFuture(row)));
+        }).onSuccess(v ->
+        {
+            if (submit)
+            {
+                changed();
+            }
         }).compose(v -> request(user, id));
     }
 
@@ -396,7 +406,7 @@ final class Review360Service
             return ctx.sql().inTransaction(tx -> new Review360Repository(tx).decline(id, expectedVersion)
                     .compose(row -> AuditService.record(tx, anonymize(AuditService.entry(auditActor(user, found), REQUEST_DECLINED, "review_request",
                             id.toString(), new JsonObject().put("group", found.getString("group"))), found)).map(row)));
-        });
+        }).onSuccess(v -> changed());
     }
 
     /**
@@ -438,11 +448,42 @@ final class Review360Service
                         "Results open when the cycle is published. Until then you see how many reviews are in."));
             }
 
-            // TODO(4.10/4.11): results come from calc/people through CalcService (merge under the threshold,
-            // hidden strengths, blind spots, weighted score, grouped comments).
-            return Future.failedFuture(ApiException.conflict("results_not_available",
-                    "360° results are computed by the calculation service, which is not available yet."));
+            return results(cycleId, user.getString("personId")).map(results -> results.put("published", true));
         });
+    }
+
+    /**
+     * Results of a person the manager (or HR) sees, preliminary while the cycle runs (spec "Differencing
+     * protection": aggregates of groups at or above the threshold only, no response-level detail).
+     */
+    Future<JsonObject> resultsFor(JsonObject user, UUID cycleId, String personId)
+    {
+        return policy.requireVisible(user, personId, PolicyService.DOMAIN_REVIEWS)
+                .compose(scope -> new Review360Repository(ctx.sql()).cycle(cycleId))
+                .compose(cycle ->
+                {
+                    if (cycle == null)
+                    {
+                        return Future.failedFuture(PolicyService.notFound());
+                    }
+
+                    boolean published = "published".equals(cycle.getString("status"));
+
+                    return results(cycleId, personId).map(results -> results.put("published", published).put("preliminary", !published));
+                });
+    }
+
+    /** The anonymity-safe aggregation from calc/people. */
+    private Future<JsonObject> results(UUID cycleId, String personId)
+    {
+        return ctx.calc().getObject("people.review360Results", new JsonObject().put("cycle", cycleId.toString()).put("person", personId))
+                .map(results -> results.put("cycleId", cycleId.toString()).put("personId", personId));
+    }
+
+    /** After assignments, submissions, declines or removals: cached results are dropped. */
+    private void changed()
+    {
+        CalcService.publish(ctx.vertx(), ReviewFormulas.REVIEWS);
     }
 
     // ------------------------------------------------------------------ rules

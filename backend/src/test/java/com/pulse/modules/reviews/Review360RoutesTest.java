@@ -40,7 +40,8 @@ class Review360RoutesTest
     {
         api = TestApi.start(PORT, null);
 
-        for (String script : new String[] {"modules/reviews/migrations/V340__review_360.sql", "modules/reviews/seed/S340__demo_review_360.sql"})
+        for (String script : new String[] {"modules/reviews/migrations/V340__review_360.sql", "modules/reviews/seed/S340__demo_review_360.sql",
+                "modules/reviews/seed/S341__demo_review_360_unstarted.sql"})
         {
             try (InputStream in = Review360RoutesTest.class.getClassLoader().getResourceAsStream(script))
             {
@@ -344,5 +345,54 @@ class Review360RoutesTest
         assertEquals(false, progress.bodyAsJsonObject().getBoolean("published"));
 
         assertTrue(!progress.bodyAsString().contains("Arjun") && !progress.bodyAsString().contains("scores"), progress.bodyAsString());
+    }
+
+    @Test
+    void publishedResultsHideGroupsUnderTheThresholdForEveryReader() throws Exception
+    {
+        // Seeded Q2 cycle (published): Priya has 3 internal and 2 cross-department responses, threshold 3.
+        String q2 = api.queryOne("SELECT id FROM review_cycles WHERE external_id = 'c0'").getString("id");
+
+        HttpResponse<Buffer> mine = api.get("/api/v1/reviews/360/cycles/" + q2 + "/results", RoleMatrix.session(api, RoleMatrix.EMPLOYEE));
+
+        assertEquals(200, mine.statusCode(), mine.bodyAsString());
+
+        JsonObject results = mine.bodyAsJsonObject();
+
+        assertEquals(true, results.getBoolean("published"));
+
+        assertEquals("hidden", results.getJsonObject("groups").getJsonObject("cross").getString("state"));
+
+        assertTrue(results.getJsonObject("averages").containsKey("internal"));
+
+        assertTrue(!results.getJsonObject("averages").containsKey("cross") && !results.getJsonObject("averages").containsKey("others"));
+
+        assertTrue(!results.getJsonObject("comments").containsKey("cross"));
+
+        HttpResponse<Buffer> managers = api.get("/api/v1/reviews/360/cycles/" + q2 + "/results/" + priyaPerson,
+                RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        assertEquals(200, managers.statusCode(), managers.bodyAsString());
+
+        assertEquals(false, managers.bodyAsJsonObject().getBoolean("preliminary"));
+
+        assertEquals("hidden", managers.bodyAsJsonObject().getJsonObject("groups").getJsonObject("cross").getString("state"));
+
+        assertEquals(403, api.get("/api/v1/reviews/360/cycles/" + q2 + "/results/" + priyaPerson,
+                RoleMatrix.session(api, RoleMatrix.PEER)).statusCode());
+    }
+
+    @Test
+    void managersSeePreliminaryAggregatesWhileTheCycleRuns() throws Exception
+    {
+        HttpResponse<Buffer> res = api.get("/api/v1/reviews/360/cycles/" + cycleId + "/results/" + nehaPerson,
+                RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        assertEquals(true, res.bodyAsJsonObject().getBoolean("preliminary"));
+
+        // Spec "Differencing protection": aggregates only, never one reviewer's answers.
+        assertTrue(!res.bodyAsString().contains("reviewer"), res.bodyAsString());
     }
 }

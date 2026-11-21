@@ -158,6 +158,10 @@ public final class ReviewsRoutes
         router.get("/360/cycles/:id/results").handler(policy.requires("review360.give"))
                 .handler(rc -> reviews360.myResults(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
 
+        router.get("/360/cycles/:id/results/:personId").handler(policy.requires("review360.manage"))
+                .handler(rc -> reviews360.resultsFor(PolicyService.user(rc), Ids.path(rc, "id"), rc.pathParam("personId"))
+                        .onSuccess(rc::json).onFailure(rc::fail));
+
         router.get("/360/to-give").handler(policy.requires("review360.give"))
                 .handler(rc -> reviews360.toGive(PolicyService.user(rc))
                         .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));

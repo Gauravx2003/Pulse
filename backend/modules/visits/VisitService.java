@@ -1,5 +1,7 @@
 package com.pulse.modules.visits;
 
+import com.pulse.calc.core.CalcService;
+import com.pulse.calc.people.VisitFormulas;
 import com.pulse.platform.audit.AuditEvents;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.http.ApiException;
@@ -31,9 +33,11 @@ import java.util.UUID;
  *   <li>Verify or reject: effort.confirm, never on one's own visit, after report and feedback.</li>
  * </ul>
  *
- * <p>Not here yet (they depend on other tasks): points and the 8-a-month cap (calc/people through
- * CalcService, 4.10/4.11), overlap with leave (attendance, 17.1), capacity and On duty days (Track 2
- * utilization, 17), notifications and the reminder (5.3).
+ * <p>Points, values and stats come from calc/people through CalcService ({@code people.visitPoints},
+ * {@code people.visitStats}, {@code people.visitMonth}); every write publishes {@link VisitFormulas#VISITS}.
+ *
+ * <p>Not here yet (they depend on other tasks): overlap with leave (attendance, 17.1), capacity and On
+ * duty days (Track 2 utilization, 17), notifications and the reminder (5.3).
  */
 final class VisitService
 {
@@ -69,9 +73,46 @@ final class VisitService
         this.policy = ctx.policy();
     }
 
-    static LocalDate today()
+    /** Today for the visits module: the CalcService clock (pinned by PULSE_TODAY outside production). */
+    LocalDate today()
     {
-        return LocalDate.now(PolicyService.ZONE);
+        return today(ctx);
+    }
+
+    static LocalDate today(ModuleContext ctx)
+    {
+        return ctx.calc() == null ? LocalDate.now(PolicyService.ZONE) : ctx.calc().clock().today();
+    }
+
+    /** After a visit changes: cached points and stats that read visits are dropped. */
+    private void changed()
+    {
+        CalcService.publish(ctx.vertx(), VisitFormulas.VISITS);
+    }
+
+    /** The visit's points breakdown and credited values from calc/people (people.visitPoints). */
+    private Future<JsonObject> withPoints(JsonObject visit)
+    {
+        return ctx.calc().get("people.visitPoints", new JsonObject().put("visit", visit.getString("id")))
+                .map(result ->
+                {
+                    if (result instanceof JsonObject points && points.containsKey("points"))
+                    {
+                        visit.put("points", points.getJsonObject("points")).put("values", points.getJsonArray("values"));
+                    }
+
+                    return visit;
+                });
+    }
+
+    /** A person's visit stats for a period (people.visitStats): {@code q:Q3} or {@code all}. */
+    Future<JsonObject> stats(JsonObject user, String personId, String period)
+    {
+        return policy.requireVisible(user, personId, PolicyService.DOMAIN_VISITS)
+                .compose(scope -> ctx.calc().getObject("people.visitStats", new JsonObject().put("person", personId).put("period", period)))
+                .recover(error -> error instanceof IllegalArgumentException
+                        ? Future.failedFuture(ApiException.badRequest("invalid_parameter", error.getMessage()).field("period"))
+                        : Future.failedFuture(error));
     }
 
     // ------------------------------------------------------------------ reads
@@ -99,7 +140,7 @@ final class VisitService
 
     Future<JsonObject> get(JsonObject user, UUID id)
     {
-        return visible(user, id).map(visit -> decorate(visit, user, today()));
+        return visible(user, id).map(visit -> decorate(visit, user, today())).compose(this::withPoints);
     }
 
     // ------------------------------------------------------------------ plan, log, edit, delete
@@ -122,7 +163,8 @@ final class VisitService
                                     .compose(v -> repo.byId(scope, UUID.fromString(row.getString("id")))))
                             .map(visit -> markManager(visit, user, scope));
                 }))
-                .map(visit -> decorate(visit, user, today()));
+                .map(visit -> decorate(visit, user, today()))
+                .onSuccess(visit -> changed());
     }
 
     Future<JsonObject> update(JsonObject user, UUID id, JsonObject body, int expectedVersion)
@@ -141,7 +183,7 @@ final class VisitService
                         .compose(row -> AuditService.record(tx, AuditService.entry(user, UPDATED, "visit", id.toString(),
                                 new JsonObject().put("personId", visit.getString("personId")))));
             }));
-        }).compose(v -> get(user, id));
+        }).onSuccess(v -> changed()).compose(v -> get(user, id));
     }
 
     Future<Void> delete(JsonObject user, UUID id, int expectedVersion)
@@ -157,7 +199,7 @@ final class VisitService
 
                     return AuditService.record(tx, AuditService.entry(user, DELETED, "visit", id.toString(),
                             new JsonObject().put("personId", visit.getString("personId"))));
-                })));
+                }))).onSuccess(v -> changed());
     }
 
     // ------------------------------------------------------------------ report, feedback, verification
@@ -186,7 +228,7 @@ final class VisitService
             return ctx.sql().inTransaction(tx -> new VisitRepository(tx).report(id, body, today, expectedVersion)
                     .compose(row -> AuditService.record(tx, AuditService.entry(user, REPORTED, "visit", id.toString(),
                             new JsonObject().put("personId", visit.getString("personId"))))));
-        }).compose(v -> get(user, id));
+        }).onSuccess(v -> changed()).compose(v -> get(user, id));
     }
 
     Future<JsonObject> feedback(JsonObject user, UUID id, JsonObject body, int expectedVersion)
@@ -219,7 +261,7 @@ final class VisitService
                     .feedback(id, body, UUID.fromString(user.getString("id")), expectedVersion)
                     .compose(row -> AuditService.record(tx, AuditService.entry(user, FEEDBACK, "visit", id.toString(),
                             new JsonObject().put("personId", visit.getString("personId")).put("csat", body.getNumber("csat"))))));
-        }).compose(v -> get(user, id));
+        }).onSuccess(v -> changed()).compose(v -> get(user, id));
     }
 
     /** Verify ({@code confirmed}) or reject ({@code rejected}) the visit's points. */
@@ -258,6 +300,7 @@ final class VisitService
                             .compose(row -> AuditService.record(tx, AuditService.entry(user, event, "visit", id.toString(),
                                     new JsonObject().put("personId", visit.getString("personId")).put("decision", decision)))));
                 })
+                .onSuccess(v -> changed())
                 .compose(v -> get(user, id));
     }
 

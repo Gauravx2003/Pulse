@@ -193,6 +193,13 @@ class VisitsRoutesTest
 
         assertEquals("verified", verified.getString("status"));
 
+        // Points from calc/people: escalation + 2 extra days + CSAT 4.8 (weekend days depend on today's date).
+        double total = verified.getJsonObject("points").getDouble("total");
+
+        assertTrue(total >= 1.5 + 1.0 + 0.5 + 1, verified.encodePrettily());
+
+        assertTrue(verified.getJsonArray("values").contains("Resilience"), verified.encodePrettily());
+
         assertEquals(1, api.count("SELECT count(*) FROM audit_log WHERE action = 'visit.verify' AND outcome = 'success'"));
 
         // A reported visit can no longer be deleted.
@@ -281,5 +288,29 @@ class VisitsRoutesTest
         HttpResponse<Buffer> res = api.post("/api/v1/visits/items", RoleMatrix.session(api, RoleMatrix.PEER), visit("2027-04-01", "2027-04-01"));
 
         assertEquals(403, res.statusCode());
+    }
+
+    @Test
+    void statsComeFromTheCalculationService() throws Exception
+    {
+        // Priya in Q3 2026 (seed): VIS-102 health check on a Thursday, CSAT 4 (1.5 points) and VIS-104
+        // troubleshooting Tuesday-Wednesday, CSAT 5 (1.5 + 0.5 + 1 = 3), both verified.
+        HttpResponse<Buffer> res = api.get("/api/v1/visits/stats?personId=" + priyaPerson + "&period=q:2026-Q3",
+                RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        JsonObject stats = ok(res, 200);
+
+        assertEquals(2, stats.getInteger("reported"), stats.encodePrettily());
+
+        assertEquals(4.5, stats.getDouble("points"));
+
+        assertEquals(4.5, stats.getDouble("pointsConfirmed"));
+
+        assertEquals(4.5, stats.getDouble("csat"));
+
+        assertEquals(403, api.get("/api/v1/visits/stats?personId=" + priyaPerson, RoleMatrix.session(api, RoleMatrix.PEER)).statusCode());
+
+        assertEquals(400, api.get("/api/v1/visits/stats?personId=" + priyaPerson + "&period=nonsense",
+                RoleMatrix.session(api, RoleMatrix.MANAGER)).statusCode());
     }
 }

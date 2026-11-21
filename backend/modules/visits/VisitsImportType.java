@@ -33,6 +33,8 @@ import java.util.UUID;
  * </ul>
  *
  * <p>Not here yet: overlap with leave (attendance, 17.1) and the notification to the engineer (5.3).
+ * "Today" here is the server clock: import types get no CalcService clock, so PULSE_TODAY does not
+ * pin the past-start warning.
  */
 public class VisitsImportType implements ImportType
 {
@@ -250,7 +252,7 @@ public class VisitsImportType implements ImportType
             return;
         }
 
-        if (from.isBefore(VisitService.today()))
+        if (from.isBefore(LocalDate.now(PolicyService.ZONE)))
         {
             row.getJsonArray("warnings").add(message(line, "from",
                     "Visit already started — " + firstName(engineer.getString("name")) + " gets a “report due” reminder."));
@@ -430,7 +432,7 @@ public class VisitsImportType implements ImportType
     @Override
     public Future<JsonArray> exportRows(JsonObject actor, JsonObject query, SqlExecutor sql, PolicyService policy)
     {
-        int year = VisitService.today().getYear();
+        int year = LocalDate.now(PolicyService.ZONE).getYear();
 
         LocalDate from;
 

@@ -197,7 +197,7 @@ public final class CsvValidator
 
             if (raw.isEmpty())
             {
-                if (column.getBoolean("required"))
+                if (column.getBoolean("required") && !column.getBoolean("allowEmpty", false))
                 {
                     errors.add(error(line, key, key + " is empty. This column is required."));
                 }

@@ -99,7 +99,12 @@ class ImportsRoutesTest
 
         HttpResponse<Buffer> employee = api.get("/api/v1/imports/types", RoleMatrix.session(api, RoleMatrix.EMPLOYEE));
 
-        assertEquals(0, employee.bodyAsJsonObject().getJsonArray("items").size());
+        String employeeTypes = employee.bodyAsString();
+
+        // priya@ holds okr.own (OKR import) but neither users.team (test notes) nor the holiday permissions.
+        assertTrue(employeeTypes.contains("\"okrs\""), employeeTypes);
+
+        assertTrue(!employeeTypes.contains("\"test_notes\"") && !employeeTypes.contains("\"holidays\""), employeeTypes);
 
         assertEquals(401, api.get("/api/v1/imports/types", null).statusCode());
     }

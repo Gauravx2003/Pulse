@@ -2,6 +2,7 @@ package com.pulse.modules.imports.type;
 
 import com.pulse.modules.imports.csv.CsvColumns;
 import com.pulse.platform.db.SqlExecutor;
+import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -95,7 +96,7 @@ public class NotesImportType implements ImportType
     }
 
     @Override
-    public Future<JsonArray> check(JsonArray rows, String mode, JsonObject actor, SqlExecutor sql)
+    public Future<JsonArray> check(JsonArray rows, String mode, JsonObject actor, SqlExecutor sql, PolicyService policy)
     {
         return sql.queryList("SELECT id, title, due FROM test_notes", Tuple.tuple()).map(stored ->
         {
@@ -162,7 +163,7 @@ public class NotesImportType implements ImportType
     }
 
     @Override
-    public Future<JsonObject> commit(JsonArray rows, String mode, JsonObject actor, SqlExecutor tx)
+    public Future<JsonObject> commit(JsonArray rows, String mode, JsonObject actor, SqlExecutor tx, PolicyService policy)
     {
         JsonArray changes = new JsonArray();
 
@@ -249,7 +250,7 @@ public class NotesImportType implements ImportType
     }
 
     @Override
-    public Future<JsonArray> exportRows(JsonObject actor, SqlExecutor sql)
+    public Future<JsonArray> exportRows(JsonObject actor, JsonObject query, SqlExecutor sql, PolicyService policy)
     {
         return sql.queryList("SELECT title, due FROM test_notes ORDER BY title", Tuple.tuple());
     }

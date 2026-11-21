@@ -9,6 +9,7 @@ import com.pulse.platform.audit.AuditEvents;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.http.ApiException;
+import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -71,13 +72,17 @@ public class ImportService
 
     private final ImportTypeRegistry registry;
 
-    public ImportService(Vertx vertx, SqlExecutor sql, ImportTypeRegistry registry)
+    private final PolicyService policy;
+
+    public ImportService(Vertx vertx, SqlExecutor sql, ImportTypeRegistry registry, PolicyService policy)
     {
         this.vertx = vertx;
 
         this.sql = sql;
 
         this.registry = registry;
+
+        this.policy = policy;
     }
 
     // ------------------------------------------------------------------ check
@@ -110,7 +115,7 @@ public class ImportService
 
         return validated
                 .recover(ImportService::asApiException)
-                .compose(file -> type.check(file.getJsonArray("rows"), mode, user, sql)
+                .compose(file -> type.check(file.getJsonArray("rows"), mode, user, sql, policy)
                         .compose(rows ->
                         {
                             JsonObject result = summarize(type, mode, name, file, rows);
@@ -333,7 +338,7 @@ public class ImportService
 
             JsonObject result = check.getJsonObject("result");
 
-            return type.commit(check.getJsonArray("rows_data"), check.getString("mode"), user, tx).compose(outcome ->
+            return type.commit(check.getJsonArray("rows_data"), check.getString("mode"), user, tx, policy).compose(outcome ->
             {
                 JsonArray changes = outcome.getJsonArray("changes", new JsonArray());
 
@@ -456,7 +461,9 @@ public class ImportService
                 return logs.lockType(type.id())
                         .compose(locked -> new BeforeImageRepository(tx).forUndo(importId))
                         .compose(images -> refuseOnConflicts(type, images, tx)
-                                .compose(clear -> restore(images, tx))
+                                .compose(clear -> type.restoresItself()
+                                        ? restoreThroughType(type, images, user, tx)
+                                        : restore(images, tx))
                                 .map(images.size()))
                         .compose(restored -> logs.markUndone(importId, userId)
                                 .compose(marked -> AuditService.record(tx, AuditService.entry(user, AuditEvents.IMPORT_UNDONE,
@@ -591,6 +598,27 @@ public class ImportService
         }
 
         return chain.mapEmpty();
+    }
+
+    /** Hands each stored change, newest first, back to the import type that made it. */
+    private Future<Void> restoreThroughType(ImportType type, JsonArray images, JsonObject user, SqlExecutor tx)
+    {
+        Future<Void> chain = Future.succeededFuture();
+
+        for (Object item : images)
+        {
+            JsonObject before = ((JsonObject) item).getJsonObject("before_data");
+
+            chain = chain.compose(v -> type.undoChange(before, user, tx, policy));
+        }
+
+        return chain;
+    }
+
+    /** Current data of one import type in its template layout (the route writes the CSV and audits). */
+    public Future<JsonArray> exportRows(ImportType type, JsonObject query, JsonObject user)
+    {
+        return type.exportRows(user, query, sql, policy);
     }
 
     /** History newest first: everyone's for an Admin, otherwise the caller's own imports. */

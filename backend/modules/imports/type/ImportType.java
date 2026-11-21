@@ -1,6 +1,7 @@
 package com.pulse.modules.imports.type;
 
 import com.pulse.platform.db.SqlExecutor;
+import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -80,10 +81,11 @@ public interface ImportType
      * @param rows  validated rows (see class comment); the method may change and return them
      * @param mode  one of {@link #modes()}
      * @param actor the signed-in user ({@code {id, role, personId, permissions}}, as {@code PolicyService.user})
-     * @param sql   read access for lookups
+     * @param sql    read access for lookups
+     * @param policy visibility decisions (never filter people by hand)
      * @return the same rows with errors, warnings and {@code action} set
      */
-    Future<JsonArray> check(JsonArray rows, String mode, JsonObject actor, SqlExecutor sql);
+    Future<JsonArray> check(JsonArray rows, String mode, JsonObject actor, SqlExecutor sql, PolicyService policy);
 
     /**
      * Applies the ready rows (action {@code new} or {@code update}) inside the pipeline's transaction.
@@ -101,12 +103,34 @@ public interface ImportType
      * @param rows  ready rows only, in file order
      * @param tx    the commit transaction; every statement must use it
      */
-    Future<JsonObject> commit(JsonArray rows, String mode, JsonObject actor, SqlExecutor tx);
+    Future<JsonObject> commit(JsonArray rows, String mode, JsonObject actor, SqlExecutor tx, PolicyService policy);
 
     /**
      * Current data in the template's column layout, so an exported file checks back unchanged
      * (spec: "Templates and round-trip exports"). Each item is keyed by column key. Must apply the
      * actor's visibility.
+     *
+     * @param query the request's query parameters (for example {@code {"quarter": "Q3 2026"}})
      */
-    Future<JsonArray> exportRows(JsonObject actor, SqlExecutor sql);
+    Future<JsonArray> exportRows(JsonObject actor, JsonObject query, SqlExecutor sql, PolicyService policy);
+
+    /**
+     * True when this type undoes its own changes through {@link #undoChange} instead of the
+     * pipeline's generic row restore, because one change spans several tables that the owning
+     * module must restore itself (OKRs: objective, key results and check-ins). The pipeline still
+     * refuses undo first when a reported record's {@code version} moved after the import.
+     */
+    default boolean restoresItself()
+    {
+        return false;
+    }
+
+    /**
+     * Reverts one reported change (newest first) inside the undo transaction; only called when
+     * {@link #restoresItself()} is true. {@code before} is the change's stored {@code before}.
+     */
+    default Future<Void> undoChange(JsonObject before, JsonObject actor, SqlExecutor tx, PolicyService policy)
+    {
+        return Future.failedFuture(new UnsupportedOperationException(id() + " does not restore itself"));
+    }
 }

@@ -41,7 +41,7 @@ class ImportServiceTest
         db = ImportsTestDb.open();
 
         service = new ImportService(db.vertx, new SqlExecutor(db.app),
-                ImportTypeRegistry.of(List.of(new NotesImportType())));
+                ImportTypeRegistry.of(List.of(new NotesImportType())), null);
 
         importer = actor(db.newUser("hr@pulse.test"), NotesImportType.PERMISSION);
 

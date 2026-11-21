@@ -51,6 +51,15 @@ public final class CsvColumns
         return column(key, type, true, aliases);
     }
 
+    /**
+     * The header must be present (a file without it stops the check), but a cell may be empty, e.g.
+     * the OKR {@code owner_email}, left empty on Team rows.
+     */
+    public static JsonObject requiredHeader(String key, String type, String... aliases)
+    {
+        return column(key, type, true, aliases).put("allowEmpty", true);
+    }
+
     public static JsonObject optional(String key, String type, String... aliases)
     {
         return column(key, type, false, aliases);
@@ -88,6 +97,7 @@ public final class CsvColumns
                 .put("key", normalize(key))
                 .put("type", type)
                 .put("required", required)
+                .put("allowEmpty", false)
                 .put("aliases", aliasList)
                 .put("values", new JsonArray());
     }

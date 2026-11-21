@@ -56,7 +56,7 @@ public final class ImportsRoutes
         // Classpath scanning is blocking I/O: done once, off the event loop.
         this.registry = ctx.vertx().executeBlocking(() -> ImportTypeRegistry.discover(loader), false);
 
-        this.service = registry.map(found -> new ImportService(ctx.vertx(), ctx.sql(), found));
+        this.service = registry.map(found -> new ImportService(ctx.vertx(), ctx.sql(), found, ctx.policy()));
     }
 
     void mount(Router router)
@@ -170,13 +170,20 @@ public final class ImportsRoutes
     {
         JsonObject user = PolicyService.user(rc);
 
-        service.map(s -> s.allowedType(rc.pathParam("type"), user))
-                .compose(type -> type.exportRows(user, ctx.sql())
-                        .compose(rows -> AuditService.record(ctx.sql(), AuditService.entry(user, AuditEvents.DATA_EXPORT,
-                                        "import_type", type.id(), new JsonObject().put("rows", rows.size())))
-                                .map(v -> CsvWriter.write(CsvWriter.keysOf(type.columns()), rows)))
-                        .onSuccess(csv -> sendCsv(rc, type.id() + "_export.csv", csv)))
-                .onFailure(rc::fail);
+        JsonObject query = new JsonObject();
+
+        rc.queryParams().forEach(entry -> query.put(entry.getKey(), entry.getValue()));
+
+        service.compose(s ->
+        {
+            ImportType type = s.allowedType(rc.pathParam("type"), user);
+
+            return s.exportRows(type, query, user)
+                    .compose(rows -> AuditService.record(ctx.sql(), AuditService.entry(user, AuditEvents.DATA_EXPORT,
+                                    "import_type", type.id(), new JsonObject().put("rows", rows.size())))
+                            .map(v -> CsvWriter.write(CsvWriter.keysOf(type.columns()), rows)))
+                    .onSuccess(csv -> sendCsv(rc, type.id() + "_export.csv", csv));
+        }).onFailure(rc::fail);
     }
 
     private static void sendCsv(RoutingContext rc, String fileName, String csv)

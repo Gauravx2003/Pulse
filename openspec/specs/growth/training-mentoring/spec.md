@@ -49,11 +49,20 @@ The trainee SHALL agree or disagree (comment required on disagreement), rate the
 - **THEN** the manager is flagged and a comment is required
 
 ### Requirement: Training rating
-The rating SHALL be 0.4 × assessment ÷ 20 + 0.2 × mentor + 0.2 × manager + 0.1 × verified check-ins + 0.1 × checkpoints, re-weighting missing parts and staying Provisional until assessment and both reviews exist. Bands: Outstanding 4.5 or more, Strong 3.75, Meets 3, Needs support 2.25, else Not yet. The overall rating SHALL be the plan-length-weighted average of completed plans.
+The rating SHALL be 0.4 × assessment ÷ 20 + 0.2 × mentor + 0.2 × manager + 0.1 × verified check-ins + 0.1 × checkpoints, re-weighting missing parts and staying Provisional until assessment and both reviews exist. Bands: Outstanding 4.5 or more, Strong 3.75, Meets 3, Needs support 2.25, else Not yet.
 
 #### Scenario: Provisional
 - **WHEN** no manager review exists
 - **THEN** the rating shows Provisional
+
+### Requirement: Overall training rating
+A person's overall rating SHALL be the plan-length-weighted average (by plan weeks) of their Final ratings, or of their Provisional ratings while none is Final; plans with no rated part SHALL be left out. Only a Final overall rating SHALL feed the Growth pillar.
+
+#### Scenario: Overall rating over plans
+- **WHEN** a person has a Final 4.0 on a 12-week plan, a Final 3.0 on a 4-week plan and a Provisional 1.0 on an 8-week plan
+- **THEN** the overall rating is 3.75 (Final) and the Provisional plan is left out
+- **WHEN** none of the person's ratings is Final
+- **THEN** the overall rating is the weighted average of the Provisional ones and shows Provisional
 
 ### Requirement: Mentoring
 The system SHALL give mentors KPIs, a Pending-for-you list (oldest first), trainee cards, an activity timeline with filters, Log session (date, duration, mode, topics, next steps, optional blocker notifying the manager) and trainees Ask for a session. Mentors SHALL see only their mentees' training data.

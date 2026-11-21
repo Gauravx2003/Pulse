@@ -29,4 +29,4 @@ must not change, so after a merge regenerate only into a new `S1xx` file (or res
 - CI fails when `seed/extracted/` differs from a fresh extraction: re-run the tool and commit.
 - `lib/load-prototype.mjs` runs `app.js` in a Node `vm` sandbox (DOM stubbed, clock and
   `Math.random` pinned) and returns `get(name)` for any binding inside it. The oracle harness
-  (task 4.2) can reuse it.
+  (task 4.2) reuses it through `lib/oracle-server.mjs`; see `docs/oracle.md`.

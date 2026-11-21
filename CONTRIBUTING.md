@@ -38,6 +38,9 @@ Groups 23 (integration checks) and 24 (live GitHub and Jira, Phase 2) are shared
 
 **Adding an endpoint?** Follow [`docs/backend-guide.md`](docs/backend-guide.md): route permissions, the policy service, the audit service, validation, optimistic locking, errors and the per-role contract test.
 
+**Porting a formula?** Compare it with the prototype using the oracle harness: [`docs/oracle.md`](docs/oracle.md).
+Then register it in your track's `calc/` folder and read it through `CalcService`: [`docs/calc.md`](docs/calc.md).
+
 Backend code must follow the "Vert.x & Java Coding Standards" in `design.md` decision 1:
 - two verticle classes only
 - nothing blocks the event loop

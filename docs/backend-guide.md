@@ -355,6 +355,18 @@ inside a handler. The body is always
 
 For 422 use `ApiException.unprocessable("<rule_code>", "<sentence the user sees>")`.
 
+**Calculated numbers.** Formulas live in `calc/` as pure functions (verified against the prototype, see
+[oracle.md](oracle.md)), are registered and read through `ctx.calc()` ([calc.md](calc.md)), and return `null`
+for "no value". Before a result leaves the server it goes
+through `ResultGuard.guard(result)`. That turns every null, NaN or infinity into
+`{"notApplicable": true}`, optionally with a `"reason"`, and turns −0 into 0. Clients test
+`value.notApplicable === true` and never see null. A result that must not move later (a closed period,
+a submitted appraisal, a published 360° cycle) is stored with
+`SnapshotStore.freeze(tx, kind, key, ruleVersion, inputs, result, actorId)` and read back with
+`SnapshotStore.find`. A rule change never alters it. Only `SnapshotStore.replace(..., reason)` does,
+which keeps the old row as history and audits a period recalculation. The caller checks who may
+replace a snapshot.
+
 **Rate limits.** Every route already has a per-IP and per-user limit. Add a stricter one to expensive
 routes such as imports and exports:
 `router.post("/upload").handler(RateLimiter.perUser(ctx.vertx(), "imports", 10, 60))`. CSV and multipart

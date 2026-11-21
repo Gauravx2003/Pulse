@@ -38,6 +38,8 @@ public final class AuditEvents
     public static final String CREDENTIAL_CHANGED = "credential.changed";
     public static final String RULES_CHANGED = "rules.changed";
     public static final String RULES_RESET = "rules.reset";
+    /** An Admin recalculated a closed period, replacing its snapshot (task 4.9). */
+    public static final String CALC_RECALCULATED = "calc.recalculated";
 
     // ------------------------------------------------------------------ business
     public static final String DISCIPLINE_OVERRIDE = "discipline.override";
@@ -118,7 +120,8 @@ public final class AuditEvents
         }
 
         for (String e : new String[] {ROLE_CREATED, ROLE_PERMISSIONS_CHANGED, ROLE_DELETED, USER_CREATED,
-                USER_UPDATED, USER_DEACTIVATED, USER_DELETED, CREDENTIAL_CHANGED, RULES_CHANGED, RULES_RESET})
+                USER_UPDATED, USER_DEACTIVATED, USER_DELETED, CREDENTIAL_CHANGED, RULES_CHANGED, RULES_RESET,
+                CALC_RECALCULATED})
         {
             events.put(e, "administration");
         }

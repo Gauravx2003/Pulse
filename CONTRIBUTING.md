@@ -88,6 +88,8 @@ cd backend && mvn exec:java            # runs migrations + seeds, then serves :8
 cd frontend && npm install && npm run dev
 ```
 
+Every `/api/v1` route needs a session: sign in with `POST /api/v1/auth/login` (`{"email", "password"}`), which sets the `pulse_session` cookie and returns `csrfToken`; send that token as the `X-CSRF-Token` header on every POST, PUT, PATCH and DELETE. In a handler the signed-in user is `ctx.get(SessionHandler.USER)`. Fail with `ctx.fail(status, ApiException...)`; never write error responses yourself. Behind the frontend nginx set `PULSE_TRUST_PROXY=true` so sign-in throttling sees the real client IP.
+
 `PULSE_PROFILE` is `development` (default) or `production`. Production refuses to start when `PULSE_DEMO_SEED` is on or a `@pulse.demo` account exists.
 
 The backend reads `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` and `PULSE_DB_POOL_SIZE`. Migrations run as `DB_USER`; at runtime the app switches to the role `pulse_app` (created by V100, DML only, no UPDATE or DELETE on `audit_log`). `PULSE_DB_APP_ROLE` overrides the role name. The database tests in `MigrationRunnerTest` use the same variables and are skipped when no database is reachable.

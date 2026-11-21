@@ -1,5 +1,6 @@
 package com.pulse.platform.module;
 
+import com.pulse.platform.policy.VisibilityRelation;
 import io.vertx.ext.web.Router;
 
 import java.util.List;
@@ -23,7 +24,11 @@ public interface PulseModule {
         return List.of();
     }
 
-    /** Menu entries; {@code GET /me} shows the ones the caller has permission for. */
+    /**
+     * Menu entries; {@code GET /me} shows the ones the caller has permission for. The 21 screens of
+     * the screen map are already declared by the platform ({@link com.pulse.platform.nav.Navigation});
+     * a module lists only screens beyond them, and repeating a screen's key or path fails start-up.
+     */
     default List<MenuEntry> menu() {
         return List.of();
     }
@@ -44,6 +49,14 @@ public interface PulseModule {
 
     /** Scheduled jobs run by the scheduler verticle. */
     default List<JobSpec> jobs() {
+        return List.of();
+    }
+
+    /**
+     * Exceptions to the base visibility rules that this module owns, e.g. "a mentor sees their mentees'
+     * training data" ({@link com.pulse.platform.policy.PolicyService}).
+     */
+    default List<VisibilityRelation> visibilityRelations() {
         return List.of();
     }
 

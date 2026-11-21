@@ -1,7 +1,6 @@
 package com.pulse.platform.module;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import com.pulse.platform.policy.VisibilityRelation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -186,7 +185,8 @@ public final class ModuleRegistry
     }
 
     /**
-     * Full permission catalogue contributed by all modules, in discovery order.
+     * Permissions contributed by all modules, in discovery order (the full catalogue, with the built-in
+     * permissions, is {@link com.pulse.platform.auth.PermissionCatalogue}).
      */
     public Set<String> permissions()
     {
@@ -196,21 +196,13 @@ public final class ModuleRegistry
         return all;
     }
 
-    /**
-     * Menu visible to a user holding {@code granted}, grouped and ordered.
-     */
-    public JsonArray menuFor(Set<String> granted)
+    /** Visibility relations contributed by all modules, in discovery order. */
+    public List<VisibilityRelation> visibilityRelations()
     {
+        List<VisibilityRelation> all = new ArrayList<>();
 
-        Map<String, JsonArray> groups = new LinkedHashMap<>();
-        modules.values().stream()
-                .flatMap(m -> m.menu().stream())
-                .filter(e -> e.permission() == null || granted.contains(e.permission()))
-                .sorted(Comparator.comparing(MenuEntry::group).thenComparingInt(MenuEntry::order)
-                        .thenComparing(MenuEntry::key))
-                .forEach(e -> groups.computeIfAbsent(e.group(), g -> new JsonArray()).add(e.toJson()));
-        JsonArray menu = new JsonArray();
-        groups.forEach((group, items) -> menu.add(new JsonObject().put("group", group).put("items", items)));
-        return menu;
+        modules.values().forEach(m -> all.addAll(m.visibilityRelations()));
+
+        return all;
     }
 }

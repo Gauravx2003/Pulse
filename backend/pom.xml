@@ -46,6 +46,12 @@
             <artifactId>scram-client</artifactId>
             <version>3.4</version>
         </dependency>
+        <!-- bcrypt for sign-in (task 3.1); verifies the $2a$ hashes pgcrypto writes in the demo seed -->
+        <dependency>
+            <groupId>at.favre.lib</groupId>
+            <artifactId>bcrypt</artifactId>
+            <version>0.10.2</version>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -150,6 +156,18 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <!-- Signed dependencies (e.g. bcrypt) carry signature files that are invalid
+                                 once repackaged; without this filter the fat jar refuses to start. -->
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>

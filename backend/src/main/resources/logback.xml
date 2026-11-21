@@ -1,7 +1,12 @@
 <configuration>
+    <!-- Task 3.6: every line carries the request id; messages and stack traces are redacted
+         (passwords, tokens, session cookies, CTC, free-text review content). -->
+    <conversionRule conversionWord="redactedMsg" class="com.pulse.platform.logging.RedactingMessageConverter" />
+    <conversionRule conversionWord="redactedEx" class="com.pulse.platform.logging.RedactingThrowableConverter" />
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [req=%X{requestId:--}] - %redactedMsg%n%redactedEx</pattern>
         </encoder>
     </appender>
 

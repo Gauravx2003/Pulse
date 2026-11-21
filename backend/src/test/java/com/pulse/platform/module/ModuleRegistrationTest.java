@@ -1,9 +1,9 @@
 package com.pulse.platform.module;
 
 import com.pulse.HttpServerVerticle;
+import com.pulse.platform.nav.Navigation;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
@@ -39,12 +39,14 @@ class ModuleRegistrationTest {
     }
 
     @Test
-    void menuIsFilteredByPermission() {
-        ModuleRegistry registry = ModuleRegistry.discover();
-        assertTrue(registry.menuFor(Set.of()).stream()
+    void menuIsFilteredByPermission()
+    {
+        Navigation navigation = Navigation.of(ModuleRegistry.discover());
+
+        assertTrue(navigation.menuFor(Set.of(), true).stream()
                 .map(JsonObject.class::cast)
                 .noneMatch(g -> g.getString("group").equals("Developer")));
-        assertEquals(1, registry.menuFor(Set.of("sample.view")).stream()
+        assertEquals(1, navigation.menuFor(Set.of("sample.view"), true).stream()
                 .map(JsonObject.class::cast)
                 .filter(g -> g.getString("group").equals("Developer"))
                 .count());
@@ -58,25 +60,25 @@ class ModuleRegistrationTest {
     }
 
     @Test
-    void sampleModuleIsRoutedAndInMe(Vertx vertx, VertxTestContext ctx) {
+    void moduleRoutesAndMeRequireASession(Vertx vertx, VertxTestContext ctx)
+    {
+        // Signed-in routing and the generated menu are covered by AuthTest (needs PostgreSQL).
         WebClient client = WebClient.create(vertx);
+
         client.get(PORT, "localhost", "/api/v1/sample/ping").send()
-                .compose(ping -> {
-                    ctx.verify(() -> {
-                        assertEquals(200, ping.statusCode());
-                        assertEquals("sample", ping.bodyAsJsonObject().getString("module"));
+                .compose(ping ->
+                {
+                    ctx.verify(() ->
+                    {
+                        assertEquals(401, ping.statusCode());
+                        assertEquals("unauthenticated", ping.bodyAsJsonObject().getJsonObject("error").getString("code"));
                     });
+
                     return client.get(PORT, "localhost", "/api/v1/me").send();
                 })
-                .onComplete(ctx.succeeding(me -> ctx.verify(() -> {
-                    assertEquals(200, me.statusCode());
-                    JsonObject body = me.bodyAsJsonObject();
-                    assertTrue(body.getJsonArray("permissions").contains("sample.view"));
-                    JsonArray menu = body.getJsonArray("menu");
-                    boolean hasSample = menu.stream().map(JsonObject.class::cast)
-                            .flatMap(g -> g.getJsonArray("items").stream().map(JsonObject.class::cast))
-                            .anyMatch(i -> i.getString("path").equals("/sample"));
-                    assertTrue(hasSample, "menu should contain the sample entry: " + menu.encode());
+                .onComplete(ctx.succeeding(me -> ctx.verify(() ->
+                {
+                    assertEquals(401, me.statusCode());
                     ctx.completeNow();
                 })));
     }

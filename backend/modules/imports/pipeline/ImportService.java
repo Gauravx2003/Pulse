@@ -5,7 +5,10 @@ import com.pulse.modules.imports.csv.CsvParser;
 import com.pulse.modules.imports.csv.CsvValidator;
 import com.pulse.modules.imports.type.ImportType;
 import com.pulse.modules.imports.type.ImportTypeRegistry;
+import com.pulse.platform.audit.AuditEvents;
+import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.db.SqlExecutor;
+import com.pulse.platform.http.ApiException;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -33,14 +36,15 @@ import java.util.UUID;
  *       and a 12-row preview. It never touches business data.</li>
  *   <li><b>Commit</b> runs in one transaction under a per-type advisory lock, so commits of one type
  *       never interleave. It accepts only an unexpired check of the same user and type, is
- *       idempotent (a repeat returns the first result), writes history and before-images and deletes
- *       the staging row.</li>
+ *       idempotent (a repeat returns the first result), writes history, before-images and the
+ *       {@code import.committed} audit entry, and deletes the staging row.</li>
  *   <li><b>Undo</b> (importer or Admin, within 24 hours) restores every before-image in reverse
- *       order, and is refused, listing the records, when any of them changed after the import.</li>
+ *       order and audits {@code import.undone}; it is refused, naming the records, when any of them
+ *       changed after the import.</li>
  * </ul>
  *
- * <p>{@code actor} is {@code {"userId": "<uuid>", "permissions": [...]}}. Every refusal is an
- * {@link ImportFailure} carrying its HTTP status.
+ * <p>{@code user} is the signed-in user of the request ({@code PolicyService.user(rc)}:
+ * {@code {id, role, personId, permissions}}). Every refusal is an {@link ApiException}.
  */
 public class ImportService
 {
@@ -50,14 +54,16 @@ public class ImportService
     public static final String UNDONE_ADDRESS = "pulse.imports.undone";
 
     /**
-     * Lets a user see everyone's history and undo anyone's import (spec: "the importer or an Admin").
-     * TODO-STUB: replace with the policy service decision once task 3.5 lands.
+     * Holders see everyone's import history and may undo anyone's import (spec: "the importer or an
+     * Admin"). In the role matrix only Admin holds {@code all.view}.
      */
     public static final String ADMIN_PERMISSION = "all.view";
 
     static final int PREVIEW_ROWS = 12;
 
     static final int MAX_LISTED_MESSAGES = 1_000;
+
+    static final int MAX_NAMED_CONFLICTS = 10;
 
     private final Vertx vertx;
 
@@ -76,7 +82,7 @@ public class ImportService
 
     // ------------------------------------------------------------------ check
 
-    public Future<JsonObject> check(String typeId, String requestedMode, String fileName, byte[] bytes, JsonObject actor)
+    public Future<JsonObject> check(String typeId, String requestedMode, String fileName, byte[] bytes, JsonObject user)
     {
         ImportType type;
 
@@ -84,11 +90,11 @@ public class ImportService
 
         try
         {
-            type = allowedType(typeId, actor);
+            type = allowedType(typeId, user);
 
             mode = resolveMode(type, requestedMode);
         }
-        catch (ImportFailure e)
+        catch (ApiException e)
         {
             return Future.failedFuture(e);
         }
@@ -103,8 +109,8 @@ public class ImportService
         }, false);
 
         return validated
-                .recover(ImportService::asImportFailure)
-                .compose(file -> type.check(file.getJsonArray("rows"), mode, actor, sql)
+                .recover(ImportService::asApiException)
+                .compose(file -> type.check(file.getJsonArray("rows"), mode, user, sql)
                         .compose(rows ->
                         {
                             JsonObject result = summarize(type, mode, name, file, rows);
@@ -112,7 +118,7 @@ public class ImportService
                             ImportCheckRepository checks = new ImportCheckRepository(sql);
 
                             return checks.deleteExpired()
-                                    .compose(removed -> checks.insert(actor.getString("userId"), type.id(), mode, name,
+                                    .compose(removed -> checks.insert(user.getString("id"), type.id(), mode, name,
                                             file.getString("fileHash"), bytes.length, readyRows(rows), result))
                                     .map(saved -> result.copy()
                                             .put("checkId", saved.getString("id"))
@@ -120,11 +126,11 @@ public class ImportService
                         }));
     }
 
-    private static Future<JsonObject> asImportFailure(Throwable error)
+    private static Future<JsonObject> asApiException(Throwable error)
     {
         if (error instanceof CsvImportException csv)
         {
-            return Future.failedFuture(new ImportFailure(422, csv.code(), csv.getMessage()));
+            return Future.failedFuture(ApiException.unprocessable(csv.code(), csv.getMessage()));
         }
 
         return Future.failedFuture(error);
@@ -263,22 +269,25 @@ public class ImportService
 
     // ------------------------------------------------------------------ commit and cancel
 
-    public Future<JsonObject> commit(String typeId, String checkId, JsonObject actor)
+    public Future<JsonObject> commit(String typeId, String checkId, JsonObject user)
     {
         ImportType type;
 
         try
         {
-            type = allowedType(typeId, actor);
-
-            requireUuid(checkId);
+            type = allowedType(typeId, user);
         }
-        catch (ImportFailure e)
+        catch (ApiException e)
         {
             return Future.failedFuture(e);
         }
 
-        String userId = actor.getString("userId");
+        if (!isUuid(checkId))
+        {
+            return Future.failedFuture(checkNotFound());
+        }
+
+        String userId = user.getString("id");
 
         return sql.inTransaction(tx ->
         {
@@ -298,7 +307,7 @@ public class ImportService
                             return Future.succeededFuture(existing);
                         }
 
-                        return applyCheck(type, checkId, actor, tx);
+                        return applyCheck(type, checkId, user, tx);
                     });
         })
                 .map(ImportService::toImportResult)
@@ -307,9 +316,9 @@ public class ImportService
                         .put("importId", result.getString("importId"))));
     }
 
-    private Future<JsonObject> applyCheck(ImportType type, String checkId, JsonObject actor, SqlExecutor tx)
+    private Future<JsonObject> applyCheck(ImportType type, String checkId, JsonObject user, SqlExecutor tx)
     {
-        String userId = actor.getString("userId");
+        String userId = user.getString("id");
 
         ImportCheckRepository checks = new ImportCheckRepository(tx);
 
@@ -324,18 +333,11 @@ public class ImportService
 
             JsonObject result = check.getJsonObject("result");
 
-            return type.commit(check.getJsonArray("rows_data"), check.getString("mode"), actor, tx).compose(outcome ->
+            return type.commit(check.getJsonArray("rows_data"), check.getString("mode"), user, tx).compose(outcome ->
             {
                 JsonArray changes = outcome.getJsonArray("changes", new JsonArray());
 
-                try
-                {
-                    verifyChanges(type, changes);
-                }
-                catch (ImportFailure e)
-                {
-                    return Future.failedFuture(e);
-                }
+                verifyChanges(type, changes);
 
                 JsonObject summary = new JsonObject()
                         .put("summary", result.getString("summary"))
@@ -358,15 +360,25 @@ public class ImportService
                         .put("warnings", result.getInteger("warnings"))
                         .put("summary", summary);
 
-                return logs.insert(entry)
-                        .compose(importId -> new BeforeImageRepository(tx).insertAll(importId, changes)
-                                .compose(stored -> checks.delete(checkId, userId))
-                                .compose(deleted -> logs.byId(importId)));
+                return logs.insert(entry).compose(importId -> new BeforeImageRepository(tx).insertAll(importId, changes)
+                        .compose(stored -> checks.delete(checkId, userId))
+                        .compose(deleted -> AuditService.record(tx, AuditService.entry(user, AuditEvents.IMPORT_COMMITTED,
+                                "import", importId, new JsonObject()
+                                        .put("type", type.id())
+                                        .put("mode", check.getString("mode"))
+                                        .put("rowsRead", entry.getInteger("rowsRead"))
+                                        .put("imported", entry.getInteger("imported"))
+                                        .put("skipped", entry.getInteger("skipped"))
+                                        .put("errors", entry.getInteger("errors")))))
+                        .compose(audited -> logs.byId(importId)));
             });
         });
     }
 
-    /** Every reported change must name a declared target table, a uuid and a known action. */
+    /**
+     * Every reported change must name a declared target table, a uuid and a known action. A broken
+     * import type is a programming error: it fails the commit (500) and the transaction rolls back.
+     */
     private static void verifyChanges(ImportType type, JsonArray changes)
     {
         Set<String> tables = new HashSet<>(type.targetTables());
@@ -384,33 +396,32 @@ public class ImportService
 
             if (!tables.contains(change.getString("table")) || !isUuid(change.getString("id")) || !known || !consistent)
             {
-                throw new ImportFailure(500, ImportFailure.BAD_CHANGE,
-                        "Import type '" + type.id() + "' reported an invalid change: " + change.encode());
+                throw new IllegalStateException("Import type '" + type.id() + "' reported an invalid change: " + change.encode());
             }
         }
     }
 
-    public Future<Void> cancel(String checkId, JsonObject actor)
+    public Future<Void> cancel(String checkId, JsonObject user)
     {
         if (!isUuid(checkId))
         {
             return Future.failedFuture(checkNotFound());
         }
 
-        return new ImportCheckRepository(sql).delete(checkId, actor.getString("userId")).compose(deleted ->
+        return new ImportCheckRepository(sql).delete(checkId, user.getString("id")).compose(deleted ->
                 deleted == 0 ? Future.failedFuture(checkNotFound()) : Future.succeededFuture());
     }
 
     // ------------------------------------------------------------------ undo and history
 
-    public Future<JsonObject> undo(String importId, JsonObject actor)
+    public Future<JsonObject> undo(String importId, JsonObject user)
     {
         if (!isUuid(importId))
         {
             return Future.failedFuture(importNotFound());
         }
 
-        String userId = actor.getString("userId");
+        String userId = user.getString("id");
 
         return sql.inTransaction(tx ->
         {
@@ -418,19 +429,19 @@ public class ImportService
 
             return logs.lockForUndo(importId).compose(log ->
             {
-                if (log == null || (!userId.equals(log.getString("user_id")) && !holds(actor, ADMIN_PERMISSION)))
+                if (log == null || (!userId.equals(log.getString("user_id")) && !holds(user, ADMIN_PERMISSION)))
                 {
                     return Future.failedFuture(importNotFound());
                 }
 
                 if (log.getValue("undone_at") != null)
                 {
-                    return Future.failedFuture(new ImportFailure(409, ImportFailure.ALREADY_UNDONE, "This import has already been undone."));
+                    return Future.failedFuture(ApiException.conflict("already_undone", "This import has already been undone."));
                 }
 
                 if (!log.getBoolean("undo_open"))
                 {
-                    return Future.failedFuture(new ImportFailure(409, ImportFailure.UNDO_EXPIRED,
+                    return Future.failedFuture(ApiException.conflict("undo_expired",
                             "Imports can be undone for 24 hours. This one is older."));
                 }
 
@@ -438,7 +449,7 @@ public class ImportService
 
                 if (type == null)
                 {
-                    return Future.failedFuture(new ImportFailure(409, ImportFailure.UNKNOWN_TYPE,
+                    return Future.failedFuture(ApiException.conflict("import_type_unavailable",
                             "This kind of import is no longer available, so it cannot be undone."));
                 }
 
@@ -447,7 +458,12 @@ public class ImportService
                         .compose(images -> refuseOnConflicts(type, images, tx)
                                 .compose(clear -> restore(images, tx))
                                 .map(images.size()))
-                        .compose(restored -> logs.markUndone(importId, userId).map(restored));
+                        .compose(restored -> logs.markUndone(importId, userId)
+                                .compose(marked -> AuditService.record(tx, AuditService.entry(user, AuditEvents.IMPORT_UNDONE,
+                                        "import", importId, new JsonObject()
+                                                .put("type", type.id())
+                                                .put("restored", restored))))
+                                .map(restored));
             })
                     .compose(restored -> logs.byId(importId).map(log -> toImportResult(log).put("restored", restored)));
         })
@@ -456,7 +472,7 @@ public class ImportService
                         .put("importId", importId)));
     }
 
-    /** Fails with the list of records changed since the import (spec: "Conflicting later change"). */
+    /** Fails naming the records changed since the import (spec: "Conflicting later change"). */
     private static Future<Void> refuseOnConflicts(ImportType type, JsonArray images, SqlExecutor tx)
     {
         Set<String> allowed = new HashSet<>(type.targetTables());
@@ -472,7 +488,7 @@ public class ImportService
 
             if (!allowed.contains(table))
             {
-                return Future.failedFuture(new ImportFailure(500, ImportFailure.BAD_CHANGE,
+                return Future.failedFuture(new IllegalStateException(
                         "Stored before-image names table '" + table + "', which import type '" + type.id() + "' does not declare."));
             }
 
@@ -499,7 +515,7 @@ public class ImportService
 
         return Future.all(reads).compose(all ->
         {
-            JsonArray conflicts = new JsonArray();
+            List<String> conflicts = new ArrayList<>();
 
             for (int i = 0; i < tables.size(); i++)
             {
@@ -524,10 +540,7 @@ public class ImportService
 
                     if (!unchanged)
                     {
-                        conflicts.add(new JsonObject()
-                                .put("table", table)
-                                .put("id", id)
-                                .put("reason", current.containsKey(id) ? "changed after the import" : "deleted after the import"));
+                        conflicts.add(table + " " + id + " (" + (current.containsKey(id) ? "changed" : "deleted") + ")");
                     }
                 }
             }
@@ -537,11 +550,21 @@ public class ImportService
                 return Future.succeededFuture();
             }
 
-            return Future.failedFuture(new ImportFailure(409, ImportFailure.UNDO_CONFLICT,
-                    "Undo refused: " + conflicts.size() + " record" + (conflicts.size() == 1 ? " was" : "s were")
-                            + " changed after this import, so restoring it is not safe.",
-                    conflicts));
+            return Future.failedFuture(ApiException.conflict("undo_conflict", conflictMessage(conflicts)));
         });
+    }
+
+    /** "Undo refused: 2 records were changed after this import ...: test_notes 1a2b… (changed), …". */
+    static String conflictMessage(List<String> conflicts)
+    {
+        int shown = Math.min(conflicts.size(), MAX_NAMED_CONFLICTS);
+
+        String listed = String.join(", ", conflicts.subList(0, shown));
+
+        String more = conflicts.size() > shown ? " and " + (conflicts.size() - shown) + " more" : "";
+
+        return "Undo refused: " + conflicts.size() + " record" + (conflicts.size() == 1 ? " was" : "s were")
+                + " changed after this import, so restoring it is not safe: " + listed + more + ".";
     }
 
     /** Applies the before-images newest first: insert → delete, update → restore, delete → re-insert. */
@@ -571,23 +594,24 @@ public class ImportService
     }
 
     /** History newest first: everyone's for an Admin, otherwise the caller's own imports. */
-    public Future<JsonObject> history(MultiMap params, JsonObject actor)
+    public Future<JsonObject> history(MultiMap params, JsonObject user)
     {
-        String onlyUser = holds(actor, ADMIN_PERMISSION) ? null : actor.getString("userId");
+        String onlyUser = holds(user, ADMIN_PERMISSION) ? null : user.getString("id");
 
         return new ImportLogRepository(sql).history(params, onlyUser);
     }
 
     // ------------------------------------------------------------------ helpers
 
-    private ImportType allowedType(String typeId, JsonObject actor)
+    /** The import type when it exists and the user holds one of its permissions. */
+    public ImportType allowedType(String typeId, JsonObject user)
     {
         ImportType type = registry.find(typeId).orElseThrow(() ->
-                new ImportFailure(404, ImportFailure.UNKNOWN_TYPE, "There is no import called '" + typeId + "'."));
+                ApiException.notFound("not_found", "There is no import called '" + typeId + "'."));
 
-        if (!ImportTypeRegistry.isAllowed(type, permissions(actor)))
+        if (!ImportTypeRegistry.isAllowed(type, permissions(user)))
         {
-            throw new ImportFailure(403, ImportFailure.FORBIDDEN, "You do not have permission to import " + type.name() + ".");
+            throw ApiException.forbidden("no_access", "You do not have permission to import " + type.name() + ".");
         }
 
         return type;
@@ -609,18 +633,18 @@ public class ImportService
                 keys.add(((JsonObject) mode).getString("key"));
             }
 
-            throw new ImportFailure(422, ImportFailure.BAD_MODE,
-                    "Unknown mode '" + requested + "'. Use one of: " + String.join(", ", keys) + ".");
+            throw ApiException.badRequest("invalid_parameter",
+                    "Unknown mode '" + requested + "'. Use one of: " + String.join(", ", keys) + ".").field("mode");
         }
 
         return requested;
     }
 
-    private static List<String> permissions(JsonObject actor)
+    static List<String> permissions(JsonObject user)
     {
         List<String> granted = new ArrayList<>();
 
-        for (Object permission : actor.getJsonArray("permissions", new JsonArray()))
+        for (Object permission : user.getJsonArray("permissions", new JsonArray()))
         {
             granted.add(String.valueOf(permission));
         }
@@ -628,9 +652,9 @@ public class ImportService
         return granted;
     }
 
-    private static boolean holds(JsonObject actor, String permission)
+    private static boolean holds(JsonObject user, String permission)
     {
-        return permissions(actor).contains(permission);
+        return permissions(user).contains(permission);
     }
 
     /** The public shape of one history row. */
@@ -655,28 +679,19 @@ public class ImportService
                 .put("undoState", log.getString("undo_state"));
     }
 
-    private static ImportFailure checkNotFound()
+    private static ApiException checkNotFound()
     {
-        return new ImportFailure(404, ImportFailure.CHECK_NOT_FOUND,
-                "This check has expired or does not exist. Check the file again.");
+        return ApiException.notFound("not_found", "This check has expired or does not exist. Check the file again.");
     }
 
-    private static ImportFailure importNotFound()
+    private static ApiException importNotFound()
     {
-        return new ImportFailure(404, ImportFailure.IMPORT_NOT_FOUND, "Import not found.");
-    }
-
-    private static void requireUuid(String value)
-    {
-        if (!isUuid(value))
-        {
-            throw checkNotFound();
-        }
+        return ApiException.notFound("not_found", "Import not found.");
     }
 
     private static boolean isUuid(String value)
     {
-        if (value == null)
+        if (value == null || value.length() != 36)
         {
             return false;
         }
@@ -685,7 +700,7 @@ public class ImportService
         {
             UUID.fromString(value);
 
-            return value.length() == 36;
+            return true;
         }
         catch (IllegalArgumentException e)
         {

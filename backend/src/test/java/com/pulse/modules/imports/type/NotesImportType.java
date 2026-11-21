@@ -26,7 +26,11 @@ import java.util.UUID;
  */
 public class NotesImportType implements ImportType
 {
-    public static final String PERMISSION = "test.notes.import";
+    /**
+     * A real catalogue permission (Admin and Manager hold it, Employees do not), so the HTTP tests can
+     * run this type through the platform's sign-in and role matrix.
+     */
+    public static final String PERMISSION = "users.team";
 
     public static final String CREATE_TABLE = """
             CREATE TABLE test_notes (

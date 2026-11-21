@@ -80,7 +80,7 @@ class ImportTypeRegistryTest
 
         ImportType notes = registry.find("test_notes").orElseThrow();
 
-        assertEquals(1, registry.allowedFor(List.of("test.notes.import", "other")).size());
+        assertEquals(1, registry.allowedFor(List.of(NotesImportType.PERMISSION, "other")).size());
 
         assertTrue(registry.allowedFor(List.of("other")).isEmpty());
 

@@ -79,7 +79,7 @@ public interface ImportType
      *
      * @param rows  validated rows (see class comment); the method may change and return them
      * @param mode  one of {@link #modes()}
-     * @param actor {@code {"userId": "...", "permissions": [...]}} of the person importing
+     * @param actor the signed-in user ({@code {id, role, personId, permissions}}, as {@code PolicyService.user})
      * @param sql   read access for lookups
      * @return the same rows with errors, warnings and {@code action} set
      */

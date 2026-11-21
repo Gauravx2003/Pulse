@@ -3,6 +3,7 @@ package com.pulse.modules.imports.pipeline;
 import com.pulse.modules.imports.type.ImportTypeRegistry;
 import com.pulse.modules.imports.type.NotesImportType;
 import com.pulse.platform.db.SqlExecutor;
+import com.pulse.platform.http.ApiException;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
@@ -60,7 +61,7 @@ class ImportServiceTest
 
     private static JsonObject actor(String userId, String... permissions)
     {
-        return new JsonObject().put("userId", userId).put("permissions", JsonArray.of((Object[]) permissions));
+        return new JsonObject().put("id", userId).put("role", "Admin").put("permissions", JsonArray.of((Object[]) permissions));
     }
 
     private JsonObject check(String csv, String mode, JsonObject who) throws Exception
@@ -73,11 +74,11 @@ class ImportServiceTest
         return await(service.commit("test_notes", checked.getString("checkId"), who));
     }
 
-    private static ImportFailure failure(Future<?> future)
+    private static ApiException failure(Future<?> future)
     {
         ExecutionException e = assertThrows(ExecutionException.class, () -> await(future));
 
-        return assertInstanceOf(ImportFailure.class, e.getCause());
+        return assertInstanceOf(ApiException.class, e.getCause());
     }
 
     private String dueOf(String title) throws Exception
@@ -149,7 +150,7 @@ class ImportServiceTest
     @Test
     void fileLevelProblemsAndRequestErrorsHaveTheirStatus() throws Exception
     {
-        ImportFailure missing = failure(service.check("test_notes", null, "x.csv", "due\n2026-09-01\n".getBytes(StandardCharsets.UTF_8), importer));
+        ApiException missing = failure(service.check("test_notes", null, "x.csv", "due\n2026-09-01\n".getBytes(StandardCharsets.UTF_8), importer));
 
         assertEquals(422, missing.status());
 
@@ -157,9 +158,9 @@ class ImportServiceTest
 
         assertEquals(404, failure(service.check("nope", null, "x.csv", new byte[]{'a'}, importer)).status());
 
-        assertEquals(403, failure(service.check("test_notes", null, "x.csv", new byte[]{'a'}, actor(importer.getString("userId")))).status());
+        assertEquals(403, failure(service.check("test_notes", null, "x.csv", new byte[]{'a'}, actor(importer.getString("id")))).status());
 
-        assertEquals(422, failure(service.check("test_notes", "explode", "x.csv", new byte[]{'a'}, importer)).status());
+        assertEquals(400, failure(service.check("test_notes", "explode", "x.csv", new byte[]{'a'}, importer)).status());
     }
 
     // ------------------------------------------------------------------ Check id binding and expiry
@@ -169,9 +170,9 @@ class ImportServiceTest
     {
         JsonObject checked = check("title\nA\n", null, importer);
 
-        ImportFailure stolen = failure(service.commit("test_notes", checked.getString("checkId"), otherUser));
+        ApiException stolen = failure(service.commit("test_notes", checked.getString("checkId"), otherUser));
 
-        ImportFailure unknown = failure(service.commit("test_notes", "00000000-0000-0000-0000-000000000000", otherUser));
+        ApiException unknown = failure(service.commit("test_notes", "00000000-0000-0000-0000-000000000000", otherUser));
 
         assertEquals(404, stolen.status());
 
@@ -196,6 +197,8 @@ class ImportServiceTest
         assertEquals(2, db.count("SELECT count(*) FROM test_notes"));
 
         assertEquals(1, db.count("SELECT count(*) FROM import_log"));
+
+        assertEquals(1, db.count("SELECT count(*) FROM audit_log WHERE action = 'import.committed'"));
     }
 
     @Test
@@ -251,9 +254,11 @@ class ImportServiceTest
 
         assertEquals(2, db.count("SELECT count(*) FROM test_notes"));
 
-        ImportFailure again = failure(service.undo(second.getString("importId"), importer));
+        assertEquals(1, db.count("SELECT count(*) FROM audit_log WHERE action = 'import.undone' AND outcome = 'success'"));
 
-        assertEquals(ImportFailure.ALREADY_UNDONE, again.code());
+        ApiException again = failure(service.undo(second.getString("importId"), importer));
+
+        assertEquals("already_undone", again.code());
     }
 
     @Test
@@ -279,15 +284,15 @@ class ImportServiceTest
 
         db.run("UPDATE test_notes SET due = '2026-12-01', version = version + 1 WHERE title = 'B'");
 
-        ImportFailure refused = failure(service.undo(done.getString("importId"), importer));
+        ApiException refused = failure(service.undo(done.getString("importId"), importer));
 
         assertEquals(409, refused.status());
 
-        assertEquals(ImportFailure.UNDO_CONFLICT, refused.code());
+        assertEquals("undo_conflict", refused.code());
 
-        assertEquals(1, refused.details().size());
+        assertTrue(refused.getMessage().startsWith("Undo refused: 1 record was changed"), refused.getMessage());
 
-        assertEquals("test_notes", refused.details().getJsonObject(0).getString("table"));
+        assertTrue(refused.getMessage().contains("test_notes "), refused.getMessage());
 
         assertEquals(2, db.count("SELECT count(*) FROM test_notes"));
     }
@@ -299,7 +304,7 @@ class ImportServiceTest
 
         db.run("UPDATE import_log SET undo_until = now() - interval '1 minute'");
 
-        assertEquals(ImportFailure.UNDO_EXPIRED, failure(service.undo(done.getString("importId"), importer)).code());
+        assertEquals("undo_expired", failure(service.undo(done.getString("importId"), importer)).code());
     }
 
     @Test

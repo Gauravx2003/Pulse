@@ -36,6 +36,8 @@ Groups 23 (integration checks) and 24 (live GitHub and Jira, Phase 2) are shared
   - `scripts/check-migration-versions.sh` fails CI on duplicate numbers, bad names and out-of-range versions.
   - **Demo data** (anything copied from the prototype's sample data, demo accounts) goes in seed files named `S<n>__demo_<description>.sql`. They load only with `PULSE_DEMO_SEED=true`; other seed files (reference data every installation needs) always load.
 
+**Adding an endpoint?** Follow [`docs/backend-guide.md`](docs/backend-guide.md): route permissions, the policy service, the audit service, validation, optimistic locking, errors and the per-role contract test.
+
 Backend code must follow the "Vert.x & Java Coding Standards" in `design.md` decision 1:
 - two verticle classes only
 - nothing blocks the event loop

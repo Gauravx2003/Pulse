@@ -196,6 +196,16 @@ public final class ModuleRegistry
         return all;
     }
 
+    /** Audit events declared by all modules. */
+    public List<String> auditEvents()
+    {
+        List<String> all = new ArrayList<>();
+
+        modules.values().forEach(m -> all.addAll(m.auditEvents()));
+
+        return all;
+    }
+
     /** Visibility relations contributed by all modules, in discovery order. */
     public List<VisibilityRelation> visibilityRelations()
     {

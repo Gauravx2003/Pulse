@@ -44,6 +44,13 @@ public final class PermissionCatalogue
                     "Create, edit, delete and assign training plans; request checkpoint reviews"},
             new String[] {"attendance.upload", "Attendance", "Upload monthly attendance and the holiday calendar"});
 
+    /**
+     * Platform permissions beyond the reference matrix: {@code audit.read} guards the audit log (spec
+     * audit-log "Access to the audit log"); like every permission, Admin holds it.
+     */
+    private static final List<String[]> PLATFORM = List.<String[]>of(
+            new String[] {"audit.read", "Admin", "Read and export the audit log"});
+
     /** Area shown for permissions a module registers. */
     public static final String MODULE_AREA = "Modules";
 
@@ -61,6 +68,11 @@ public final class PermissionCatalogue
         Map<String, JsonObject> entries = new LinkedHashMap<>();
 
         for (String[] p : BUILT_IN)
+        {
+            entries.put(p[0], entry(p[0], p[1], p[2], true));
+        }
+
+        for (String[] p : PLATFORM)
         {
             entries.put(p[0], entry(p[0], p[1], p[2], true));
         }

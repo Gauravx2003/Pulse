@@ -9,16 +9,43 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.util.Map;
+
 /**
- * The one place that writes error responses (design.md decision 1): every route failure goes
- * through {@code ctx.fail(status, exception)} to here and comes back as
- * {@code {"error": {"code", "message", "requestId"[, "field"][, "retryAfter"]}}}. Unknown failures
- * become a generic 500 quoting the request id, with no stack trace or SQL in the body; the detail goes
- * to the log only, redacted (task 3.6). Task 3.8 completes the full error contract.
+ * The one place that writes error responses (design.md decision 1, spec api-conventions "Error
+ * contract", task 3.8): every route failure goes through {@code ctx.fail(status, exception)} to here,
+ * and unmatched routes reach it through the router's error handlers. The body is always
+ * {@code {"error": {"code", "message", "requestId"[, "field"][, "retryAfter"][, "currentVersion"]}}}:
+ *
+ * <ul>
+ *   <li>400 validation: {@code invalid_field} (with {@code field}), {@code invalid_parameter}, {@code invalid_body}</li>
+ *   <li>401 {@code unauthenticated}; 403 {@code no_access}, {@code csrf_invalid}, {@code origin_rejected}</li>
+ *   <li>404 {@code not_found}; 405 {@code method_not_allowed}; 409 {@code version_conflict} (with
+ *       {@code currentVersion}); 413 {@code payload_too_large}</li>
+ *   <li>422 a code naming the business rule, e.g. {@code self_action_refused}; 429 {@code rate_limited}
+ *       (with {@code retryAfter} and a Retry-After header)</li>
+ *   <li>500 {@code internal_error}: generic, quoting the request id, with no stack trace or SQL in the
+ *       body; the detail goes to the log only, redacted (task 3.6)</li>
+ * </ul>
+ *
+ * A failure without an {@link ApiException} gets the stable code of its status from {@link #CODES}.
  */
 public class FailureHandler implements Handler<RoutingContext>
 {
     private static final Logger log = LoggerFactory.getLogger(FailureHandler.class);
+
+    /** Stable code and message for each status a framework handler or the router fails with. */
+    static final Map<Integer, String[]> CODES = Map.of(
+            400, new String[] {"bad_request", "The request is not valid."},
+            401, new String[] {"unauthenticated", "Sign in to continue."},
+            403, new String[] {"no_access", "You don't have access"},
+            404, new String[] {"not_found", "Not found"},
+            405, new String[] {"method_not_allowed", "This method is not allowed here."},
+            409, new String[] {"conflict", "The request conflicts with the current state."},
+            413, new String[] {"payload_too_large", "The request body is too large."},
+            415, new String[] {"unsupported_media_type", "Send the body as JSON."},
+            422, new String[] {"unprocessable", "The request breaks a business rule."},
+            429, new String[] {"rate_limited", "Too many requests. Try again in a moment."});
 
     @Override
     public void handle(RoutingContext ctx)
@@ -43,18 +70,16 @@ public class FailureHandler implements Handler<RoutingContext>
             status = 400;
             code = "invalid_parameter";
             message = invalid.getMessage();
-        }
-        else if (statusOf(ctx, failure) == 413)
-        {
-            status = 413;
-            code = "payload_too_large";
-            message = "The request body is too large.";
+            details = new JsonObject().put("field", invalid.field());
         }
         else if (statusOf(ctx, failure) >= 400 && statusOf(ctx, failure) < 500)
         {
             status = statusOf(ctx, failure);
-            code = "http_" + status;
-            message = "Request failed";
+
+            String[] known = CODES.getOrDefault(status, new String[] {"http_" + status, "Request failed"});
+
+            code = known[0];
+            message = known[1];
         }
         else
         {

@@ -1,5 +1,6 @@
 package com.pulse.platform.policy;
 
+import com.pulse.platform.audit.AuditEvents;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.auth.SessionHandler;
 import com.pulse.platform.db.SqlExecutor;
@@ -145,7 +146,7 @@ public final class PolicyService
 
             if (!permissions(user).containsAll(needed))
             {
-                ctx.fail(403, noAccess());
+                refuseRoute(ctx, user, needed);
 
                 return;
             }
@@ -174,13 +175,24 @@ public final class PolicyService
 
             if (needed.stream().noneMatch(held::contains))
             {
-                ctx.fail(403, noAccess());
+                refuseRoute(ctx, user, needed);
 
                 return;
             }
 
             ctx.next();
         };
+    }
+
+    /** Audits a refused route permission check (spec audit-log), then answers 403. */
+    private void refuseRoute(RoutingContext ctx, JsonObject user, Set<String> needed)
+    {
+        JsonObject entry = AuditService.entry(user, AuditEvents.PERMISSION_REFUSED, "route",
+                        ctx.request().method() + " " + ctx.request().path(),
+                        new JsonObject().put("required", new JsonArray(List.copyOf(needed))))
+                .put("outcome", "refused");
+
+        AuditService.record(sql, entry).onComplete(ignored -> ctx.fail(403, noAccess()));
     }
 
     /** Unknown permission keys fail at mount time, so a typo cannot silently open or close a route. */
@@ -300,9 +312,18 @@ public final class PolicyService
 
             if (!scope.all())
             {
-                return id != null && scope.allows(id.toString())
-                        ? Future.succeededFuture(scope)
-                        : Future.failedFuture(noAccess());
+                if (id != null && scope.allows(id.toString()))
+                {
+                    return Future.succeededFuture(scope);
+                }
+
+                JsonObject entry = AuditService.entry(user, AuditEvents.ACCESS_REFUSED, "person",
+                                personId == null ? null : personId.substring(0, Math.min(personId.length(), 64)),
+                                new JsonObject().put("domain", domain))
+                        .put("outcome", "refused");
+
+                return AuditService.record(sql, entry)
+                        .transform(ignored -> Future.failedFuture(noAccess()));
             }
 
             if (id == null)

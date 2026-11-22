@@ -127,6 +127,20 @@ final class MentoringRepository extends ScopedRepository
                 Tuple.of((Object) assignmentIds));
     }
 
+    /**
+     * Sessions of these assignments held on or after {@code from}: {@code [{assignmentId, heldOn, blocker, topics,
+     * loggedBy}]}, newest first.
+     */
+    Future<JsonArray> recentSessions(UUID[] assignmentIds, LocalDate from)
+    {
+        return queryList("""
+                SELECT s.assignment_id AS "assignmentId", s.held_on AS "heldOn", s.blocker, s.topics, u.name AS "loggedBy"
+                FROM mentoring_sessions s LEFT JOIN users u ON u.id = s.logged_by
+                WHERE s.assignment_id = ANY($1) AND s.held_on >= $2 ORDER BY s.held_on DESC
+                """,
+                Tuple.of(assignmentIds, from));
+    }
+
     // ------------------------------------------------------------------ checkpoint requests
 
     /** The person's own user id, or null. */

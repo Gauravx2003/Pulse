@@ -268,4 +268,119 @@ class TrainingMentoringRoutesTest
 
         assertEquals(pendingOf(priya).size(), badge(priya, "training"));
     }
+
+    // ------------------------------------------------------------------ Action Center and onboarding (task 21.2)
+
+    @Test
+    void aBlockerIsAHighItemForTheManager() throws Exception
+    {
+        HttpResponse<Buffer> logged = api.post("/api/v1/training/assignments/" + rohitPlan + "/sessions", as("priya@pulse.demo"),
+                session("Staging deploy keys and access requests", TODAY).put("blocker", true).put("blockerNote", "Waiting on IT"));
+
+        assertEquals(200, logged.statusCode(), logged.bodyAsString());
+
+        JsonArray items = remindersOf(as(RoleMatrix.MANAGER));
+
+        JsonObject blocker = null;
+
+        for (Object o : items)
+        {
+            JsonObject x = (JsonObject) o;
+
+            if (TrainingActionProvider.BLOCKERS.equals(x.getString("key")) && x.getString("text").contains("Staging deploy keys"))
+            {
+                blocker = x;
+            }
+        }
+
+        assertTrue(blocker != null, items.encodePrettily());
+
+        assertEquals("High", blocker.getString("priority"));
+
+        assertEquals(403, api.get("/api/v1/training/reminders", as(RoleMatrix.EMPLOYEE)).statusCode());
+    }
+
+    @Test
+    void managerItemsFollowTheAssignmentActions() throws Exception
+    {
+        TestApi.Session rahul = as(RoleMatrix.MANAGER);
+
+        int expected = 0;
+
+        for (Object o : api.get("/api/v1/training/assignments", rahul).bodyAsJsonObject().getJsonArray("items"))
+        {
+            JsonObject a = (JsonObject) o;
+
+            if (a.getJsonArray("roles").contains("manager"))
+            {
+                for (String action : new String[] {"managerReview", "assess", "markDiscussed"})
+                {
+                    expected += a.getJsonArray("actions").contains(action) ? 1 : 0;
+                }
+            }
+        }
+
+        long items = remindersOf(rahul).stream()
+                .filter(x -> TrainingActionProvider.MANAGER_ACTIONS.equals(((JsonObject) x).getString("key"))).count();
+
+        assertEquals(expected, items);
+    }
+
+    @Test
+    void expectedSessionsFollowTheMeetingFrequency()
+    {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+
+        JsonObject a = new JsonObject().put("startOn", "2026-01-05").put("end", "2026-12-31");
+
+        assertEquals(5, TrainingActionProvider.expected(a.copy().put("meetingFrequency", "Daily"), monday, monday.plusDays(6), java.util.Set.of()));
+
+        assertEquals(2, TrainingActionProvider.expected(a.copy().put("meetingFrequency", "Twice a week"), monday, monday.plusDays(6),
+                java.util.Set.of()));
+
+        assertEquals(1, TrainingActionProvider.expected(a.copy().put("meetingFrequency", "Weekly"), monday, monday.plusDays(6), java.util.Set.of()));
+
+        // Before the plan starts nothing is expected.
+        assertEquals(0, TrainingActionProvider.expected(a.copy().put("startOn", "2027-01-04"), monday, monday.plusDays(6), java.util.Set.of()));
+    }
+
+    @Test
+    void aNewJoinerOnAnOnboardingPlanIsOnboarding() throws Exception
+    {
+        String rohit = api.queryOne("SELECT person_id FROM training_assignments WHERE external_id = 'ta1kk9'").getString("person_id");
+
+        JsonObject joined = api.queryOne("SELECT joined_on::text AS d FROM people WHERE id = '" + rohit + "'");
+
+        HttpResponse<Buffer> res = api.get("/api/v1/training/onboarding?personId=" + rohit, as(RoleMatrix.MANAGER));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        boolean newJoiner = LocalDate.parse(joined.getString("d")).plusMonths(3).isAfter(TODAY);
+
+        if (newJoiner)
+        {
+            assertEquals("Software Engineer onboarding", res.bodyAsJsonObject().getString("plan"), res.bodyAsString());
+
+            assertEquals("Priya Shah", res.bodyAsJsonObject().getString("mentor"));
+        }
+        else
+        {
+            assertTrue(res.bodyAsJsonObject().getBoolean("notApplicable", false), res.bodyAsString());
+        }
+
+        // Someone who joined long ago is never onboarding.
+        String arjun = api.queryOne("SELECT p.id FROM people p JOIN users u ON u.id = p.user_id WHERE u.email = 'arjun@pulse.demo'").getString("id");
+
+        assertTrue(api.get("/api/v1/training/onboarding?personId=" + arjun, as(RoleMatrix.MANAGER)).bodyAsJsonObject()
+                .getBoolean("notApplicable", false));
+    }
+
+    private static JsonArray remindersOf(TestApi.Session session) throws Exception
+    {
+        HttpResponse<Buffer> res = api.get("/api/v1/training/reminders", session);
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        return res.bodyAsJsonObject().getJsonArray("items");
+    }
 }

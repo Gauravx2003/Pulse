@@ -780,6 +780,13 @@ final class AssignmentService
                 .compose(scope -> ctx.calc().getObject("people.trainingOverall", new JsonObject().put("person", personId)));
     }
 
+    /** The person's onboarding plan while on one (people.onboarding), else {@code notApplicable}. */
+    Future<JsonObject> onboarding(JsonObject user, String personId)
+    {
+        return policy.requireVisible(user, personId, PolicyService.DOMAIN_TRAINING)
+                .compose(scope -> ctx.calc().getObject("people.onboarding", new JsonObject().put("person", personId)));
+    }
+
     /** Days the trainee has to sign off once both final reviews are in (prototype rule trSignDays). */
     static final int SIGN_OFF_DAYS = 5;
 

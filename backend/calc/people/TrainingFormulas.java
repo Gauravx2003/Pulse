@@ -25,6 +25,10 @@ import java.util.UUID;
  *       checkIns}}; null for an unknown assignment.</li>
  *   <li>{@code people.trainingOverall {person}}: the plan-length-weighted overall rating
  *       {@code {score, final, n, band}} (Final ratings only when one exists).</li>
+ *   <li>{@code people.onboarding {person}}: the input port of Track 2's {@code work.onboarding} (task 21.2):
+ *       {@code {assignment, plan, progress, mentor}} while a new joiner (joined less than 3 months ago) is on
+ *       a started, unfinished onboarding plan, else null. Utilization alerts and rebalance leave them out.
+ *       Reads as null when the training tables are not installed.</li>
  * </ul>
  *
  * <p>The input port {@code people.trainingPlans} that {@code core.training} reads (docs/calc.md §5) is
@@ -48,7 +52,60 @@ public final class TrainingFormulas implements FormulaModule
     {
         return List.of(
                 Formula.of("people.trainingRating", Set.of("assignment"), TOPICS, TrainingFormulas::rating),
-                Formula.of("people.trainingOverall", Set.of("person"), TOPICS, TrainingFormulas::overall));
+                Formula.of("people.trainingOverall", Set.of("person"), TOPICS, TrainingFormulas::overall),
+                Formula.of("people.onboarding", Set.of("person"), Set.of(TRAINING, CalcService.PEOPLE), TrainingFormulas::onboarding));
+    }
+
+    /** Months after joining during which a person counts as a new joiner (prototype {@code isNewJoiner}). */
+    static final int NEW_JOINER_MONTHS = 3;
+
+    private static Future<Object> onboarding(CalcContext ctx, JsonObject params)
+    {
+        UUID person = UUID.fromString(params.getString("person"));
+
+        return ctx.sql().queryOne("SELECT to_regclass('training_assignments') IS NOT NULL AS installed", Tuple.tuple()).compose(t ->
+        {
+            if (!t.getBoolean("installed"))
+            {
+                return Future.succeededFuture(null);
+            }
+
+            return ctx.sql().queryOne("""
+                    SELECT a.id AS assignment, v.name AS plan, v.modules, a.module_progress AS progress, m.name AS mentor
+                    FROM training_assignments a
+                    JOIN people p ON p.id = a.person_id
+                    JOIN training_plan_versions v ON v.plan_id = a.plan_id AND v.plan_version = a.plan_version
+                    LEFT JOIN users m ON m.id = a.mentor_id
+                    WHERE a.person_id = $1 AND a.outcome IS NULL AND a.start_on <= $2
+                      AND p.joined_on > $2 - make_interval(months => $3)
+                      AND (v.name ILIKE '%onboarding%' OR v.audience ILIKE '%new %' OR v.audience ILIKE '%trainee%')
+                    ORDER BY a.start_on DESC LIMIT 1
+                    """,
+                    Tuple.of(person, ctx.today(), NEW_JOINER_MONTHS)).map(row ->
+            {
+                if (row == null)
+                {
+                    return null;
+                }
+
+                JsonArray modules = row.getJsonArray("modules", new JsonArray());
+
+                JsonObject done = row.getJsonObject("progress", new JsonObject());
+
+                int finished = 0;
+
+                for (Object o : modules)
+                {
+                    finished += o instanceof JsonObject m && done.containsKey(m.getString("id")) ? 1 : 0;
+                }
+
+                return (Object) new JsonObject()
+                        .put("assignment", row.getString("assignment"))
+                        .put("plan", row.getString("plan"))
+                        .put("progress", modules.isEmpty() ? 0 : Math.round(100f * finished / modules.size()))
+                        .put("mentor", row.getString("mentor"));
+            });
+        });
     }
 
     private static Future<Object> rating(CalcContext ctx, JsonObject params)

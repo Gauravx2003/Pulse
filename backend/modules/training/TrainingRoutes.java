@@ -4,13 +4,17 @@ import com.pulse.platform.http.ApiException;
 import com.pulse.platform.http.BodySchema;
 import com.pulse.platform.http.ExpectedVersion;
 import com.pulse.platform.http.Ids;
+import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 
 /**
@@ -45,6 +49,8 @@ import java.util.function.BiFunction;
  * POST   /assignments/:id/checkpoints/:day      a manager requests the Day N checkpoint (360° form)
  * GET    /mentors                               Mentors table (training.manage)
  * GET    /suggestions/onboarding                joiners under 3 months without a plan (training.manage)
+ * GET    /onboarding?personId=                  a new joiner's onboarding plan (people.onboarding)
+ * GET    /reminders                             the caller's training Action Center items (training.manage)
  * GET    /rating?personId=                      the overall training rating
  * </pre>
  *
@@ -183,8 +189,12 @@ public final class TrainingRoutes
 
     private final MentoringService mentoring;
 
+    private final ModuleContext ctx;
+
     TrainingRoutes(ModuleContext ctx)
     {
+        this.ctx = ctx;
+
         this.policy = ctx.policy();
 
         this.plans = new PlanService(ctx);
@@ -306,6 +316,47 @@ public final class TrainingRoutes
         router.get("/suggestions/onboarding").handler(policy.requires("training.manage"))
                 .handler(rc -> mentoring.onboardingSuggestions(PolicyService.user(rc))
                         .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
+
+        // GET /api/v1/training/onboarding?personId=: the onboarding plan of a new joiner (calc/people, task 21.2)
+        router.get("/onboarding").handler(policy.requiresAny(anyone)).handler(rc ->
+        {
+            String personId = rc.queryParams().get("personId");
+
+            if (personId == null)
+            {
+                rc.fail(ApiException.badRequest("invalid_parameter", "Choose the person.").field("personId"));
+
+                return;
+            }
+
+            assignments.onboarding(PolicyService.user(rc), personId).onSuccess(rc::json).onFailure(rc::fail);
+        });
+
+        // GET /api/v1/training/reminders: the caller's training Action Center items (task 21.2)
+        router.get("/reminders").handler(policy.requires("training.manage")).handler(rc ->
+        {
+            JsonObject user = PolicyService.user(rc);
+
+            List<Future<List<JsonObject>>> parts = new ArrayList<>();
+
+            for (ActionProvider provider : TrainingActionProvider.all())
+            {
+                parts.add(provider.actionsFor(user, ctx));
+            }
+
+            Future.all(parts).map(all ->
+                    {
+                        JsonArray items = new JsonArray();
+
+                        for (int i = 0; i < parts.size(); i++)
+                        {
+                            all.<List<JsonObject>>resultAt(i).forEach(items::add);
+                        }
+
+                        return new JsonObject().put("items", items);
+                    })
+                    .onSuccess(rc::json).onFailure(rc::fail);
+        });
 
         router.post("/assignments/:id/discussed").handler(policy.requires("training.manage")).handler(VERSION_ONLY.handler())
                 .handler(rc -> versioned(rc, (body, version) -> assignments.discussed(PolicyService.user(rc), Ids.path(rc, "id"), version)));

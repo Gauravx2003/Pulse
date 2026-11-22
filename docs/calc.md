@@ -117,6 +117,7 @@ no data).
 | `work.extraMileItems` | person, period (quarter) | `[{state, points, values}]` | `core.culture` (bonus) |
 | `work.disciplineInputs` | person | `{days, stale, replan, status, block, logSame, bulk, dod, review, standup}`, as `Discipline.metrics` | `core.discipline` |
 | `people.attendanceDiscipline` | person | `{score, absent}` from `Attendance.stats` for the quarter | `core.discipline` (rule h) |
+| `people.onboarding` | person | `{assignment, plan, progress, mentor}` while a joiner (< 3 months) is on a started, unfinished onboarding plan, else null — registered by training (task 21.2) | `work.onboarding` (no utilization alert, left out of rebalance) |
 | `people.leaveDays` | person | full leave and absent days (`L`, `S`, `A`) as dates — registered by attendance (task 17.1) | capacity: pass as `WorkingDays` person `leave` |
 | `people.disciplineOverride` | person | `{score, reason}`, or null | `core.discipline` |
 | `people.trainingPlans` | person | `[{weeks, rating}]` with `rating` from `TrainingRating.rating` | `core.training` → Growth pillar |

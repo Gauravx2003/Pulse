@@ -1,5 +1,6 @@
 package com.pulse.modules.training;
 
+import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.BadgeProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
@@ -43,6 +44,12 @@ public class TrainingModule implements PulseModule
                 """
                 SELECT a.person_id FROM training_assignments a JOIN people m ON m.user_id = a.mentor_id WHERE m.id = $1
                 """));
+    }
+
+    @Override
+    public List<ActionProvider> actionProviders()
+    {
+        return TrainingActionProvider.all();
     }
 
     @Override

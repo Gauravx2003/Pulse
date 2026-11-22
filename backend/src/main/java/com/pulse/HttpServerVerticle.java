@@ -160,7 +160,7 @@ public class HttpServerVerticle extends AbstractVerticle
 
         calc = new CalcService(sql, PulseClock.from(config(), RuntimeProfile.from(config())), formulas).listen(vertx);
 
-        ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy, calc);
+        ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy, calc, registry);
 
         for (PulseModule module : registry.modules())
         {

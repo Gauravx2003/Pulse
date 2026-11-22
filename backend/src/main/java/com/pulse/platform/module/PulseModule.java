@@ -1,5 +1,6 @@
 package com.pulse.platform.module;
 
+import com.pulse.platform.ingest.SeedMapper;
 import com.pulse.platform.policy.VisibilityRelation;
 import io.vertx.ext.web.Router;
 
@@ -46,6 +47,17 @@ public interface PulseModule {
     /** Classpath directory holding this module's seed files (consumed by the seed loader). */
     default String seedDir() {
         return "modules/" + id() + "/seed";
+    }
+
+    /**
+     * Seed mappers for this module's ingest tables (task 5.4): the {@link com.pulse.platform.ingest.SeedConnector}
+     * reads {@code seed/extracted/*.json} through them at start-up (demo seed on) and on Sync now of a seeded
+     * tool, and {@link com.pulse.platform.ingest.IngestService} upserts the records. Ingest tables are never
+     * seeded by direct inserts.
+     */
+    default List<SeedMapper> seedMappers()
+    {
+        return List.of();
     }
 
     /** Scheduled jobs run by the scheduler verticle. */

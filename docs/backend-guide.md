@@ -97,8 +97,8 @@ public class KudosModule implements PulseModule
 Other hooks on `PulseModule`: `menu()` (only screens beyond the screen map), `jobs()`,
 `actionProviders()` and `visibilityRelations()` (section 4).
 
-`ModuleContext` gives you `vertx()`, `config()`, `sql()` (the shared `SqlExecutor`) and `policy()`
-(the `PolicyService`). Never use `pool()` directly.
+`ModuleContext` gives you `vertx()`, `config()`, `sql()` (the shared `SqlExecutor`), `policy()`
+(the `PolicyService`), `calc()` and `registry()` (the discovered modules). Never use `pool()` directly.
 
 ## 3. Routes: permission first, then schema, then the handler
 
@@ -399,7 +399,46 @@ routes such as imports and exports:
 `router.post("/upload").handler(RateLimiter.perUser(ctx.vertx(), "imports", 10, 60))`. CSV and multipart
 bodies may be up to 5 MB, everything else 1 MB.
 
-## 7. Tests
+## 7. Tool data: seed mappers and IngestService
+
+Tables that mirror an external tool (issues, worklogs, pull requests, bugs, tickets, sprints, holidays
+...) carry the ingest columns `source text NOT NULL DEFAULT 'seed'`, `external_id text` and
+`synced_at timestamptz`, with `CREATE UNIQUE INDEX <table>_source_external_uq ON <table> (source,
+external_id)` (design.md decision 6). Never insert into such a table from a seed SQL file or a service:
+`IngestService` (`com.pulse.platform.ingest`) is the only write path. It finds ingest tables in the
+database by those three columns, so adding them to your table is all the registration it needs.
+
+Seed data reaches an ingest table through a `SeedMapper` that your module lists in its descriptor. The
+`SeedConnector` runs every mapper at start-up while `PULSE_DEMO_SEED=true` (after all SQL seeds, and in
+`TestApi` too) and again on **Sync now** of the mapper's tool:
+
+```java
+@Override
+public List<SeedMapper> seedMappers()
+{
+    return List.of(PlatformSeedMappers.mapper("jira", "issues", 210, "issues", i -> new JsonObject()
+            .put("external_id", i.getString("key"))                       // required, unique per source
+            .put("summary", i.getString("summary"))
+            .put("story_points", i.getValue("sp"))                        // cast to the column type
+            .put("assignee_id", SeedMapper.ref("people", i.getString("person")))));   // id of that seed row
+}
+```
+
+- `tool` is the Integrations tile (`jira`, `gh`, `tfs`, `sl`, `hr`, ...); `entity` is your table; the file
+  is `seed/extracted/<file>.json`. Implement `SeedMapper` yourself when one JSON row is not one record.
+- `order` sets load order: platform tables use 0–99, and a table that `$ref`s another must load after
+  it. A `$ref` that matches no row stores null.
+- Records may only name columns of the table; `id`, `source`, `external_id`, `synced_at`, `created_at`,
+  `updated_at` and `version` are set by the service. A bad record fails the whole batch.
+- The upsert is by (`source`, `external_id`): re-running creates no duplicates, moves `synced_at`, and
+  bumps `updated_at`/`version` only when a value changed. Nothing is ever deleted.
+- After each sync `CalcService` drops its cache (topic `CalcService.ALL`), so formulas see the new rows.
+
+Live connectors (group 24) implement `ConnectorPort` (`fetchChanges(since)` returning the same
+normalized batch, documented on the interface) and register on the `ConnectorRegistry`; nothing in your
+module changes when they arrive.
+
+## 8. Tests
 
 Every endpoint needs a per-role contract test. Use `TestApi` (a real server on a throw-away schema with
 the demo seed) and `RoleMatrix`:
@@ -456,4 +495,5 @@ is up.
 - [ ] Editable records update through `updateVersioned` with `ExpectedVersion.of`.
 - [ ] Failures go through `rc.fail` / `ApiException` with a stable code.
 - [ ] Migrations and seeds are in your range; demo data is in `S<n>__demo_*.sql`.
+- [ ] Ingest tables (with `source`/`external_id`/`synced_at`) are seeded only through a `SeedMapper`.
 - [ ] A `RoleMatrix` contract test covers Admin, Manager, Employee and peer.

@@ -23,8 +23,9 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      # repository root: the image also needs seed/extracted (seed connector, task 5.4)
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: pulse-backend
     restart: unless-stopped
     environment:

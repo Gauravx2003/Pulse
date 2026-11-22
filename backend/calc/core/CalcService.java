@@ -51,6 +51,9 @@ public final class CalcService
     /** Rules &amp; thresholds changed: every cached result is dropped. */
     public static final String RULES = "rules";
 
+    /** Invalidation topic that drops every cached result, e.g. after a connector sync (task 5.4). */
+    public static final String ALL = "all";
+
     /** Sprints or releases changed (the period calendar). */
     public static final String SPRINTS = "sprints";
 
@@ -186,12 +189,12 @@ public final class CalcService
 
     // ------------------------------------------------------------------ invalidation
 
-    /** Drops every cached result that read one of {@code topics}; {@link #RULES} drops everything. */
+    /** Drops every cached result that read one of {@code topics}; {@link #RULES} and {@link #ALL} drop everything. */
     public void invalidate(String... topics)
     {
         Set<String> ts = Set.of(topics);
 
-        if (ts.contains(RULES))
+        if (ts.contains(RULES) || ts.contains(ALL))
         {
             rules = null;
             calendar = null;

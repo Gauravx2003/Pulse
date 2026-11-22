@@ -95,10 +95,26 @@ public class KudosModule implements PulseModule
 ```
 
 Other hooks on `PulseModule`: `menu()` (only screens beyond the screen map), `jobs()`,
-`actionProviders()` and `visibilityRelations()` (section 4).
+`actionProviders()`, `visibilityRelations()` (section 4) and `erasePersonalData()` (below).
 
 `ModuleContext` gives you `vertx()`, `config()`, `sql()` (the shared `SqlExecutor`), `policy()`
 (the `PolicyService`), `calc()` and `registry()` (the discovered modules). Never use `pool()` directly.
+
+**Deleting a user.** When a user is deleted (Users screen, task 5.1), the platform erases the account
+and the profile (name, email, password, sessions) and keeps their ids as opaque pseudonymous ids. Then it
+calls every module's `erasePersonalData(tx, {userId, personId})` inside the same transaction. A module
+that keeps personal data overrides it and removes what spec `platform/privacy-retention` says is removed
+(for example OKRs, extra-work records, free-text pulse notes, 1:1 notes, kudos text the user wrote),
+unlinks the user as a 360° reviewer and scrubs comments written about them. It keeps aggregates keyed by
+the ids. A failed future rolls the whole deletion back.
+
+```java
+@Override
+public Future<Void> erasePersonalData(SqlExecutor tx, JsonObject subject)
+{
+    return new KudosRepository(tx).deleteWrittenBy(UUID.fromString(subject.getString("userId")));
+}
+```
 
 ## 3. Routes: permission first, then schema, then the handler
 
@@ -381,6 +397,12 @@ For 422 use `ApiException.unprocessable("<rule_code>", "<sentence the user sees>
 by `:id`, status, size, duration and request id. It never writes the query string, IP, referrer or user
 agent. Don't undo that in your own log lines: never log a raw path, a record id that identifies a
 person (for example a 360° request id), or free text. Client IPs belong in audit entries only.
+
+**Rules and thresholds.** Never hard-code a threshold, weight or point value. Formulas read them from
+`ctx.rules()` (the rule set in force; see [calc.md](calc.md)). The keys, groups, ranges and defaults are
+listed in `calc/core/RuleCatalogue.java`, the only place that holds them. Admins edit them on Rules &
+thresholds (`/api/v1/rules`, task 5.2). Each save creates a new rule version and drops the calculation
+cache on every instance.
 
 **Calculated numbers.** Formulas live in `calc/` as pure functions (verified against the prototype, see
 [oracle.md](oracle.md)), are registered and read through `ctx.calc()` ([calc.md](calc.md)), and return `null`

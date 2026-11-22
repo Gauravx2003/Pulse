@@ -22,7 +22,12 @@ export default [
     },
   },
   {
-    files: ['*.config.js', 'eslint-rules/**/*.js'],
+    // Kit components keep the design-system component names (Badge, StatTile, ...).
+    files: ['src/kit/*.vue'],
+    rules: { 'vue/multi-word-component-names': 'off' },
+  },
+  {
+    files: ['*.config.js', 'eslint-rules/**/*.js', 'e2e/**/*.js'],
     languageOptions: { globals: { ...globals.node } },
   },
 ];

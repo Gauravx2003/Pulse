@@ -26,6 +26,8 @@ import com.pulse.platform.module.ModuleRegistry;
 import com.pulse.platform.module.PulseModule;
 import com.pulse.platform.nav.Navigation;
 import com.pulse.platform.policy.PolicyService;
+import com.pulse.platform.shell.ShellRepository;
+import com.pulse.platform.shell.ShellRoutes;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -148,6 +150,11 @@ public class HttpServerVerticle extends AbstractVerticle
 
         AuthService auth = new AuthService(vertx, sql, authSettings, catalogue.keys());
 
+        ShellRepository shell = new ShellRepository(sql);
+
+        // public, so it is mounted before the session guard that AuthRoutes installs
+        ShellRoutes.mountPublic(router, API_PREFIX, shell, RuntimeProfile.from(config()).demoSeed());
+
         AuthRoutes.mount(router, API_PREFIX, auth, new PasswordService(vertx, sql, auth), Navigation.of(registry),
                 RateLimiter.perUser(vertx, "user", security.userPerMinute(), 60));
 
@@ -159,6 +166,8 @@ public class HttpServerVerticle extends AbstractVerticle
         AuditRoutes.mount(router, API_PREFIX, policy, sql);
 
         calc = new CalcService(sql, PulseClock.from(config(), RuntimeProfile.from(config())), formulas).listen(vertx);
+
+        ShellRoutes.mount(router, API_PREFIX, shell, policy, calc);
 
         ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy, calc, registry);
 

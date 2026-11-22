@@ -1,7 +1,10 @@
 package com.pulse.platform.module;
 
+import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.ingest.SeedMapper;
 import com.pulse.platform.policy.VisibilityRelation;
+import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 
 import java.util.List;
@@ -96,5 +99,25 @@ public interface PulseModule {
     /** Providers that contribute items to the Action Center. */
     default List<ActionProvider> actionProviders() {
         return List.of();
+    }
+
+    /**
+     * Erases this module's personal data of a deleted user (spec platform/privacy-retention "User
+     * deletion and anonymization", task 5.1). The users module calls every module's hook inside the
+     * delete transaction, after the platform has erased the account and the profile; a failed future
+     * rolls the whole deletion back.
+     *
+     * <p>Delete what the spec says is removed (for example OKRs, extra-work records, free-text pulse
+     * notes, 1:1 notes, kudos text the user wrote), unlink the user as a 360° reviewer and scrub
+     * comments about them, and keep aggregates keyed by the ids, which are now opaque pseudonymous
+     * ids. Never copy a name, email or free text anywhere.
+     *
+     * @param tx      the delete transaction; build repositories from it
+     * @param subject {@code {userId, personId}}; {@code personId} is null for an account without a
+     *                performance profile
+     */
+    default Future<Void> erasePersonalData(SqlExecutor tx, JsonObject subject)
+    {
+        return Future.succeededFuture();
     }
 }

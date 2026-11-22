@@ -193,3 +193,45 @@ test('shell has no axe violations and fits at 1024 and 1440 px', async ({ page }
 
   expect(violations.map((v) => v.id)).toEqual([]);
 });
+
+test('with no active sprint (today after the last sprint) the period control still works across screens', async ({ page }) => {
+  // the server's shape when today is past the last seeded sprint (an unpinned dev backend)
+  await page.route('**/api/v1/periods', (route) =>
+    route.fulfill({
+      json: {
+        today: '2026-11-22',
+        activeSprint: { notApplicable: true },
+        sprints: [
+          { kind: 'sprint', key: 's:S43', label: 'Sprint 43 · 21 Sep – 9 Oct', live: false },
+          { kind: 'sprint', key: 's:S42', label: 'Sprint 42 · 7 Sep – 18 Sep', live: false },
+        ],
+        months: [{ kind: 'month', key: 'm:2026-11', label: 'Nov 2026 (to date)', live: true }],
+        releases: [{ kind: 'release', key: 'r:8.3', label: 'Release 8.3 (in progress)', live: false }],
+      },
+    }),
+  );
+
+  const errors = [];
+
+  page.on('pageerror', (e) => errors.push(e.message));
+
+  await signIn(page, DEMO.employee);
+
+  const period = page.getByRole('combobox', { name: 'Period', exact: true });
+
+  await expect(period).toHaveValue('s:S43');
+
+  await menu(page).getByRole('link', { name: 'Progress' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Progress' })).toBeVisible();
+
+  await menu(page).getByRole('link', { name: 'Overview' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();
+  await expect(period).toHaveValue('s:S43');
+
+  await page.getByRole('button', { name: 'Month' }).click();
+  await expect(period).toHaveValue('m:2026-11');
+  await page.getByRole('button', { name: 'Sprint' }).click();
+  await expect(period).toHaveValue('s:S43');
+
+  expect(errors).toEqual([]);
+});

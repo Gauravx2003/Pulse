@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { BASE_FILE, DEMO_FILE, HISTORY_FILE, HISTORY_QUARTERS, PERFORMANCE_FILE, RULE_GROUPS, SEED_SQL_DIR, buildBase, buildDemo, buildHistory, buildPerformance, lit } from './build-sql.mjs';
+import { BASE_FILE, DEMO_FILE, HISTORY_FILE, HISTORY_QUARTERS, NOTIFICATIONS_FILE, PERFORMANCE_FILE, RULE_GROUPS, SEED_SQL_DIR, buildBase, buildDemo, buildHistory, buildNotifications, buildPerformance, lit } from './build-sql.mjs';
 
 test('committed seed SQL matches a fresh generation', () => {
   assert.equal(readFileSync(path.join(SEED_SQL_DIR, BASE_FILE), 'utf8'), buildBase(),
@@ -14,6 +14,15 @@ test('committed seed SQL matches a fresh generation', () => {
     'run `node seed/build-sql.mjs` and commit the result');
   assert.equal(readFileSync(path.join(SEED_SQL_DIR, HISTORY_FILE), 'utf8'), buildHistory(),
     'run `node seed/build-sql.mjs` and commit the result');
+  assert.equal(readFileSync(path.join(SEED_SQL_DIR, NOTIFICATIONS_FILE), 'utf8'), buildNotifications(),
+    'run `node seed/build-sql.mjs` and commit the result');
+});
+
+test('demo notifications: one row per prototype notification, none with salary or 360° comment text', () => {
+  const lines = buildNotifications().split('\n').filter((l) => l.startsWith('INSERT INTO notifications '));
+  assert.equal(lines.length, 32);
+  assert.ok(lines.some((l) => l.includes("'Share 360° feedback on Rohit Kulkarni · Rohit · Software Engineer onboarding · Day 14 · due 28 Sept'")));
+  assert.ok(lines.every((l) => !l.includes('₹')));
 });
 
 test('index history has one period snapshot per closed quarter, from the prototype trend', () => {

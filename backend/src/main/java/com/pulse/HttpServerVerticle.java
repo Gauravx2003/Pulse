@@ -25,6 +25,7 @@ import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.ModuleRegistry;
 import com.pulse.platform.module.PulseModule;
 import com.pulse.platform.nav.Navigation;
+import com.pulse.platform.notify.NotificationRoutes;
 import com.pulse.platform.policy.PolicyService;
 import com.pulse.platform.shell.ShellRepository;
 import com.pulse.platform.shell.ShellRoutes;
@@ -155,7 +156,9 @@ public class HttpServerVerticle extends AbstractVerticle
         // public, so it is mounted before the session guard that AuthRoutes installs
         ShellRoutes.mountPublic(router, API_PREFIX, shell, RuntimeProfile.from(config()).demoSeed());
 
-        AuthRoutes.mount(router, API_PREFIX, auth, new PasswordService(vertx, sql, auth), Navigation.of(registry),
+        Navigation navigation = Navigation.of(registry);
+
+        AuthRoutes.mount(router, API_PREFIX, auth, new PasswordService(vertx, sql, auth), navigation,
                 RateLimiter.perUser(vertx, "user", security.userPerMinute(), 60));
 
         PolicyService policy = new PolicyService(sql, catalogue.keys(), registry.visibilityRelations(),
@@ -170,6 +173,8 @@ public class HttpServerVerticle extends AbstractVerticle
         ShellRoutes.mount(router, API_PREFIX, shell, policy, calc);
 
         ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy, calc, registry);
+
+        NotificationRoutes.mount(router, API_PREFIX, moduleContext, navigation);
 
         for (PulseModule module : registry.modules())
         {

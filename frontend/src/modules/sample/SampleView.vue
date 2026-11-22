@@ -14,7 +14,10 @@ import { ref, onMounted } from 'vue';
 const ok = ref(false);
 onMounted(async () => {
   try {
-    ok.value = (await fetch('/api/v1/sample/ping')).ok;
+    // read the body so the request completes (an unread body keeps the connection open)
+    const res = await fetch('/api/v1/sample/ping');
+
+    ok.value = res.ok && (await res.json()).pong === true;
   } catch {
     ok.value = false;
   }

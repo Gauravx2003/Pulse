@@ -156,4 +156,24 @@ public final class ModuleRegistry
 
         return all;
     }
+
+    /** Action Center providers of all modules, in discovery order. */
+    public List<ActionProvider> actionProviders()
+    {
+        List<ActionProvider> all = new ArrayList<>();
+
+        modules.values().forEach(m -> all.addAll(m.actionProviders()));
+
+        return all;
+    }
+
+    /** Menu badge providers of all modules, in discovery order. */
+    public List<BadgeProvider> badgeProviders()
+    {
+        List<BadgeProvider> all = new ArrayList<>();
+
+        modules.values().forEach(m -> all.addAll(m.badges()));
+
+        return all;
+    }
 }

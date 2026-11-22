@@ -173,7 +173,7 @@ public class OkrImportService implements OkrImportPort
         target.put("epic_key", OkrService.trimmed(OkrService.str(group, "epic_key")))
                 .put("culture_value", OkrService.trimmed(OkrService.str(group, "culture_value")));
 
-        UUID by = OkrService.parseId(actor.getString("userId"));
+        UUID by = OkrService.parseId(OkrService.userId(actor));
 
         return sql.inTransaction(tx ->
         {

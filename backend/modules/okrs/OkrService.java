@@ -1,5 +1,6 @@
 package com.pulse.modules.okrs;
 
+import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.db.SqlExecutor;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -19,7 +20,8 @@ import java.util.regex.Pattern;
  * permissions and transactional writes. Progress, status and the OKR pillar are formulas, so they are
  * computed by {@code calc/work} through CalcService (task 4.10) and are not part of this service.
  *
- * <p>The caller ({@code actor}) is a JSON object {@code {userId, personId, permissions: [...]}}.
+ * <p>The caller ({@code actor}) is the platform user {@code {id, role, personId, permissions: [...]}}
+ * ({@code PolicyService.user}); {@code userId} is accepted in place of {@code id} for older callers.
  * Visibility of another person comes from {@code canSeePerson}, the seam for the policy service
  * (task 3.5): it resolves true when the actor may see that person's data.
  *
@@ -34,6 +36,20 @@ public class OkrService
     public static final String OKR_TEAM = "okr.team";
 
     public static final String ALL_VIEW = "all.view";
+
+    public static final String OBJECTIVE_CREATED = "okr.objective.created";
+
+    public static final String OBJECTIVE_UPDATED = "okr.objective.updated";
+
+    public static final String OBJECTIVE_DELETED = "okr.objective.deleted";
+
+    public static final String CHECKED_IN = "okr.key_result.checked_in";
+
+    /**
+     * The audit events this service writes; {@link OkrsModule} declares them.
+     */
+    public static final List<String> AUDIT_EVENTS = List.of(OBJECTIVE_CREATED, OBJECTIVE_UPDATED, OBJECTIVE_DELETED,
+            CHECKED_IN);
 
     private static final Pattern QUARTER = Pattern.compile("^[0-9]{4}-Q[1-4]$");
 
@@ -160,8 +176,12 @@ public class OkrService
                     {
                         OkrRepository repo = new OkrRepository(tx);
 
-                        return repo.insertObjective(objective, parseId(actor.getString("userId")))
+                        return repo.insertObjective(objective, parseId(userId(actor)))
                                 .compose(id -> insertKeyResults(repo, id, keyResults, 1)
+                                        .compose(done -> audit(tx, actor, OBJECTIVE_CREATED, id, new JsonObject()
+                                                .put("quarter", objective.getString("quarter"))
+                                                .put("level", objective.getString("level"))
+                                                .put("keyResults", keyResults.size())))
                                         .compose(done -> repo.findObjective(id)));
                     });
                 })
@@ -220,9 +240,12 @@ public class OkrService
 
                                 return repo.updateObjective(id, version, changes)
                                         .compose(updated -> updated == 0
-                                                ? Future.failedFuture(OkrException.conflict(
-                                                        "This objective was changed by someone else. Reload and try again."))
+                                                ? repo.lockVersion(id).compose(latest ->
+                                                        Future.<Void>failedFuture(OkrException.versionConflict(latest)))
                                                 : replaceKeyResults(repo, id, current.getJsonArray("key_results"), keyResults))
+                                        .compose(done -> audit(tx, actor, OBJECTIVE_UPDATED, id, new JsonObject()
+                                                .put("quarter", changes.getString("quarter"))
+                                                .put("keyResults", keyResults.size())))
                                         .compose(done -> repo.findObjective(id));
                             }));
         }).recover(OkrService::translate);
@@ -248,9 +271,13 @@ public class OkrService
                     .compose(current -> current == null
                             ? Future.failedFuture(OkrException.forbidden())
                             : canEdit(actor, current).compose(allowed -> allowed
-                                    ? repo.deleteObjective(id).map(n -> new JsonObject()
-                                            .put("deleted", true)
-                                            .put("key_results", current.getJsonArray("key_results").size()))
+                                    ? repo.deleteObjective(id)
+                                            .compose(n -> audit(tx, actor, OBJECTIVE_DELETED, id, new JsonObject()
+                                                    .put("quarter", current.getString("quarter"))
+                                                    .put("keyResults", current.getJsonArray("key_results").size())))
+                                            .map(n -> new JsonObject()
+                                                    .put("deleted", true)
+                                                    .put("key_results", current.getJsonArray("key_results").size()))
                                     : Future.failedFuture(OkrException.forbidden())));
         });
     }
@@ -290,9 +317,35 @@ public class OkrService
                             ? Future.failedFuture(OkrException.forbidden())
                             : canEdit(actor, objective).compose(allowed -> allowed
                                     ? repo.checkIn(id, new BigDecimal(value.toString()), note, "manual",
-                                            parseId(actor.getString("userId")))
+                                                    parseId(userId(actor)))
+                                            .compose(kr -> audit(tx, actor, CHECKED_IN, UUID.fromString(objective.getString("id")),
+                                                            new JsonObject().put("keyResult", kr.getString("id")))
+                                                    .map(kr))
                                     : Future.failedFuture(OkrException.forbidden())));
         });
+    }
+
+    // ------------------------------------------------------------------ actor and audit
+
+    /**
+     * The actor's user id: {@code id} of the platform user, or {@code userId} from older callers.
+     */
+    static String userId(JsonObject actor)
+    {
+        String id = actor.getString("id");
+
+        return id != null ? id : actor.getString("userId");
+    }
+
+    /**
+     * An audit entry in the caller's transaction, so it rolls back with the change. The summary never
+     * holds free text (objective or key result wording, notes).
+     */
+    private static Future<Void> audit(SqlExecutor tx, JsonObject actor, String event, UUID objectiveId, JsonObject summary)
+    {
+        JsonObject user = actor.copy().put("id", userId(actor));
+
+        return AuditService.record(tx, AuditService.entry(user, event, "okr.objective", objectiveId.toString(), summary));
     }
 
     // ------------------------------------------------------------------ permissions
@@ -631,7 +684,7 @@ public class OkrService
     {
         if (error instanceof PgException pg && UNIQUE_VIOLATION.equals(pg.getSqlState()))
         {
-            return Future.failedFuture(OkrException.conflict(
+            return Future.failedFuture(OkrException.conflict("okr_exists",
                     "An objective with this text already exists for this owner and quarter."));
         }
 

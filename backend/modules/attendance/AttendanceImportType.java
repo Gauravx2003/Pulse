@@ -103,7 +103,15 @@ public class AttendanceImportType implements ImportType
     @Override
     public JsonObject templateExample()
     {
-        return new JsonObject().put("employee_email", "priya@pulse.demo").put("date", "2026-09-01").put("status", "Office")
+        // A weekday of last month, so the sample stays inside the kept months.
+        LocalDate day = YearMonth.from(LocalDate.now(PolicyService.ZONE)).minusMonths(1).atDay(1);
+
+        while (day.getDayOfWeek() == DayOfWeek.SATURDAY || day.getDayOfWeek() == DayOfWeek.SUNDAY)
+        {
+            day = day.plusDays(1);
+        }
+
+        return new JsonObject().put("employee_email", "priya@pulse.demo").put("date", day.toString()).put("status", "Office")
                 .put("leave_type", "").put("applied_on", "").put("check_in", "09:40").put("check_out", "18:30");
     }
 
@@ -241,9 +249,7 @@ public class AttendanceImportType implements ImportType
 
         if (user.getString("personId") == null)
         {
-            warn(row, "employee_email", user.getString("name") + " is not tracked in Pulse (no performance profile) — row skipped.");
-
-            row.put("action", "unchanged");
+            error(row, "employee_email", user.getString("name") + " has no performance profile in Pulse, so attendance can't be recorded.");
 
             return;
         }
@@ -278,7 +284,7 @@ public class AttendanceImportType implements ImportType
 
         if (status == null)
         {
-            error(row, "status", "“" + v.getString("status") + "” is not a status — use Office, WFH, On duty, Leave, Sick, Half day or Absent.");
+            error(row, "status", "“" + v.getString("status") + "” is not a status — use O, W, D, L, S, H, A or HD (Office, WFH, On duty, Leave, Sick, Holiday, Absent, Half day).");
 
             return;
         }

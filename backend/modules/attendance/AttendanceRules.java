@@ -41,7 +41,7 @@ final class AttendanceRules
             Map.entry("emergency leave", "S"),
             Map.entry("half day", "HD"), Map.entry("halfday", "HD"), Map.entry("hd", "HD"), Map.entry("half", "HD"),
             Map.entry("absent", "A"), Map.entry("a", "A"), Map.entry("lwp", "A"), Map.entry("loss of pay", "A"),
-            Map.entry("holiday", HOLIDAY_ROW), Map.entry("hol", HOLIDAY_ROW), Map.entry("public holiday", HOLIDAY_ROW));
+            Map.entry("holiday", HOLIDAY_ROW), Map.entry("h", HOLIDAY_ROW), Map.entry("hol", HOLIDAY_ROW), Map.entry("public holiday", HOLIDAY_ROW));
 
     private AttendanceRules()
     {

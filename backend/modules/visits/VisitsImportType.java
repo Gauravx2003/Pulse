@@ -27,7 +27,7 @@ import java.util.UUID;
  * visits from the CRM, for managers and Admin.
  *
  * <ul>
- *   <li>Errors: person not in your team, purpose not in the list, over 14 days, overlap with existing
+ *   <li>Errors: person not in your team, purpose not in the list, over 14 days, overlap with leave (attendance records), overlap with existing
  *       visits or with another row of the file (both rows name each other), unknown account owner.</li>
  *   <li>Warning: a start in the past (the visit shows as Report due).</li>
  *   <li>A row identical to an existing visit (same person, dates and customer) is skipped, so an export
@@ -36,7 +36,6 @@ import java.util.UUID;
  *
  * <p>Commit notifies each engineer of their planned visit (platform 5.3).
  *
- * <p>Not here yet: overlap with leave (attendance, 17.1).
  * "Today" here is the server clock: import types get no CalcService clock, so PULSE_TODAY does not
  * pin the past-start warning.
  */
@@ -314,8 +313,14 @@ public class VisitsImportType implements ImportType
             return Future.succeededFuture();
         }
 
-        return repo.overlappingAny(people.toArray(new UUID[0]), min, max).map(stored ->
+        UUID[] ids = people.toArray(new UUID[0]);
+
+        return Future.all(repo.overlappingAny(ids, min, max), repo.leaveDays(ids, min, max)).map(found ->
         {
+            JsonArray stored = found.resultAt(0);
+
+            JsonArray leave = found.resultAt(1);
+
             for (JsonObject row : candidates)
             {
                 JsonObject visit = row.getJsonObject("visit");
@@ -348,6 +353,24 @@ public class VisitsImportType implements ImportType
                 {
                     error(row, row.getInteger("line"), "from", visit.getString("personName") + " already has a visit to "
                             + clash.getString("customer") + " on those dates.");
+                }
+                else
+                {
+                    for (Object item : leave)
+                    {
+                        JsonObject day = (JsonObject) item;
+
+                        LocalDate d = LocalDate.parse(day.getString("day"));
+
+                        if (day.getString("personId").equals(visit.getString("personId"))
+                                && !d.isBefore(LocalDate.parse(visit.getString("from"))) && !d.isAfter(LocalDate.parse(visit.getString("to"))))
+                        {
+                            error(row, row.getInteger("line"), "from", visit.getString("personName") + " is on leave on "
+                                    + d.getDayOfMonth() + " " + d.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH) + ".");
+
+                            break;
+                        }
+                    }
                 }
             }
 

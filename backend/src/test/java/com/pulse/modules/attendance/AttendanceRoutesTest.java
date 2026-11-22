@@ -438,9 +438,46 @@ class AttendanceRoutesTest
 
         assertTrue(body.contains("No applied date"), body);
 
-        assertTrue(body.contains("not tracked in Pulse"), body);
+        assertTrue(body.contains("has no performance profile"), body);
+
+        assertTrue(body.contains("use O, W, D, L, S, H, A or HD"), body);
 
         assertEquals(1, result.getInteger("ready"), body);
+    }
+
+    @Test
+    void aVisitCannotBePlannedOnLeave() throws Exception
+    {
+        // Priya's seeded earned leave on 14 Aug 2026 (spec time/customer-visits "Plan or log" overlap with leave).
+        String owner = api.queryOne("SELECT id FROM users WHERE email = 'sana@pulse.demo'").getString("id");
+
+        HttpResponse<Buffer> res = api.post("/api/v1/visits/items", as(RoleMatrix.MANAGER), new JsonObject()
+                .put("personId", priya).put("customer", "Initech").put("city", "Pune").put("purpose", "Escalation")
+                .put("from", "2026-08-13").put("to", "2026-08-14").put("requestedBy", "Sana Mirza").put("ownerId", owner));
+
+        assertEquals(422, res.statusCode(), res.bodyAsString());
+
+        assertEquals("visit_on_leave", TestApi.error(res).getString("code"));
+    }
+
+    @Test
+    void theTemplateSampleChecksAndCommits() throws Exception
+    {
+        HttpResponse<Buffer> template = api.get("/api/v1/imports/attendance/template", as(RoleMatrix.ADMIN));
+
+        assertEquals(200, template.statusCode(), template.bodyAsString());
+
+        JsonObject checked = ok(check(as(RoleMatrix.ADMIN), AttendanceImportType.MERGE, "attendance_template.csv", template.bodyAsString()));
+
+        assertEquals(0, checked.getInteger("errors"), checked.encodePrettily());
+
+        assertEquals(1, checked.getInteger("ready"), checked.encodePrettily());
+
+        String importId = ok(api.post("/api/v1/imports/attendance/commit", as(RoleMatrix.ADMIN),
+                new JsonObject().put("checkId", checked.getString("checkId")))).getString("importId");
+
+        // Leave the month as other tests expect it.
+        ok(api.post("/api/v1/imports/history/" + importId + "/undo", as(RoleMatrix.ADMIN), new JsonObject()));
     }
 
     // ------------------------------------------------------------------ Action Center

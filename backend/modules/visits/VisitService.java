@@ -41,8 +41,7 @@ import java.util.UUID;
  * <p>Notifications (platform 5.3): planned by someone else → the engineer; report filed → the account
  * owner; Remind → the engineer of an overdue report.
  *
- * <p>Not here yet (they depend on other tasks): overlap with leave (attendance, 17.1), capacity and On
- * duty days (Track 2 utilization, 17).
+ * <p>Not here yet (they depend on other tasks): capacity and On duty days (Track 2 utilization).
  */
 final class VisitService
 {
@@ -409,17 +408,27 @@ final class VisitService
     }
 
     /**
-     * Refuses a visit that shares a day with another visit of the same person (spec "Plan or log").
-     * TODO(17.1): also refuse overlap with approved leave once attendance records exist.
+     * Refuses a visit that shares a day with another visit of the same person, or with their leave or
+     * absence in the attendance records (spec "Plan or log").
      */
     private static Future<Void> refuseOverlap(VisitRepository repo, JsonObject body, UUID exceptId)
     {
-        return repo.overlapping(UUID.fromString(body.getString("personId")), LocalDate.parse(body.getString("from")),
-                        LocalDate.parse(body.getString("to")), exceptId)
+        UUID person = UUID.fromString(body.getString("personId"));
+
+        LocalDate from = LocalDate.parse(body.getString("from"));
+
+        LocalDate to = LocalDate.parse(body.getString("to"));
+
+        return repo.overlapping(person, from, to, exceptId)
                 .compose(other -> other == null
                         ? Future.<Void>succeededFuture()
                         : Future.failedFuture(ApiException.unprocessable("visit_overlap", "Overlaps the visit to "
-                                + other.getString("customer") + " (" + dates(other) + ").")));
+                                + other.getString("customer") + " (" + dates(other) + ").")))
+                .compose(v -> repo.leaveDays(new UUID[] {person}, from, to))
+                .compose(leave -> leave.isEmpty()
+                        ? Future.<Void>succeededFuture()
+                        : Future.failedFuture(ApiException.unprocessable("visit_on_leave", "The engineer is on leave on "
+                                + SHORT.format(LocalDate.parse(leave.getJsonObject(0).getString("day"))) + ".")));
     }
 
     private static boolean isEngineer(JsonObject user, JsonObject visit)

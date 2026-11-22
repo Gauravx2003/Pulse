@@ -162,6 +162,13 @@ public final class ReviewsRoutes
                 .handler(rc -> reviews360.resultsFor(PolicyService.user(rc), Ids.path(rc, "id"), rc.pathParam("personId"))
                         .onSuccess(rc::json).onFailure(rc::fail));
 
+        // Remind everyone who has not submitted, or one reviewer (review360.manage).
+        router.post("/360/cycles/:id/remind").handler(policy.requires("review360.manage"))
+                .handler(rc -> reviews360.remind(PolicyService.user(rc), Ids.path(rc, "id"), null).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.post("/360/requests/:id/remind").handler(policy.requires("review360.manage"))
+                .handler(rc -> reviews360.remindRequest(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
+
         router.get("/360/to-give").handler(policy.requires("review360.give"))
                 .handler(rc -> reviews360.toGive(PolicyService.user(rc))
                         .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));

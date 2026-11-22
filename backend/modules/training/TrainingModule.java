@@ -1,7 +1,10 @@
 package com.pulse.modules.training;
 
+import com.pulse.platform.module.BadgeProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
+import com.pulse.platform.policy.PolicyService;
+import com.pulse.platform.policy.VisibilityRelation;
 import io.vertx.ext.web.Router;
 
 import java.util.List;
@@ -27,6 +30,25 @@ public class TrainingModule implements PulseModule
                 AssignmentService.ASSIGNED, AssignmentService.UPDATED, AssignmentService.REMOVED, AssignmentService.CHECKIN_REVIEWED,
                 AssignmentService.ASSESSED, AssignmentService.FINAL_REVIEW, AssignmentService.SIGNED_OFF,
                 MentoringService.SESSION_LOGGED, MentoringService.SESSION_REQUESTED, MentoringService.CHECKPOINT_REQUESTED);
+    }
+
+    /**
+     * Mentors see their mentees' training (spec policy "mentor sees mentees' training"), current and
+     * past. The platform binds the viewer's person id; assignments name the mentor by user id.
+     */
+    @Override
+    public List<VisibilityRelation> visibilityRelations()
+    {
+        return List.of(new VisibilityRelation(PolicyService.DOMAIN_TRAINING, "mentor",
+                """
+                SELECT a.person_id FROM training_assignments a JOIN people m ON m.user_id = a.mentor_id WHERE m.id = $1
+                """));
+    }
+
+    @Override
+    public List<BadgeProvider> badges()
+    {
+        return List.of(new TrainingBadge());
     }
 
     @Override

@@ -162,20 +162,20 @@ final class MentoringRepository extends ScopedRepository
                 .map(row -> row == null ? null : row.getString("id"));
     }
 
-    /** A request in a checkpoint cycle (the reviewer's pseudonym is created for the cycle). */
-    Future<Void> insertCheckpointRequest(UUID cycleId, UUID subjectId, UUID reviewerUserId, String group, UUID assignedBy)
+    /** A request in a checkpoint cycle (the reviewer's pseudonym is created for the cycle); resolves to its id or null. */
+    Future<String> insertCheckpointRequest(UUID cycleId, UUID subjectId, UUID reviewerUserId, String group, UUID assignedBy)
     {
         return queryOne("""
                 INSERT INTO review_reviewer_keys (cycle_id, user_id) VALUES ($1, $2)
                 ON CONFLICT (cycle_id, user_id) DO UPDATE SET user_id = EXCLUDED.user_id RETURNING pseudonym
                 """,
                 Tuple.of(cycleId, reviewerUserId))
-                .compose(key -> execute("""
+                .compose(key -> queryOne("""
                         INSERT INTO review_requests (cycle_id, subject_id, reviewer_key, rater_group, assigned_by)
-                        VALUES ($1, $2, $3, $4, $5) ON CONFLICT (cycle_id, subject_id, reviewer_key) DO NOTHING
+                        VALUES ($1, $2, $3, $4, $5) ON CONFLICT (cycle_id, subject_id, reviewer_key) DO NOTHING RETURNING id
                         """,
                         Tuple.of(cycleId, subjectId, UUID.fromString(key.getString("pseudonym")), group, assignedBy)))
-                .mapEmpty();
+                .map(row -> row == null ? null : row.getString("id"));
     }
 
     // ------------------------------------------------------------------ managers' views

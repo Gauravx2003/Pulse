@@ -25,6 +25,7 @@ import java.time.LocalDate;
  * DELETE /items/:id                              delete before the report (If-Match: version)
  * POST   /items/:id/report                       the engineer's visit report
  * POST   /items/:id/feedback                     the account owner's customer feedback
+ * POST   /items/:id/remind                       the manager reminds the engineer of an overdue report
  * POST   /items/:id/verify | /items/:id/reject   effort.confirm, after report and feedback
  * </pre>
  */
@@ -114,6 +115,9 @@ public final class VisitsRoutes
         router.post("/items/:id/report").handler(policy.requires("self.view")).handler(REPORT.handler()).handler(this::report);
 
         router.post("/items/:id/feedback").handler(policy.requiresAny(anyone)).handler(FEEDBACK.handler()).handler(this::feedback);
+
+        router.post("/items/:id/remind").handler(policy.requiresAny("team.view", "all.view"))
+                .handler(rc -> visits.remind(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
 
         router.post("/items/:id/verify").handler(policy.requires("effort.confirm")).handler(DECISION.handler())
                 .handler(rc -> decide(rc, "confirmed"));

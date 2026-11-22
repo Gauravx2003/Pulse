@@ -185,7 +185,8 @@ final class AssignmentRepository extends ScopedRepository
     /** One check-in with its assignment id, or null. */
     Future<JsonObject> checkIn(UUID id)
     {
-        return queryOne("SELECT id, assignment_id AS \"assignmentId\", status, version FROM training_checkins WHERE id = $1", Tuple.of(id));
+        return queryOne("SELECT id, assignment_id AS \"assignmentId\", period_start AS \"periodStart\", status, version "
+                + "FROM training_checkins WHERE id = $1", Tuple.of(id));
     }
 
     /**
@@ -243,6 +244,17 @@ final class AssignmentRepository extends ScopedRepository
                 FROM mentoring_requests WHERE assignment_id = $1 ORDER BY requested_on DESC
                 """,
                 Tuple.of(assignmentId));
+    }
+
+    /** The current manager (a user) of the person, from the open reporting line, or null. */
+    Future<String> managerOf(UUID personId)
+    {
+        return queryOne("""
+                SELECT rl.manager_id AS "managerId" FROM people p JOIN reporting_lines rl ON rl.user_id = p.user_id
+                WHERE p.id = $1 AND rl.valid_to IS NULL LIMIT 1
+                """,
+                Tuple.of(personId))
+                .map(row -> row == null ? null : row.getString("managerId"));
     }
 
     Future<JsonArray> holidays()

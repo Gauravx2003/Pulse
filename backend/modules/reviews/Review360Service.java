@@ -6,12 +6,14 @@ import com.pulse.platform.audit.AuditEvents;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
+import com.pulse.platform.notify.NotificationTriggers;
 import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgException;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -34,8 +36,10 @@ import java.util.regex.Pattern;
  * <p>Results come from calc/people through CalcService ({@code people.review360Results}), which merges
  * or hides groups under the anonymity threshold; every change publishes {@link ReviewFormulas#REVIEWS}.
  *
- * <p>Not here yet (they depend on other tasks): publish into culture values (4.4 / group 19),
- * notifications and reminders (5.3) and training checkpoints (task 21).
+ * <p>Notifications (platform 5.3): every new reviewer on assignment; Remind / Send reminders to everyone
+ * who has not submitted. Training checkpoints use these cycles (kind training, task 21.1).
+ *
+ * <p>Not here yet: publish into culture values (4.4 / group 19).
  */
 final class Review360Service
 {
@@ -258,7 +262,7 @@ final class Review360Service
                         }));
             }
 
-            return chain.map(v -> new JsonObject().put("add", add).put("skipped", skipped));
+            return chain.map(v -> new JsonObject().put("add", add).put("skipped", skipped).put("cycle", cycle));
         });
     }
 
@@ -293,16 +297,114 @@ final class Review360Service
 
                             assigned.add(a.copy().put("requestId", requestId));
 
+                            JsonObject cycle = plan.getJsonObject("cycle");
+
                             // The audit names the request and its group, never the reviewer (spec: not in logs).
                             return AuditService.record(tx, AuditService.entry(user, AuditEvents.REVIEW360_REVIEWER_ASSIGN,
                                     "review_request", requestId, new JsonObject().put("cycleId", cycleId.toString())
-                                            .put("subjectId", a.getString("subjectId")).put("group", a.getString("group"))));
+                                            .put("subjectId", a.getString("subjectId")).put("group", a.getString("group"))))
+                                    .compose(audited -> ctx.notifications().notify(tx, NotificationTriggers.review360Assigned(
+                                            a.getString("reviewerId"), a.getString("subjectName"), cycle.getString("name"),
+                                            LocalDate.parse(cycle.getString("dueOn")), raterGroup(a.getString("group")), requestId)))
+                                    .mapEmpty();
                         }));
             }
 
-            // TODO(5.3): notify every new reviewer with a link that opens the form.
             return chain.map(v -> new JsonObject().put("assigned", assigned).put("skipped", skipped));
         }).onSuccess(v -> changed());
+    }
+
+    /**
+     * Reminds reviewers who have not submitted (spec "Remind all": only those are notified): every such
+     * request of the cycle for visible subjects, or the one request {@code requestId}. The text names the
+     * subject and the due date only.
+     */
+    Future<JsonObject> remind(JsonObject user, UUID cycleId, String requestId)
+    {
+        Review360Repository repo = new Review360Repository(ctx.sql());
+
+        return repo.cycle(cycleId).compose(cycle ->
+        {
+            if (cycle == null)
+            {
+                return Future.failedFuture(PolicyService.notFound());
+            }
+
+            if (!"running".equals(cycle.getString("status")))
+            {
+                return Future.failedFuture(ApiException.conflict("cycle_not_running", "Reminders go out while the cycle runs."));
+            }
+
+            return assignments(user, cycleId).compose(rows ->
+            {
+                List<JsonObject> open = new ArrayList<>();
+
+                boolean found = false;
+
+                for (Object item : rows)
+                {
+                    JsonObject r = (JsonObject) item;
+
+                    if (requestId != null && !requestId.equals(r.getString("id")))
+                    {
+                        continue;
+                    }
+
+                    found = true;
+
+                    if ("not_started".equals(r.getString("status")) || "in_progress".equals(r.getString("status")))
+                    {
+                        open.add(r);
+                    }
+                }
+
+                if (requestId != null && !found)
+                {
+                    return Future.failedFuture(PolicyService.notFound());
+                }
+
+                if (requestId != null && open.isEmpty())
+                {
+                    return Future.failedFuture(ApiException.conflict("already_submitted", "This review is already submitted or declined."));
+                }
+
+                return ctx.sql().inTransaction(tx ->
+                {
+                    Future<Integer> chain = Future.succeededFuture(0);
+
+                    for (JsonObject r : open)
+                    {
+                        chain = chain.compose(n -> ctx.notifications().notify(tx, NotificationTriggers.review360Reminder(r.getString("reviewerId"),
+                                        r.getString("subjectName"), cycle.getString("name"), LocalDate.parse(cycle.getString("dueOn")),
+                                        raterGroup(r.getString("group")), r.getString("id")))
+                                .map(sent -> sent == null ? n : n + 1));
+                    }
+
+                    return chain;
+                }).map(n -> new JsonObject().put("reminded", n));
+            });
+        });
+    }
+
+    /** The cycle of a request the user may manage, for the single-request reminder. */
+    Future<JsonObject> remindRequest(JsonObject user, UUID requestId)
+    {
+        return policy.scope(user, PolicyService.DOMAIN_REVIEWS)
+                .compose(scope -> new Review360Repository(ctx.sql()).visibleRequest(scope, requestId))
+                .compose(found -> found == null
+                        ? Future.failedFuture(PolicyService.notFound())
+                        : remind(user, UUID.fromString(found.getString("cycleId")), requestId.toString()));
+    }
+
+    static NotificationTriggers.RaterGroup raterGroup(String group)
+    {
+        return switch (group)
+        {
+            case "self" -> NotificationTriggers.RaterGroup.SELF;
+            case "manager" -> NotificationTriggers.RaterGroup.MANAGER;
+            case "cross" -> NotificationTriggers.RaterGroup.CROSS;
+            default -> NotificationTriggers.RaterGroup.INTERNAL;
+        };
     }
 
     /** The manager's view: reviewers and states per visible subject. */

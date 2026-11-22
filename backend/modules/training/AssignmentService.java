@@ -5,8 +5,10 @@ import com.pulse.calc.core.TrainingRating;
 import com.pulse.calc.people.TrainingFormulas;
 import com.pulse.calc.core.WorkingDays;
 import com.pulse.platform.audit.AuditService;
+import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
+import com.pulse.platform.notify.NotificationTriggers;
 import com.pulse.platform.policy.PolicyService;
 import com.pulse.platform.policy.Scope;
 import io.vertx.core.Future;
@@ -32,8 +34,10 @@ import java.util.UUID;
  * trainee) does what the mentor does plus assigning, editing, removing and the manager review with the
  * decision. Others who may see the person only read.
  *
- * <p>Not here yet: notifications (5.3) — assignment, assessment result, reviews ready, a disagreement
- * flagging the manager — are recorded in state only.
+ * <p>Notifications (platform 5.3): assigned → trainee; check-in submitted → mentor; verified / needs
+ * work → trainee; assessment recorded → mentor and manager (final review due); both final reviews →
+ * trainee (sign-off due); a disagreement → mentor, and the manager for the final sign-off. The
+ * "assessment due" notice at the end of the training period needs the scheduler (5.5).
  */
 final class AssignmentService
 {
@@ -225,6 +229,7 @@ final class AssignmentService
                 rows.add(new JsonObject()
                         .put("personId", personId)
                         .put("personName", person.getString("name"))
+                        .put("userId", person.getString("userId"))
                         .put("planId", plan.getString("id"))
                         .put("planName", plan.getString("name"))
                         .put("planVersion", plan.getInteger("planVersion"))
@@ -262,11 +267,14 @@ final class AssignmentService
                             .put("planName", row.getString("planName")));
 
                     return AuditService.record(tx, AuditService.entry(user, ASSIGNED, "training_assignment", id,
-                            new JsonObject().put("personId", row.getString("personId")).put("planId", row.getString("planId"))));
+                                    new JsonObject().put("personId", row.getString("personId")).put("planId", row.getString("planId"))))
+                            .compose(audited -> notifyUser(tx, row.getString("userId"), uid -> NotificationTriggers.trainingAssigned(uid,
+                                    row.getString("planName"), LocalDate.parse(row.getString("startOn")), id)));
                 }));
             }
 
-            // TODO(5.3): notify the trainee and the mentor.
+            // The mentor has no "you are mentoring" trigger yet (platform NotificationTriggers); they see the
+            // assignment in their Pending list and the Mentoring tab.
             return chain.map(v -> new JsonObject().put("assigned", assigned).put("skipped", skipped).put("warnings", warnings));
         }).onSuccess(v -> changed());
     }
@@ -387,9 +395,10 @@ final class AssignmentService
                             "That is not a check-in period of this plan up to today."));
                 }
 
-                return repo.submitCheckIn(id, body, today()).compose(row -> row == null
+                return ctx.sql().inTransaction(tx -> new AssignmentRepository(tx).submitCheckIn(id, body, today()).compose(row -> row == null
                         ? Future.failedFuture(ApiException.conflict("already_verified", "This period's check-in is already verified."))
-                        : Future.succeededFuture());
+                        : notifyUser(tx, a.getString("mentorId"), uid -> NotificationTriggers.checkinSubmitted(uid, a.getString("personId"),
+                                a.getString("personName"), a.getString("planName"), week(a, body.getString("periodStart")), id.toString()))));
             });
         }).compose(v -> afterWrite(user, id));
     }
@@ -431,7 +440,11 @@ final class AssignmentService
                         .reviewCheckIn(checkInId, decision, UUID.fromString(user.getString("id")), role, comment == null ? "" : comment.strip(),
                                 today(), expectedVersion)
                         .compose(row -> AuditService.record(tx, AuditService.entry(user, CHECKIN_REVIEWED, "training_checkin",
-                                checkInId.toString(), new JsonObject().put("decision", decision)))))
+                                checkInId.toString(), new JsonObject().put("decision", decision))))
+                        .compose(audited -> notifyUser(tx, a.getString("personUserId"), uid -> "Verified".equals(decision)
+                                ? NotificationTriggers.checkinVerified(uid, a.getString("planName"), week(a, c.getString("periodStart")), assignmentId.toString())
+                                : NotificationTriggers.checkinNeedsWork(uid, a.getString("planName"), week(a, c.getString("periodStart")),
+                                        assignmentId.toString()))))
                         .compose(v -> afterWrite(user, assignmentId));
             });
         });
@@ -488,7 +501,13 @@ final class AssignmentService
 
             return ctx.sql().inTransaction(tx -> new AssignmentRepository(tx).setJson(id, "assessment", assessment, expectedVersion)
                     .compose(row -> AuditService.record(tx, AuditService.entry(user, ASSESSED, "training_assignment", id.toString(),
-                            new JsonObject().put("score", score).put("result", assessment.getString("result"))))));
+                            new JsonObject().put("score", score).put("result", assessment.getString("result")))))
+                    .compose(audited -> new AssignmentRepository(tx).managerOf(UUID.fromString(a.getString("personId"))))
+                    .compose(manager -> notifyUser(tx, a.getString("mentorId"), uid -> NotificationTriggers.finalReviewDue(uid,
+                                    a.getString("personId"), a.getString("personName"), a.getString("planName"), id.toString()))
+                            .compose(v -> manager == null || manager.equals(a.getString("mentorId")) ? Future.<Void>succeededFuture()
+                                    : notifyUser(tx, manager, uid -> NotificationTriggers.finalReviewDue(uid, a.getString("personId"),
+                                            a.getString("personName"), a.getString("planName"), id.toString())))));
         }).compose(v -> afterWrite(user, id));
     }
 
@@ -603,10 +622,15 @@ final class AssignmentService
 
     private Future<Void> saveFinals(JsonObject user, UUID id, JsonObject a, JsonObject finals, int expectedVersion)
     {
+        boolean complete = finals.getValue("mentor") != null && finals.getValue("manager") != null;
+
         return ctx.sql().inTransaction(tx -> new AssignmentRepository(tx).setJson(id, "final_reviews", finals, expectedVersion)
                 .compose(row -> AuditService.record(tx, AuditService.entry(user, FINAL_REVIEW, "training_assignment", id.toString(),
                         new JsonObject().put("role", finals.getValue("manager") != null && a.getJsonObject("finalReviews").getValue("manager") == null
-                                ? "manager" : "mentor")))));
+                                ? "manager" : "mentor"))))
+                .compose(audited -> !complete ? Future.<Void>succeededFuture()
+                        : notifyUser(tx, a.getString("personUserId"), uid -> NotificationTriggers.signOffDue(uid, a.getString("planName"),
+                                today().plusDays(SIGN_OFF_DAYS), id.toString()))));
     }
 
     /**
@@ -656,10 +680,11 @@ final class AssignmentService
 
             String outcome = "Completed".equals(decision) ? "completed" : "not_completed";
 
-            // TODO(5.3): notify the manager and the mentor; a disagreement flags the manager.
             return ctx.sql().inTransaction(tx -> new AssignmentRepository(tx).signOff(id, outcome, signOff, acks, expectedVersion)
                     .compose(row -> AuditService.record(tx, AuditService.entry(user, SIGNED_OFF, "training_assignment", id.toString(),
-                            new JsonObject().put("agree", agree).put("outcome", outcome)))));
+                            new JsonObject().put("agree", agree).put("outcome", outcome))))
+                    .compose(audited -> !"Disagreed".equals(agree) ? Future.<Void>succeededFuture()
+                            : notifyDisagreement(tx, a, true)));
         }).compose(v -> afterWrite(user, id));
     }
 
@@ -697,7 +722,8 @@ final class AssignmentService
                 JsonObject acks = a.getJsonObject("acknowledgements").copy()
                         .put(key, new JsonObject().put("st", agree).put("comment", comment).put("at", today().toString()));
 
-                return repo.setJson(id, "acknowledgements", acks, expectedVersion);
+                return ctx.sql().inTransaction(tx -> new AssignmentRepository(tx).setJson(id, "acknowledgements", acks, expectedVersion)
+                        .compose(row -> !"Disagreed".equals(agree) ? Future.<Void>succeededFuture() : notifyDisagreement(tx, a, false)));
             });
         }).compose(v -> afterWrite(user, id));
     }
@@ -752,6 +778,40 @@ final class AssignmentService
     {
         return policy.requireVisible(user, personId, PolicyService.DOMAIN_TRAINING)
                 .compose(scope -> ctx.calc().getObject("people.trainingOverall", new JsonObject().put("person", personId)));
+    }
+
+    /** Days the trainee has to sign off once both final reviews are in (prototype rule trSignDays). */
+    static final int SIGN_OFF_DAYS = 5;
+
+    /** Sends a notice to one user in the action's transaction; nothing when there is no recipient. */
+    Future<Void> notifyUser(SqlExecutor tx, String userId, java.util.function.Function<String, JsonObject> notice)
+    {
+        return userId == null ? Future.succeededFuture() : ctx.notifications().notify(tx, notice.apply(userId)).mapEmpty();
+    }
+
+    /** A trainee's disagreement goes to the mentor and, for the final sign-off, to the manager too. */
+    private Future<Void> notifyDisagreement(SqlExecutor tx, JsonObject a, boolean manager)
+    {
+        Future<Void> mentor = notifyUser(tx, a.getString("mentorId"), uid -> NotificationTriggers.trainingDisagreement(uid,
+                a.getString("personId"), a.getString("personName"), a.getString("planName"), a.getString("id")));
+
+        if (!manager)
+        {
+            return mentor;
+        }
+
+        return mentor.compose(v -> new AssignmentRepository(tx).managerOf(UUID.fromString(a.getString("personId"))))
+                .compose(m -> m == null || m.equals(a.getString("mentorId")) ? Future.<Void>succeededFuture()
+                        : notifyUser(tx, m, uid -> NotificationTriggers.trainingDisagreement(uid, a.getString("personId"),
+                                a.getString("personName"), a.getString("planName"), a.getString("id"))));
+    }
+
+    /** The plan week a check-in period falls in (1 for the first week). */
+    static int week(JsonObject a, String periodStart)
+    {
+        long days = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.parse(a.getString("startOn")), LocalDate.parse(periodStart));
+
+        return (int) Math.max(1, days / 7 + 1);
     }
 
     /** After a write: cached training ratings are dropped, then the fresh assignment is returned. */
@@ -848,8 +908,6 @@ final class AssignmentService
         {
             actions.add("markDiscussed");
         }
-
-        a.remove("personUserId");
 
         return a.put("stage", stage)
                 .put("end", TrainingLifecycle.end(a, weeks).toString())

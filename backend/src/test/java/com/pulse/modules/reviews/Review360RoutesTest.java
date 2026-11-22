@@ -157,6 +157,23 @@ class Review360RoutesTest
 
     // ------------------------------------------------------------------ cycle
 
+    /** Notifications of this kind the user has. */
+    private static long notices(String email, String kind) throws Exception
+    {
+        return api.count("SELECT count(*) FROM notifications n JOIN users u ON u.id = n.user_id WHERE u.email = '" + email
+                + "' AND n.kind = '" + kind + "'");
+    }
+
+    /** The user's menu badge for a screen (0 when absent). */
+    private static int badge(TestApi.Session session, String screen) throws Exception
+    {
+        HttpResponse<Buffer> res = api.get("/api/v1/notifications/badges", session);
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        return res.bodyAsJsonObject().getJsonObject("badges").getInteger(screen, 0);
+    }
+
     @Test
     void onlyOneCycleRunsAndOnlyAdminCreatesCycles() throws Exception
     {
@@ -395,5 +412,46 @@ class Review360RoutesTest
 
         // Spec "Differencing protection": aggregates only, never one reviewer's answers.
         assertTrue(!res.bodyAsString().contains("reviewer"), res.bodyAsString());
+    }
+
+    // ------------------------------------------------------------------ notifications, reminders and badge
+
+    @Test
+    void assignedReviewersAreToldAndRemindersSkipSubmittedReviews() throws Exception
+    {
+        long assigned = notices("arjun@pulse.demo", "review360.assigned");
+
+        assign(RoleMatrix.session(api, RoleMatrix.MANAGER), nehaPerson, "arjun@pulse.demo");
+
+        assertEquals(assigned + 1, notices("arjun@pulse.demo", "review360.assigned"));
+
+        assertEquals(403, api.post("/api/v1/reviews/360/cycles/" + cycleId + "/remind", RoleMatrix.session(api, RoleMatrix.EMPLOYEE),
+                new JsonObject()).statusCode());
+
+        HttpResponse<Buffer> reminded = api.post("/api/v1/reviews/360/cycles/" + cycleId + "/remind", RoleMatrix.session(api, RoleMatrix.ADMIN),
+                new JsonObject());
+
+        assertEquals(200, reminded.statusCode(), reminded.bodyAsString());
+
+        assertTrue(reminded.bodyAsJsonObject().getInteger("reminded") >= 1, reminded.bodyAsString());
+
+        assertTrue(notices("arjun@pulse.demo", "review360.reminder") >= 1);
+
+        // Nobody whose reviews in the cycle are all submitted or declined is reminded.
+        assertEquals(0, api.count("SELECT count(*) FROM notifications n WHERE n.kind = 'review360.reminder' AND NOT EXISTS ("
+                + "SELECT 1 FROM review_requests r JOIN review_reviewer_keys k ON k.pseudonym = r.reviewer_key WHERE r.cycle_id = '"
+                + cycleId + "' AND k.user_id = n.user_id AND r.status IN ('not_started', 'in_progress'))"));
+    }
+
+    @Test
+    void theReviewsBadgeMatchesTheOpenToGiveList() throws Exception
+    {
+        TestApi.Session kiran = RoleMatrix.session(api, "kiran@pulse.demo");
+
+        long open = api.get("/api/v1/reviews/360/to-give", kiran).bodyAsJsonObject().getJsonArray("items").stream()
+                .map(x -> ((JsonObject) x).getString("status"))
+                .filter(s -> "not_started".equals(s) || "in_progress".equals(s)).count();
+
+        assertEquals(open, badge(kiran, "reviews"));
     }
 }

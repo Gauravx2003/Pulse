@@ -98,6 +98,23 @@ class TrainingMentoringRoutesTest
                 .put("nextSteps", "Pair on the first bug.");
     }
 
+    /** Notifications of this kind the user has. */
+    private static long notices(String email, String kind) throws Exception
+    {
+        return api.count("SELECT count(*) FROM notifications n JOIN users u ON u.id = n.user_id WHERE u.email = '" + email
+                + "' AND n.kind = '" + kind + "'");
+    }
+
+    /** The user's menu badge for a screen (0 when absent). */
+    private static int badge(TestApi.Session session, String screen) throws Exception
+    {
+        HttpResponse<Buffer> res = api.get("/api/v1/notifications/badges", session);
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        return res.bodyAsJsonObject().getJsonObject("badges").getInteger(screen, 0);
+    }
+
     @Test
     void theMentorAnswersASessionRequestByLoggingASession() throws Exception
     {
@@ -209,5 +226,46 @@ class TrainingMentoringRoutesTest
 
         // Rohit joined recently too, but already has a plan.
         assertTrue(!items.encode().contains("Rohit Kulkarni"), items.encodePrettily());
+    }
+
+    // ------------------------------------------------------------------ notifications and badge
+
+    @Test
+    void sessionsAndCheckpointsNotifyTheRightPeople() throws Exception
+    {
+        long logged = notices("rohit@pulse.demo", "mentoring.session_logged");
+
+        long blocked = notices(RoleMatrix.MANAGER, "mentoring.session_blocked");
+
+        HttpResponse<Buffer> res = api.post("/api/v1/training/assignments/" + rohitPlan + "/sessions", as("priya@pulse.demo"),
+                session("Release process and the deploy checklist", TODAY).put("blocker", true).put("blockerNote", "Needs prod access"));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        assertEquals(logged + 1, notices("rohit@pulse.demo", "mentoring.session_logged"));
+
+        assertEquals(blocked + 1, notices(RoleMatrix.MANAGER, "mentoring.session_blocked"));
+
+        long requested = notices("priya@pulse.demo", "mentoring.session_requested");
+
+        assertEquals(200, api.post("/api/v1/training/assignments/" + rohitPlan + "/session-requests", as("rohit@pulse.demo"),
+                new JsonObject().put("note", "Walk me through code review norms?")).statusCode());
+
+        assertEquals(requested + 1, notices("priya@pulse.demo", "mentoring.session_requested"));
+
+        long checkpoint = api.count("SELECT count(*) FROM notifications WHERE kind = 'training.checkpoint_requested'");
+
+        assertEquals(200, api.post("/api/v1/training/assignments/" + rohitPlan + "/checkpoints/30", as(RoleMatrix.MANAGER),
+                new JsonObject()).statusCode());
+
+        assertEquals(checkpoint + 3, api.count("SELECT count(*) FROM notifications WHERE kind = 'training.checkpoint_requested'"));
+    }
+
+    @Test
+    void theTrainingBadgeMatchesThePendingList() throws Exception
+    {
+        TestApi.Session priya = as("priya@pulse.demo");
+
+        assertEquals(pendingOf(priya).size(), badge(priya, "training"));
     }
 }

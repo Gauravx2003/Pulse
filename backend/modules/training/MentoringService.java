@@ -3,6 +3,7 @@ package com.pulse.modules.training;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
+import com.pulse.platform.notify.NotificationTriggers;
 import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -19,9 +20,11 @@ import java.util.UUID;
  * suggestions"; task 21.1 part D): sessions, "Ask for a session", the mentor's Pending-for-you list
  * and KPIs, checkpoint requests through the 360° form, the Mentors table and onboarding suggestions.
  *
- * <p>Not here yet: notifications (5.3) — session notes to the trainee, a blocker to the manager — and
- * the High Do-today item for a blocker (action providers, task 21.2); plans for the three lowest
- * culture values ("Suggested from your reviews") need the culture score (task 4.4).
+ * <p>Notifications (platform 5.3): session logged → trainee; blocker → the trainee's manager; session
+ * asked → mentor; checkpoint requested → each reviewer.
+ *
+ * <p>Not here yet: the High Do-today item for a blocker (action providers, task 21.2); plans for the
+ * three lowest culture values ("Suggested from your reviews") need the culture score (task 4.4).
  */
 final class MentoringService
 {
@@ -83,11 +86,17 @@ final class MentoringService
                                 ? Future.failedFuture(PolicyService.notFound())
                                 : Future.<Void>succeededFuture());
 
-                // TODO(5.3, 21.2): session notes to the trainee; a blocker notifies the manager and adds a High
-                // Do-today item for 5 days.
+                boolean blocker = body.getBoolean("blocker", false);
+
+                // TODO(21.2): a blocker also adds a High Do-today item for 5 days (action provider).
                 return answered.compose(v -> repo.insertSession(id, body, UUID.fromString(user.getString("id"))))
                         .compose(row -> AuditService.record(tx, AuditService.entry(user, SESSION_LOGGED, "training_assignment", id.toString(),
-                                new JsonObject().put("blocker", body.getBoolean("blocker", false)))));
+                                new JsonObject().put("blocker", blocker))))
+                        .compose(v -> assignments.notifyUser(tx, a.getString("personUserId"), uid -> NotificationTriggers.mentorSessionLogged(uid,
+                                user.getString("name"), LocalDate.parse(body.getString("heldOn")))))
+                        .compose(v -> !blocker ? Future.<Void>succeededFuture()
+                                : repo.managerOf(UUID.fromString(a.getString("personId"))).compose(manager -> assignments.notifyUser(tx, manager,
+                                        uid -> NotificationTriggers.mentorSessionBlocked(uid, a.getString("personId"), a.getString("personName")))));
             });
         }).compose(v -> assignments.get(user, id));
     }
@@ -109,7 +118,9 @@ final class MentoringService
 
             return ctx.sql().inTransaction(tx -> new MentoringRepository(tx).insertRequest(id, note, assignments.today())
                     .compose(row -> AuditService.record(tx, AuditService.entry(user, SESSION_REQUESTED, "training_assignment",
-                            id.toString(), new JsonObject()))));
+                            id.toString(), new JsonObject())))
+                    .compose(v -> assignments.notifyUser(tx, a.getString("mentorId"), uid -> NotificationTriggers.mentorSessionRequested(uid,
+                            a.getString("personId"), a.getString("personName")))));
         }).compose(v -> assignments.get(user, id));
     }
 
@@ -283,23 +294,31 @@ final class MentoringService
 
                             String manager = people.resultAt(1);
 
+                            List<String[]> reviewers = new ArrayList<>();
+
                             if (trainee != null)
                             {
-                                chain = chain.compose(v -> repo.insertCheckpointRequest(cycle, person, UUID.fromString(trainee), "self", by));
+                                reviewers.add(new String[] {trainee, "self"});
                             }
 
                             if (manager != null)
                             {
-                                chain = chain.compose(v -> repo.insertCheckpointRequest(cycle, person, UUID.fromString(manager), "manager", by));
+                                reviewers.add(new String[] {manager, "manager"});
                             }
 
                             if (a.getString("mentorId") != null)
                             {
-                                chain = chain.compose(v -> repo.insertCheckpointRequest(cycle, person, UUID.fromString(a.getString("mentorId")),
-                                        "internal", by));
+                                reviewers.add(new String[] {a.getString("mentorId"), "internal"});
                             }
 
-                            // TODO(5.3): notify the reviewers with a link that opens the form.
+                            for (String[] reviewer : reviewers)
+                            {
+                                chain = chain.compose(v -> repo.insertCheckpointRequest(cycle, person, UUID.fromString(reviewer[0]), reviewer[1], by)
+                                        .compose(requestId -> requestId == null ? Future.<Void>succeededFuture()
+                                                : assignments.notifyUser(tx, reviewer[0], uid -> NotificationTriggers.checkpointRequested(uid,
+                                                        a.getString("personName"), a.getString("planName"), day, due, requestId))));
+                            }
+
                             return chain.compose(v -> AuditService.record(tx, AuditService.entry(user, CHECKPOINT_REQUESTED,
                                     "training_assignment", id.toString(), new JsonObject().put("day", day))));
                         }));

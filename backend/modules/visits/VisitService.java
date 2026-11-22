@@ -4,8 +4,10 @@ import com.pulse.calc.core.CalcService;
 import com.pulse.calc.people.VisitFormulas;
 import com.pulse.platform.audit.AuditEvents;
 import com.pulse.platform.audit.AuditService;
+import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
+import com.pulse.platform.notify.NotificationTriggers;
 import com.pulse.platform.policy.PolicyService;
 import com.pulse.platform.policy.Scope;
 import io.vertx.core.Future;
@@ -36,8 +38,11 @@ import java.util.UUID;
  * <p>Points, values and stats come from calc/people through CalcService ({@code people.visitPoints},
  * {@code people.visitStats}, {@code people.visitMonth}); every write publishes {@link VisitFormulas#VISITS}.
  *
+ * <p>Notifications (platform 5.3): planned by someone else → the engineer; report filed → the account
+ * owner; Remind → the engineer of an overdue report.
+ *
  * <p>Not here yet (they depend on other tasks): overlap with leave (attendance, 17.1), capacity and On
- * duty days (Track 2 utilization, 17), notifications and the reminder (5.3).
+ * duty days (Track 2 utilization, 17).
  */
 final class VisitService
 {
@@ -161,6 +166,7 @@ final class VisitService
                             .compose(row -> AuditService.record(tx, AuditService.entry(user, CREATED, "visit", row.getString("id"),
                                             new JsonObject().put("personId", personId).put("planned", !personId.equals(user.getString("personId")))))
                                     .compose(v -> repo.byId(scope, UUID.fromString(row.getString("id")))))
+                            .compose(visit -> notifyPlanned(tx, user, visit))
                             .map(visit -> markManager(visit, user, scope));
                 }))
                 .map(visit -> decorate(visit, user, today()))
@@ -227,7 +233,10 @@ final class VisitService
 
             return ctx.sql().inTransaction(tx -> new VisitRepository(tx).report(id, body, today, expectedVersion)
                     .compose(row -> AuditService.record(tx, AuditService.entry(user, REPORTED, "visit", id.toString(),
-                            new JsonObject().put("personId", visit.getString("personId"))))));
+                            new JsonObject().put("personId", visit.getString("personId")))))
+                    .compose(v -> ctx.notifications().notify(tx, NotificationTriggers.visitFeedbackRequested(visit.getString("ownerId"),
+                            visit.getString("personId"), visit.getString("personName"), visit.getString("customer"),
+                            LocalDate.parse(visit.getString("from")), LocalDate.parse(visit.getString("to")), id.toString()))));
         }).onSuccess(v -> changed()).compose(v -> get(user, id));
     }
 
@@ -302,6 +311,47 @@ final class VisitService
                 })
                 .onSuccess(v -> changed())
                 .compose(v -> get(user, id));
+    }
+
+    /**
+     * A manager reminds the engineer of an overdue report (spec "Report": the manager MAY send a reminder).
+     * Resolves to {@code {notified}}: false when the engineer may not receive it (deactivated).
+     */
+    Future<JsonObject> remind(JsonObject user, UUID id)
+    {
+        return visible(user, id).compose(visit ->
+        {
+            if (!isManager(visit))
+            {
+                return Future.failedFuture(ApiException.forbidden("no_access", "Only the engineer's manager sends reminders."));
+            }
+
+            if (!"report_due".equals(status(visit, today())))
+            {
+                return Future.failedFuture(ApiException.conflict("nothing_to_remind", "This visit has no overdue report."));
+            }
+
+            return ctx.notifications().notify(ctx.sql(), NotificationTriggers.visitReportDue(visit.getString("personUserId"),
+                            visit.getString("customer"), LocalDate.parse(visit.getString("from")), LocalDate.parse(visit.getString("to")),
+                            id.toString()))
+                    .map(sent -> new JsonObject().put("notified", sent != null));
+        });
+    }
+
+    /** Tells the engineer about a visit someone else planned for them, in the planning transaction. */
+    private Future<JsonObject> notifyPlanned(SqlExecutor tx, JsonObject user, JsonObject visit)
+    {
+        String engineer = visit.getString("personUserId");
+
+        if (engineer == null || engineer.equals(user.getString("id")))
+        {
+            return Future.succeededFuture(visit);
+        }
+
+        return ctx.notifications().notify(tx, NotificationTriggers.visitPlanned(engineer, visit.getString("customer"), visit.getString("city"),
+                        LocalDate.parse(visit.getString("from")), LocalDate.parse(visit.getString("to")), visit.getString("requestedBy"),
+                        visit.getString("id")))
+                .map(visit);
     }
 
     // ------------------------------------------------------------------ rules

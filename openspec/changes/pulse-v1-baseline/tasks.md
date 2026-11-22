@@ -104,7 +104,7 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 
 ## 11. Effort and extra-mile
 
-- [ ] 11.1 Implement hours and days worked, code-only days, extra-work detection from seeded events (the nine types and points) and the evidence text as formulas in `calc/work/`, exposed through `CalcService`; verify by comparing monthly totals against the oracle `monthStats` (line ~430) and tests for each scenario in `work/effort-extra-mile`.
+- [x] 11.1 Implement hours and days worked, code-only days, extra-work detection from seeded events (the nine types and points) and the evidence text as formulas in `calc/work/`, exposed through `CalcService`; verify by comparing monthly totals against the oracle `monthStats` (line ~430) and tests for each scenario in `work/effort-extra-mile`.
 - [ ] 11.2 Implement confirm and reject with caps (0.05 per point, 0.3 per value per quarter, 6 per month, visit cap 8), self-confirm refusal, audit, and calc cache invalidation; verify that confirming changes the culture bonus on the next culture read and the cap test.
 - [ ] 11.3 Build the Effort screens (Team and Person tabs, daily log calendar, evidence modal, Confirm all); verify Playwright and the UI audit.
 

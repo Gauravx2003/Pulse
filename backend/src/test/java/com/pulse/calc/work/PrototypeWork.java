@@ -41,6 +41,8 @@ final class PrototypeWork
 
     private JsonObject visitPoints = new JsonObject();
 
+    private final Map<String, JsonObject> onboarding = new HashMap<>();
+
     PrototypeWork(Oracle oracle, SqlExecutor owner) throws Exception
     {
         this.oracle = oracle;
@@ -52,6 +54,24 @@ final class PrototypeWork
             JsonObject p = (JsonObject) item;
 
             people.put(p.getString("external_id"), p.getString("id"));
+        }
+    }
+
+    /**
+     * The people the prototype has on onboarding ({@code onboarding(pid)}: an active training plan as a new
+     * joiner), answered by the {@code people.onboarding} stand-in.
+     */
+    void loadOnboarding()
+    {
+        for (Map.Entry<String, String> person : people.entrySet())
+        {
+            Object plan = oracle.eval("(function(id){if(!onboarding(id))return null;var a=trFor(id).filter(function(x){"
+                    + "return x.status==='Active'})[0];return {plan:a.plan.name}})('" + person.getKey() + "')");
+
+            if (plan instanceof JsonObject o)
+            {
+                onboarding.put(person.getValue(), o);
+            }
         }
     }
 
@@ -264,7 +284,9 @@ final class PrototypeWork
                         Formula.of("people.visitDays", Set.of("person"), Set.of(),
                                 (ctx, params) -> Future.succeededFuture(visitDays.getOrDefault(params.getString("person"), new JsonArray()))),
                         Formula.of("people.visitPoints", Set.of("person"), Set.of(),
-                                (ctx, params) -> Future.succeededFuture(visitPoints)));
+                                (ctx, params) -> Future.succeededFuture(visitPoints)),
+                        Formula.of("people.onboarding", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(onboarding.get(params.getString("person")))));
             }
         };
     }

@@ -75,14 +75,17 @@ public final class WorkloadFormulas implements FormulaModule
      */
     public static final int CALIBRATION_SPRINTS = 3;
 
-    private static final Set<String> COUNTED_ACTIVITY = Set.of("transition", "worklog", "comment", "commit", "pull_request");
+    /**
+     * Event kinds that count as the assignee's activity (spec work/work-items); bots never count.
+     */
+    public static final Set<String> COUNTED_ACTIVITY = Set.of("transition", "worklog", "comment", "commit", "pull_request");
 
-    private static final String ISSUE_ROW = """
-            SELECT i.id, i.key, i.status, i.issue_type AS "issueType", i.assignee_id AS "assigneeId",
+    static final String ISSUE_ROW = """
+            SELECT i.id, i.key, i.summary, i.status, i.issue_type AS "issueType", i.assignee_id AS "assigneeId",
                    i.story_points AS "storyPoints", i.estimate_hours AS "estimateHours", i.spent_hours AS "spentHours",
                    i.remaining_hours AS "remainingHours", i.due_on AS "dueOn", i.started_on AS "startedOn",
                    i.resolved_on AS "resolvedOn", i.carried_over AS "carriedOver", i.was_stale AS "wasStale",
-                   i.reopened, s.key AS "sprintKey", s.work_ends_on AS "sprintWorkEnd",
+                   i.reopened, s.key AS "sprintKey", s.work_ends_on AS "sprintWorkEnd", r.key AS "releaseKey",
                    to_char(coalesce(
                        (SELECT max(e.occurred_at) FROM issue_events e
                         WHERE e.issue_id = i.id AND e.actor_id = i.assignee_id AND NOT e.is_bot
@@ -126,7 +129,7 @@ public final class WorkloadFormulas implements FormulaModule
     /**
      * Turns a bad parameter thrown while reading {@code params} into a failed future (answered as 400).
      */
-    private static Formula.Compute safe(Formula.Compute compute)
+    static Formula.Compute safe(Formula.Compute compute)
     {
         return (ctx, params) ->
         {
@@ -205,7 +208,8 @@ public final class WorkloadFormulas implements FormulaModule
                                 days.result().person(), hoursPerPoint)
                         .put("sprint", sprint.getString("key"))
                         .put("elapsedPct", elapsed)
-                        .put("hoursPerPoint", hoursPerPoint);
+                        .put("hoursPerPoint", hoursPerPoint)
+                        .put("focus", ctx.rules().getDouble("focus", 6.0));
             });
         });
     }
@@ -370,11 +374,11 @@ public final class WorkloadFormulas implements FormulaModule
     /**
      * The person's and the company's working-day predicates.
      */
-    private record Days(Predicate<LocalDate> person, Predicate<LocalDate> company, JsonObject profile, Set<LocalDate> holidays)
+    record Days(Predicate<LocalDate> person, Predicate<LocalDate> company, JsonObject profile, Set<LocalDate> holidays)
     {
     }
 
-    private static Future<Days> days(CalcContext ctx, UUID person)
+    static Future<Days> days(CalcContext ctx, UUID person)
     {
         Future<JsonArray> holidays = WorkSql.rows(ctx, "SELECT holiday_on AS date, name, location FROM holidays");
 
@@ -478,7 +482,7 @@ public final class WorkloadFormulas implements FormulaModule
      * those of closed sprints ending in it that were never resolved, and every issue of the active
      * sprint when the month overlaps it (the prototype's {@code issuesIn}).
      */
-    private static Future<JsonArray> issuesIn(CalcContext ctx, UUID person, JsonObject period, JsonObject active)
+    static Future<JsonArray> issuesIn(CalcContext ctx, UUID person, JsonObject period, JsonObject active)
     {
         String kind = period.getString("kind");
 
@@ -528,7 +532,7 @@ public final class WorkloadFormulas implements FormulaModule
                 today, company);
     }
 
-    private static Future<JsonObject> period(CalcContext ctx, JsonObject params)
+    static Future<JsonObject> period(CalcContext ctx, JsonObject params)
     {
         return ctx.calendar().map(calendar -> calendar.period(params.getString("period")));
     }
@@ -548,12 +552,12 @@ public final class WorkloadFormulas implements FormulaModule
         return null;
     }
 
-    private static String[] activityKinds()
+    static String[] activityKinds()
     {
         return COUNTED_ACTIVITY.toArray(String[]::new);
     }
 
-    private static List<JsonObject> list(JsonArray rows)
+    static List<JsonObject> list(JsonArray rows)
     {
         List<JsonObject> out = new ArrayList<>();
 
@@ -562,7 +566,7 @@ public final class WorkloadFormulas implements FormulaModule
         return out;
     }
 
-    private static LocalDate date(JsonObject row, String key)
+    static LocalDate date(JsonObject row, String key)
     {
         String value = row.getString(key);
 
@@ -578,7 +582,7 @@ public final class WorkloadFormulas implements FormulaModule
         return out;
     }
 
-    private static UUID uuid(JsonObject params, String name)
+    static UUID uuid(JsonObject params, String name)
     {
         String value = params.getString(name);
 

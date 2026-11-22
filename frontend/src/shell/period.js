@@ -64,7 +64,7 @@ function use(slot, kinds, fallback) {
 }
 
 function setSlot(slot, value) {
-  state[slot] = value || null;
+  state[slot] = typeof value === 'string' && value ? value : null;
   writeView(slot === 'shared' ? SHARED : ATTENDANCE, state[slot]);
 }
 

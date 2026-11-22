@@ -14,6 +14,7 @@ import io.vertx.ext.web.RoutingContext;
  * <pre>
  * GET    /tools                       tiles: state, status text, action, last sync
  * GET    /tools/:tool                 settings form: methods and fields, masked stored values, scopes, sync mode
+ * POST   /tools/:tool/test            {method, values}: Test connection (simulated in Phase 1, nothing stored)
  * PUT    /tools/:tool/credentials     {method, values}: validate, store masked placeholders, log, audit
  * DELETE /tools/:tool/credentials     disconnect
  * PUT    /tools/:tool/settings        {syncMode}
@@ -60,6 +61,9 @@ final class IntegrationsRoutes
 
         router.get("/tools/:tool").handler(policy.requires(PERMISSION)).handler(this::tool);
 
+        router.post("/tools/:tool/test").handler(policy.requires(PERMISSION)).handler(CREDENTIALS.handler())
+                .handler(this::testConnection);
+
         router.put("/tools/:tool/credentials").handler(policy.requires(PERMISSION)).handler(CREDENTIALS.handler())
                 .handler(this::saveCredentials);
 
@@ -96,6 +100,14 @@ final class IntegrationsRoutes
 
         integrations.saveCredentials(PolicyService.user(rc), rc.pathParam("tool"), body.getString("method"),
                 body.getJsonObject("values")).onSuccess(rc::json).onFailure(rc::fail);
+    }
+
+    private void testConnection(RoutingContext rc)
+    {
+        JsonObject body = BodySchema.body(rc);
+
+        integrations.testConnection(rc.pathParam("tool"), body.getString("method"), body.getJsonObject("values"))
+                .onSuccess(rc::json).onFailure(rc::fail);
     }
 
     private void disconnect(RoutingContext rc)

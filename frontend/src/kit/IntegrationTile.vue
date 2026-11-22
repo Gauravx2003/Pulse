@@ -4,9 +4,18 @@
     <div>
       <div class="pl-int-name">{{ name }}</div>
       <div class="pl-caption">{{ description }}</div>
+      <div v-if="detail" class="pl-caption">{{ detail }}</div>
       <div class="status"><Badge :text="statusText" :tone="statusTone" /></div>
     </div>
-    <button type="button" class="pl-btn pl-btn-sm" @click="emit('action')">{{ actionLabel }}</button>
+    <button
+      type="button"
+      class="pl-btn pl-btn-sm"
+      :disabled="actionDisabled"
+      :aria-label="`${actionLabel} ${name}`"
+      @click="emit('action')"
+    >
+      {{ actionLabel }}
+    </button>
   </div>
 </template>
 
@@ -26,6 +35,9 @@ defineProps({
   statusText: { type: String, required: true },
   statusTone: { type: String, default: '' },
   actionLabel: { type: String, default: 'Settings' },
+  /** Optional second caption line, e.g. "Feeds: …" on the Integrations screen. */
+  detail: { type: String, default: '' },
+  actionDisabled: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['action']);

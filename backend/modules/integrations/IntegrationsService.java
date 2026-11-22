@@ -202,6 +202,49 @@ final class IntegrationsService
         }).compose(v -> tool(tool));
     }
 
+    /**
+     * Test connection of the Connect / Change credentials form (reference 11.3). Phase 1 simulates it: the
+     * form is checked exactly as {@link #saveCredentials} checks it (400 naming the field on a format
+     * error), nothing is stored and no network call is made; the reported scopes are the catalogued ones,
+     * with the write-scope warning. The live GitHub and Jira tests of group 24 replace this behind the
+     * same endpoint.
+     */
+    Future<JsonObject> testConnection(String tool, String method, JsonObject values)
+    {
+        return catalogue().compose(c ->
+        {
+            JsonObject t = known(c, tool);
+
+            if (!t.getBoolean("seeded"))
+            {
+                throw ApiException.unprocessable("connector_planned",
+                        t.getString("name") + " is planned; it can't be connected in this version.");
+            }
+
+            JsonArray fields = c.fields(tool, method);
+
+            if (fields == null)
+            {
+                throw ApiException.badRequest("validation_failed", "Unknown sign-in method for "
+                        + t.getString("name") + ".").field("method");
+            }
+
+            validateAndMask(tool, fields, values);
+
+            JsonArray scopes = t.getJsonArray("scopes");
+            List<String> broad = scopes.stream().map(String::valueOf)
+                    .filter(sc -> sc.toLowerCase(Locale.ROOT).contains("write")).toList();
+
+            return Future.succeededFuture(new JsonObject()
+                    .put("ok", true)
+                    .put("simulated", true)
+                    .put("message", "Connection test passed · simulated, no request is sent in this version")
+                    .put("scopes", scopes)
+                    .put("scopeWarning", broad.isEmpty() ? null
+                            : "Write scope is not needed: Pulse only reads (" + String.join(", ", broad) + ")"));
+        });
+    }
+
     Future<JsonObject> disconnect(JsonObject user, String tool)
     {
         return catalogue().compose(c ->

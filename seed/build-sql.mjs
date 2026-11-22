@@ -22,6 +22,7 @@ export const BASE_FILE = 'S100__roles_and_rules.sql';
 export const DEMO_FILE = 'S110__demo_org.sql';
 export const PERFORMANCE_FILE = 'S120__demo_performance.sql';
 export const HISTORY_FILE = 'S130__demo_index_history.sql';
+export const NOTIFICATIONS_FILE = 'S150__demo_notifications.sql';
 /** The quarter the prototype's seeded pillars, 360° ratings and culture signals belong to. */
 export const SEEDED_QUARTER = '2026-Q3';
 /** The closed quarters before SEEDED_QUARTER, oldest first: the prototype's trend[0..2]. */
@@ -204,13 +205,38 @@ JOIN people p ON p.source = 'seed' AND p.external_id = v.person_key;`);
   return out.join('\n') + '\n';
 }
 
+/** Prototype notification kind -> the screen its item opens (spec platform/notifications "In-app notifications"). */
+export const NOTIFICATION_LINKS = { seed: '/reviews?tab=360', reminder: '/reviews?tab=360', request: '/reviews?tab=360', training: '/training', visit: '/visits' };
+
+/**
+ * S150: the bell's demo notifications, the prototype's `NOTIFS` after start-up (360° requests of the
+ * active cycle, training and customer-visit reminders). Each row goes to the account of its `uid`, at
+ * 09:00 Asia/Kolkata on its date plus its sequence number in minutes so the prototype's order holds.
+ */
+export function buildNotifications(dir = EXTRACTED) {
+  const users = new Map(load(dir, 'users').map((u) => [u.id, u.email]));
+  const rows = load(dir, 'notifications').map((n) => {
+    const email = users.get(n.uid);
+    if (!email) throw new Error(`notification ${n.id}: unknown user ${n.uid}`);
+    const link = NOTIFICATION_LINKS[n.kind];
+    if (!link) throw new Error(`notification ${n.id}: no link for kind ${n.kind}`);
+    const seq = Number(/^n(\d+)/.exec(n.id)?.[1] ?? 0);
+    const kind = n.kind === 'seed' ? 'review360.assigned' : n.kind === 'visit' ? 'visit.reminder' : 'training.reminder';
+    const at = `timestamptz ${lit(`${n.at} 09:00:00+05:30`)} + interval ${lit(`${seq} minutes`)}`;
+    const readAt = n.read ? at : 'NULL';
+    return `INSERT INTO notifications (user_id, kind, text, link, read_at, created_at) VALUES (${userId(email)}, ${lit(kind)}, ${lit(n.text)}, ${lit(link)}, ${readAt}, ${at});`;
+  });
+  return [HEADER('Demo notifications: the prototype bell after start-up (360° requests, training and visit reminders).'), ...rows].join('\n') + '\n';
+}
+
 export function build(outDir = SEED_SQL_DIR, dir = EXTRACTED) {
   mkdirSync(outDir, { recursive: true });
   writeFileSync(path.join(outDir, BASE_FILE), buildBase(dir));
   writeFileSync(path.join(outDir, DEMO_FILE), buildDemo(dir));
   writeFileSync(path.join(outDir, PERFORMANCE_FILE), buildPerformance(dir));
   writeFileSync(path.join(outDir, HISTORY_FILE), buildHistory(dir));
-  return [BASE_FILE, DEMO_FILE, PERFORMANCE_FILE, HISTORY_FILE];
+  writeFileSync(path.join(outDir, NOTIFICATIONS_FILE), buildNotifications(dir));
+  return [BASE_FILE, DEMO_FILE, PERFORMANCE_FILE, HISTORY_FILE, NOTIFICATIONS_FILE];
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

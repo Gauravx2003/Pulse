@@ -7,7 +7,11 @@
       <template v-for="section in menu" :key="section.group">
         <div class="sec pl-eyebrow">{{ section.group }}</div>
         <RouterLink v-for="item in section.items" :key="item.key" :to="item.path" active-class="is-active">
+          <MenuIcon :name="item.key" />
           {{ item.label }}
+          <span v-if="badgeFor(item.key)" class="cnt" :aria-label="`${badgeFor(item.key)} need action`">
+            {{ badgeFor(item.key) }}
+          </span>
         </RouterLink>
       </template>
       <div class="pl-nav-foot">
@@ -49,12 +53,15 @@
 <script setup>
 // App shell (task 6.4, spec platform/app-shell-ui "Shell and navigation" and "Responsive layout"):
 // side menu from GET /me, top bar with breadcrumb, person selector, sync status, bell, theme and
-// Sign out. Under 860 px the menu collapses behind the Menu button.
-import { computed, ref, watch } from 'vue';
+// Sign out. Under 860 px the menu collapses behind the Menu button. Menu items show the badge counts
+// of GET /notifications/badges (task 6.5).
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import ThemeToggle from '../kit/ThemeToggle.vue';
 import { useDialog } from '../ui/dialog.js';
 import BellButton from './BellButton.vue';
+import MenuIcon from './MenuIcon.vue';
+import { badgeFor, refreshOnNavigation, startNotificationPolling, stopNotificationPolling } from './notifications.js';
 import PersonSelector from './PersonSelector.vue';
 import SyncStatus from './SyncStatus.vue';
 import { can, isPersonScreen, menuItemFor, session } from './session.js';
@@ -81,6 +88,11 @@ watch(
   () => route.fullPath,
   () => {
     menuOpen.value = false;
+    refreshOnNavigation();
   },
 );
+
+// The bell count and the menu badges (reference 11.6) refresh on mount, on navigation and every minute.
+onMounted(startNotificationPolling);
+onBeforeUnmount(stopNotificationPolling);
 </script>

@@ -46,13 +46,13 @@ class DemoSeedFlagTest {
         assertEquals(0L, count("SELECT count(*) FROM pillars"));
 
         List<SqlScript> on = await(MigrationRunner.seed(owner, platform, true));
-        assertEquals(List.of("S110", "S120", "S130"), on.stream().map(SqlScript::label).toList());
+        assertEquals(List.of("S110", "S120", "S130", "S150"), on.stream().map(SqlScript::label).toList());
         assertTrue(count("SELECT count(*) FROM users WHERE email = 'hr@pulse.demo'") == 1L);
     }
 
     @Test
     void demoSeedsAreRecognisedByName() {
-        assertTrue(platform.seeds().stream().filter(SqlScript::demo).map(SqlScript::label).toList().containsAll(List.of("S110", "S120", "S130")));
+        assertTrue(platform.seeds().stream().filter(SqlScript::demo).map(SqlScript::label).toList().containsAll(List.of("S110", "S120", "S130", "S150")));
         assertTrue(platform.seeds().stream().filter(s -> !s.demo()).map(SqlScript::label).toList().contains("S100"));
     }
 

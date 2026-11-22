@@ -75,6 +75,10 @@ export const DATASETS = {
   bugs: (p) => p.json('BUGS'),
   support_tickets: (p) => p.json('SUPPORT'),
   extra_mile: (p) => p.json('EXTRA'),
+  // day by day from the prototype's dayInfo (task 7.2): hours logged and days with commits, from the
+  // first seeded month to TODAY; customer-visit days are left out (their on-site hours are Track 3's)
+  worklogs: (p) => workDays(p).filter((d) => d.hours > 0).map(({ person, date, hours }) => ({ person, date, hours })),
+  commit_days: (p) => workDays(p).filter((d) => d.commits).map(({ person, date }) => ({ person, date })),
   coverage: (p) => entries(p.json('COVER')).flatMap(([area, byPerson]) =>
     entries(byPerson).map(([person, count]) => ({ area, person, count }))),
   areas: (p) => p.json('AREAS').map((name) => ({ name })),
@@ -121,6 +125,23 @@ export const DATASETS = {
 
   culture_signals: (p) => cultureSignals(p),
 };
+
+/** First day of the day-by-day work data: the first month of the prototype's history (PER_MONTHS). */
+export const WORK_FROM = '2026-04-01';
+
+/** dayInfo(person, day) of every person and day from WORK_FROM to TODAY, visit days left out. */
+export function workDays(p) {
+  const dayInfo = p.get('dayInfo');
+  const days = p.get('days');
+  const visitOn = p.get('visitOn');
+  const today = p.get('TODAY');
+  return p.get('PEOPLE').flatMap((person) => days(WORK_FROM, today)
+    .filter((date) => !visitOn(person.id, date))
+    .map((date) => {
+      const x = dayInfo(person, date);
+      return { person: person.id, date, hours: x.h, commits: !!x.gh };
+    }));
+}
 
 export function cultureSignals(p) {
   const valData = p.get('valData');

@@ -60,7 +60,7 @@ class OkrOffTrackProviderTest
         CalcService calc = new CalcService(new SqlExecutor(app), PulseClock.of(Clock.systemUTC(), "2026-09-28", false),
                 FormulaRegistry.discover());
 
-        ctx = new ModuleContext(db.vertx(), new JsonObject(), app, null, calc);
+        ctx = new ModuleContext(db.vertx(), new JsonObject(), app, null, calc, null);
 
         oracle = Oracle.start();
     }

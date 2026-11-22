@@ -34,8 +34,9 @@ import java.util.function.Predicate;
  * </ul>
  *
  * <p>Last activity of an issue is the latest transition, worklog, comment, commit or PR event by its
- * assignee, never a bot or planning event (spec work/work-items); without one it is the day work started,
- * else the first day of the issue's sprint.
+ * assignee, never a bot or planning event (spec work/work-items). An issue nobody has worked on yet is
+ * idle since it was created or assigned; without those events, since work started, else since the first
+ * day of its sprint.
  */
 public final class WorkloadFormulas implements FormulaModule
 {
@@ -86,6 +87,8 @@ public final class WorkloadFormulas implements FormulaModule
                        (SELECT max(e.occurred_at) FROM issue_events e
                         WHERE e.issue_id = i.id AND e.actor_id = i.assignee_id AND NOT e.is_bot
                           AND e.kind = ANY($1::text[])) AT TIME ZONE 'Asia/Kolkata',
+                       (SELECT max(e.occurred_at) FROM issue_events e
+                        WHERE e.issue_id = i.id AND e.kind IN ('created', 'assignee_change')) AT TIME ZONE 'Asia/Kolkata',
                        coalesce(i.started_on, s.starts_on, i.created_at::date)::timestamp),
                        'YYYY-MM-DD"T"HH24:MI') AS "lastActivity"
             FROM issues i

@@ -17,6 +17,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,8 +75,10 @@ public final class PolicyService
     public static final String DOMAIN_PULSE = "pulse";
 
     /**
-     * Actions nobody may take on their own record (spec rbac-visibility "Separation of duties"), with
-     * the sentence shown when it is refused.
+     * Platform actions nobody may take on their own record (spec rbac-visibility "Separation of
+     * duties"), with the sentence shown when it is refused. Modules add their own through
+     * {@link com.pulse.platform.module.PulseModule#selfRefusedActions()}; {@link #selfRefused()} is the
+     * merged list.
      */
     public static final Map<String, String> SELF_REFUSED = Map.of(
             "appraisal.increment.approve", "You can't approve your own increment.",
@@ -97,19 +100,57 @@ public final class PolicyService
 
     private final Clock clock;
 
+    private final Map<String, String> selfRefused;
+
     public PolicyService(SqlExecutor sql, Set<String> catalogue, List<VisibilityRelation> relations, boolean trustProxy)
     {
-        this(sql, catalogue, relations, trustProxy, Clock.system(ZONE));
+        this(sql, catalogue, relations, trustProxy, Map.of());
+    }
+
+    /** @param moduleSelfRefused separation-of-duties actions declared by modules; a platform key fails */
+    public PolicyService(SqlExecutor sql, Set<String> catalogue, List<VisibilityRelation> relations, boolean trustProxy,
+                         Map<String, String> moduleSelfRefused)
+    {
+        this(sql, catalogue, relations, trustProxy, Clock.system(ZONE), moduleSelfRefused);
     }
 
     PolicyService(SqlExecutor sql, Set<String> catalogue, List<VisibilityRelation> relations, boolean trustProxy,
                   Clock clock)
+    {
+        this(sql, catalogue, relations, trustProxy, clock, Map.of());
+    }
+
+    PolicyService(SqlExecutor sql, Set<String> catalogue, List<VisibilityRelation> relations, boolean trustProxy,
+                  Clock clock, Map<String, String> moduleSelfRefused)
     {
         this.sql = sql;
         this.catalogue = Set.copyOf(catalogue);
         this.relations = List.copyOf(relations);
         this.trustProxy = trustProxy;
         this.clock = clock;
+
+        Map<String, String> merged = new LinkedHashMap<>(SELF_REFUSED);
+
+        moduleSelfRefused.forEach((action, message) -> {
+            if (message == null || message.isBlank())
+            {
+                throw new IllegalStateException("Separation-of-duties action '" + action + "' needs a message");
+            }
+
+            if (merged.putIfAbsent(action, message) != null)
+            {
+                throw new IllegalStateException("Separation-of-duties action '" + action
+                        + "' is already declared by the platform");
+            }
+        });
+
+        this.selfRefused = Map.copyOf(merged);
+    }
+
+    /** Every separation-of-duties action, platform and module, with its refusal sentence. */
+    public Map<String, String> selfRefused()
+    {
+        return selfRefused;
     }
 
     // ------------------------------------------------------------------ uniform refusals
@@ -353,13 +394,13 @@ public final class PolicyService
      * being assigned. The audit entry is written outside the caller's transaction so it survives the
      * refusal.
      *
-     * @param action  a key of {@link #SELF_REFUSED}
+     * @param action  a key of {@link #selfRefused()} (platform or module-declared)
      * @param request {@code {sourceIp, requestId}} from {@link #request(RoutingContext)}
      */
     public Future<Void> refuseSelf(JsonObject user, String action, String subjectPersonId, String subjectUserId,
                                    JsonObject request)
     {
-        String message = SELF_REFUSED.get(action);
+        String message = selfRefused.get(action);
 
         if (message == null)
         {

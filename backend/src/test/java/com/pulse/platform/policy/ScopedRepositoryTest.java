@@ -88,7 +88,7 @@ class ScopedRepositoryTest
     @Test
     void scopeConditionIsNumberedAfterTheStatementParameters()
     {
-        var bound = ScopedRepository.bind(scope(false, PRIYA, ARJUN), "o.person_id", null,
+        var bound = ScopedRepository.bind(scope(false, PRIYA, ARJUN), "o.person_id", (Scope.Owner) null,
                 "SELECT * FROM okrs o WHERE o.quarter = $1 AND {scope} ORDER BY o.id", Tuple.of("Q3"));
 
         assertEquals("SELECT * FROM okrs o WHERE o.quarter = $1 AND o.person_id = ANY($2) ORDER BY o.id", bound.sql());
@@ -104,6 +104,31 @@ class ScopedRepositoryTest
 
         assertEquals("(v.person_id = ANY(?) OR v.owner_id = ?)", c.sql());
         assertEquals(UUID.fromString(PRIYA), c.values().get(1));
+    }
+
+    @Test
+    void userOwnerColumnMatchesTheViewersAccountEvenWithoutAProfile()
+    {
+        String sanaUser = UUID.randomUUID().toString();
+
+        // an account owner who is a user without a performance profile (no person id)
+        Scope sana = new Scope("visit", sanaUser, null, false, Set.of());
+
+        Scope.Condition byUser = sana.condition("v.person_id", Scope.Owner.user("v.owner_id"));
+
+        assertEquals("(v.person_id = ANY(?) OR v.owner_id = ?)", byUser.sql());
+        assertEquals(UUID.fromString(sanaUser), byUser.values().get(1));
+
+        // the person-id form has nothing to compare for her, so it adds no owner clause
+        assertEquals("v.person_id = ANY(?)", sana.condition("v.person_id", Scope.Owner.person("v.owner_id")).sql());
+
+        var bound = ScopedRepository.bind(sana, "v.person_id", Scope.Owner.user("v.owner_id"),
+                "SELECT * FROM visits v WHERE v.id = $1 AND {scope}", Tuple.of(UUID.randomUUID()));
+
+        assertEquals("SELECT * FROM visits v WHERE v.id = $1 AND (v.person_id = ANY($2) OR v.owner_id = $3)", bound.sql());
+        assertEquals(UUID.fromString(sanaUser), bound.params().getValue(2));
+
+        assertThrows(IllegalArgumentException.class, () -> Scope.Owner.user("v.owner_id OR TRUE"));
     }
 
     @Test
@@ -149,6 +174,24 @@ class ScopedRepositoryTest
 
         assertTrue(policy.refuseSelf(user, "effort.confirm", ARJUN, null, null).succeeded());
         assertTrue(policy.refuseSelf(user, "no.such.action", ARJUN, null, null).failed());
+    }
+
+    @Test
+    void modulesCanDeclareTheirOwnSeparationOfDutiesActions()
+    {
+        PolicyService policy = new PolicyService(UNUSED, Set.of(), List.of(), false,
+                java.util.Map.of("kudos.give", "You can't give yourself kudos."));
+
+        JsonObject user = new JsonObject().put("id", UUID.randomUUID().toString()).put("personId", PRIYA);
+
+        assertEquals("You can't give yourself kudos.", policy.selfRefused().get("kudos.give"));
+        assertTrue(policy.selfRefused().containsKey("effort.confirm"));
+        assertTrue(policy.refuseSelf(user, "kudos.give", ARJUN, null, null).succeeded());
+
+        assertThrows(IllegalStateException.class, () -> new PolicyService(UNUSED, Set.of(), List.of(), false,
+                java.util.Map.of("effort.confirm", "Duplicate of a platform action.")));
+        assertThrows(IllegalStateException.class, () -> new PolicyService(UNUSED, Set.of(), List.of(), false,
+                java.util.Map.of("kudos.give", " ")));
     }
 
     private static Scope scope(boolean all, String... people)

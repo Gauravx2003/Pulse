@@ -13,6 +13,7 @@ import com.pulse.platform.auth.PermissionCatalogue;
 import com.pulse.platform.config.RuntimeProfile;
 import com.pulse.platform.db.Db;
 import com.pulse.platform.db.SqlExecutor;
+import com.pulse.platform.http.AccessLog;
 import com.pulse.platform.http.BodyLimits;
 import com.pulse.platform.http.FailureHandler;
 import com.pulse.platform.http.OriginGuard;
@@ -31,7 +32,6 @@ import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.CorsHandler;
-import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.pgclient.PgPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,7 +125,7 @@ public class HttpServerVerticle extends AbstractVerticle
                 .exposedHeaders(Set.of(RequestId.HEADER, "Retry-After")));
         router.route().handler(new OriginGuard(security.appOrigin()));
         router.route().handler(RateLimiter.perIp(vertx, "ip", security.ipPerMinute(), 60, authSettings.trustProxy()));
-        router.route().handler(LoggerHandler.create());
+        router.route().handler(new AccessLog());
         router.route().handler(new BodyLimits(security));
         FailureHandler failures = new FailureHandler();
 
@@ -152,7 +152,7 @@ public class HttpServerVerticle extends AbstractVerticle
                 RateLimiter.perUser(vertx, "user", security.userPerMinute(), 60));
 
         PolicyService policy = new PolicyService(sql, catalogue.keys(), registry.visibilityRelations(),
-                authSettings.trustProxy());
+                authSettings.trustProxy(), registry.selfRefusedActions());
 
         AuditEvents.register(registry.auditEvents());
 

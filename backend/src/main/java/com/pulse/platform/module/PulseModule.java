@@ -4,6 +4,7 @@ import com.pulse.platform.policy.VisibilityRelation;
 import io.vertx.ext.web.Router;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Descriptor every feature module implements.
@@ -66,6 +67,18 @@ public interface PulseModule {
      */
     default List<String> auditEvents() {
         return List.of();
+    }
+
+    /**
+     * Separation-of-duties actions this module adds to the platform list
+     * ({@link com.pulse.platform.policy.PolicyService#SELF_REFUSED}): action key to the sentence shown
+     * when someone tries it on their own record, e.g. {@code "kudos.give" -> "You can't give yourself
+     * kudos."}. Refuse with {@code ctx.policy().refuseSelf(user, action, ...)}, which writes the
+     * "refused" audit entry and answers 422 {@code self_action_refused}. A key the platform or another
+     * module already declares fails start-up.
+     */
+    default Map<String, String> selfRefusedActions() {
+        return Map.of();
     }
 
     /** Providers that contribute items to the Action Center. */

@@ -83,7 +83,9 @@ class ApiConventionsTest
         // a sequential-looking or malformed id addresses nothing
         contract(api.get("/api/v1/probe/notes/" + UUID.randomUUID(), priya), 404, "not_found");
         contract(api.get("/api/v1/probe/notes/1", priya), 404, "not_found");
-        contract(api.get("/api/v1/probe/notes/" + id.substring(0, 35) + "0".repeat(1), priya), 404, "not_found");
+        // change the last character, whatever it is, so the id is guaranteed to differ from the real one
+        String guessed = id.substring(0, 35) + (id.endsWith("0") ? "1" : "0");
+        contract(api.get("/api/v1/probe/notes/" + guessed, priya), 404, "not_found");
 
         contract(api.get("/api/v1/no-such-thing", priya), 404, "not_found");
 

@@ -40,27 +40,43 @@ public abstract class ScopedRepository extends BaseRepository
 
     protected Future<JsonArray> scopedList(Scope scope, String personColumn, String statement, Tuple params)
     {
-        return scopedList(scope, personColumn, null, statement, params);
+        return scopedList(scope, personColumn, (Scope.Owner) null, statement, params);
     }
 
-    /** As {@link #scopedList(Scope, String, String, Tuple)}, also returning rows the viewer owns. */
+    /** As {@link #scopedList(Scope, String, String, Tuple)}, also returning rows the viewer owns (person id column). */
     protected Future<JsonArray> scopedList(Scope scope, String personColumn, String ownerColumn, String statement,
                                            Tuple params)
     {
-        Bound bound = bind(scope, personColumn, ownerColumn, statement, params);
+        return scopedList(scope, personColumn, owner(ownerColumn), statement, params);
+    }
+
+    /**
+     * As {@link #scopedList(Scope, String, String, Tuple)}, also returning rows the viewer owns; use
+     * {@code Scope.Owner.user("v.owner_id")} when the owner column holds a user account id.
+     */
+    protected Future<JsonArray> scopedList(Scope scope, String personColumn, Scope.Owner owner, String statement,
+                                           Tuple params)
+    {
+        Bound bound = bind(scope, personColumn, owner, statement, params);
 
         return queryList(bound.sql(), bound.params());
     }
 
     protected Future<JsonObject> scopedOne(Scope scope, String personColumn, String statement, Tuple params)
     {
-        return scopedOne(scope, personColumn, null, statement, params);
+        return scopedOne(scope, personColumn, (Scope.Owner) null, statement, params);
     }
 
     protected Future<JsonObject> scopedOne(Scope scope, String personColumn, String ownerColumn, String statement,
                                            Tuple params)
     {
-        Bound bound = bind(scope, personColumn, ownerColumn, statement, params);
+        return scopedOne(scope, personColumn, owner(ownerColumn), statement, params);
+    }
+
+    protected Future<JsonObject> scopedOne(Scope scope, String personColumn, Scope.Owner owner, String statement,
+                                           Tuple params)
+    {
+        Bound bound = bind(scope, personColumn, owner, statement, params);
 
         return queryOne(bound.sql(), bound.params());
     }
@@ -73,12 +89,22 @@ public abstract class ScopedRepository extends BaseRepository
         return page(scope.applyTo(query, personColumn), params);
     }
 
+    private static Scope.Owner owner(String ownerColumn)
+    {
+        return ownerColumn == null ? null : Scope.Owner.person(ownerColumn);
+    }
+
     record Bound(String sql, Tuple params)
     {
     }
 
     /** Replaces {@code {scope}} with the scope condition, numbering its placeholders after {@code params}. */
     static Bound bind(Scope scope, String personColumn, String ownerColumn, String statement, Tuple params)
+    {
+        return bind(scope, personColumn, owner(ownerColumn), statement, params);
+    }
+
+    static Bound bind(Scope scope, String personColumn, Scope.Owner owner, String statement, Tuple params)
     {
         Objects.requireNonNull(scope, "scope: personal data needs a policy scope");
 
@@ -89,7 +115,7 @@ public abstract class ScopedRepository extends BaseRepository
             throw new IllegalArgumentException("A scoped statement needs exactly one " + SCOPE_MARK + ": " + statement);
         }
 
-        Scope.Condition condition = scope.condition(personColumn, ownerColumn);
+        Scope.Condition condition = scope.condition(personColumn, owner);
 
         Tuple bound = Tuple.tuple();
 

@@ -128,6 +128,25 @@ public final class ModuleRegistry
         return all;
     }
 
+    /**
+     * Separation-of-duties actions declared by all modules ({@link PulseModule#selfRefusedActions()});
+     * the same key in two modules fails.
+     */
+    public Map<String, String> selfRefusedActions()
+    {
+        Map<String, String> all = new LinkedHashMap<>();
+
+        modules.values().forEach(m -> m.selfRefusedActions().forEach((action, message) -> {
+            if (all.putIfAbsent(action, message) != null)
+            {
+                throw new IllegalStateException("Separation-of-duties action '" + action
+                        + "' is declared by more than one module (again by '" + m.id() + "')");
+            }
+        }));
+
+        return all;
+    }
+
     /** Visibility relations contributed by all modules, in discovery order. */
     public List<VisibilityRelation> visibilityRelations()
     {

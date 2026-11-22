@@ -190,7 +190,14 @@ Exceptions:
   ```
 
 - **Account owner sees their visits.** The visits repository passes an owner column (next section) and
-  the scope adds "rows the viewer owns".
+  the scope adds "rows the viewer owns". A plain column name (`"v.owner_id"`) holds a person id and is
+  matched against the viewer's person. When the owner is a user account, possibly one without a
+  performance profile, pass `Scope.Owner.user("v.owner_id")` and the column is matched against the
+  viewer's user id:
+
+  ```java
+  scopedOne(scope, "v.person_id", Scope.Owner.user("v.owner_id"), VISIT + " WHERE v.id = $1 AND {scope}", Tuple.of(id))
+  ```
 
 ### Repositories for personal data take the scope
 
@@ -312,7 +319,17 @@ policy.refuseSelf(user, "appraisal.increment.approve", subjectPersonId, null, po
 ```
 
 On the caller's own record this writes a refused audit entry and fails with 422
-`self_action_refused`. The action names are the keys of `PolicyService.SELF_REFUSED`.
+`self_action_refused`. The platform actions are the keys of `PolicyService.SELF_REFUSED`. A module adds
+its own by overriding `selfRefusedActions()` in its descriptor; reusing a platform or another module's
+key fails start-up:
+
+```java
+@Override
+public Map<String, String> selfRefusedActions()
+{
+    return Map.of("kudos.give", "You can't give yourself kudos.");
+}
+```
 
 **Concurrent edits.** Editable records carry `version`. Read the version the client loaded with
 `ExpectedVersion.of(rc, body)` (the body's `version`, or the `If-Match` header) and update through
@@ -339,7 +356,12 @@ most `BaseRepository.MAX_EXPORT_ROWS` (10,000) rows, and returns `{items, trunca
 
 Fail with `rc.fail(apiException)`, or return a failed future, or throw an `ApiException`
 inside a handler. The body is always
-`{"error": {"code", "message", "requestId"[, "field"][, "retryAfter"][, "currentVersion"]}}`.
+`{"error": {"code", "message", "requestId"[, "field"][, "retryAfter"][, "currentVersion"][, ...details]}}`.
+
+Anything else the client needs to act on goes in a detail, not in the message text:
+`ApiException.conflict("undo_conflict", "Some rows changed since the import").detail("conflicts", rows)`
+renders `error.conflicts`. `code`, `message`, `requestId` and the names above are reserved. Details are
+sent as they are, so put only data the caller may see.
 
 | Status | When | Code |
 |---|---|---|
@@ -354,6 +376,11 @@ inside a handler. The body is always
 | 500 | anything unexpected | `internal_error`: a generic message quoting the request id; the detail goes to the (redacted) log |
 
 For 422 use `ApiException.unprocessable("<rule_code>", "<sentence the user sees>")`.
+
+**Logs.** The access log (`AccessLog`) writes one line per request: method, path with every id replaced
+by `:id`, status, size, duration and request id. It never writes the query string, IP, referrer or user
+agent. Don't undo that in your own log lines: never log a raw path, a record id that identifies a
+person (for example a 360° request id), or free text. Client IPs belong in audit entries only.
 
 **Calculated numbers.** Formulas live in `calc/` as pure functions (verified against the prototype, see
 [oracle.md](oracle.md)), are registered and read through `ctx.calc()` ([calc.md](calc.md)), and return `null`
@@ -385,7 +412,7 @@ class KudosRoutesTest
     @BeforeAll
     static void start() throws Exception
     {
-        api = TestApi.start(18_330, null);    // pick a port no other test class uses
+        api = TestApi.start(18_330, null, "reviews");    // your module id; pick a port no other test class uses
     }
 
     @AfterAll
@@ -410,6 +437,11 @@ class KudosRoutesTest
 refusals carry no data and look the same. `{person:<email>}` and `{user:<email>}` resolve to ids. For
 writes pass a body: `assertRoleMatrix(api, "POST /api/v1/...", body, expectations)`. `TestApi` also has
 `get`, `post`, `put`, `signIn`, `exec`, `count` and `queryOne` for arranging data and checking rows.
+
+`TestApi.start(port, config)` applies only the platform migrations and seed. Name your module (and any
+module whose tables yours uses) after the config, `TestApi.start(port, null, "reviews")`, to also run its
+`V3xx` migrations and `S3xx` seed files through the production migration runner. Don't read and `exec`
+the SQL files yourself.
 
 Run the tests with `DB_PASSWORD=pulse_secret_dev mvn test` from `backend/` while the compose PostgreSQL
 is up.

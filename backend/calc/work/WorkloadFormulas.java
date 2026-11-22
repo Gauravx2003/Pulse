@@ -9,7 +9,6 @@ import com.pulse.calc.core.WorkingDays;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.pgclient.PgException;
 import io.vertx.sqlclient.Tuple;
 
 import java.time.DayOfWeek;
@@ -74,8 +73,6 @@ public final class WorkloadFormulas implements FormulaModule
      * Closed sprints the hours-per-point calibration looks back over (reference section 12).
      */
     public static final int CALIBRATION_SPRINTS = 3;
-
-    private static final String UNDEFINED_TABLE = "42P01";
 
     private static final Set<String> COUNTED_ACTIVITY = Set.of("transition", "worklog", "comment", "commit", "pull_request");
 
@@ -151,7 +148,7 @@ public final class WorkloadFormulas implements FormulaModule
     {
         UUID person = uuid(params, "person");
 
-        return row(ctx, """
+        return WorkSql.row(ctx, """
                 SELECT sum(i.spent_hours) AS spent, sum(i.story_points) AS points
                 FROM issues i JOIN sprints s ON s.id = i.sprint_id
                 WHERE i.assignee_id = $1 AND i.status = 'Done' AND i.story_points > 0
@@ -186,7 +183,7 @@ public final class WorkloadFormulas implements FormulaModule
 
             Future<Days> days = days(ctx, person);
 
-            Future<JsonArray> issues = rows(ctx, ISSUE_ROW + " WHERE i.assignee_id = $2 AND s.key = $3 ORDER BY i.key",
+            Future<JsonArray> issues = WorkSql.rows(ctx, ISSUE_ROW + " WHERE i.assignee_id = $2 AND s.key = $3 ORDER BY i.key",
                     Tuple.of(activityKinds(), person, sprintKey));
 
             Future<Object> perPoint = ctx.get(HOURS_PER_POINT, params);
@@ -218,7 +215,7 @@ public final class WorkloadFormulas implements FormulaModule
     {
         UUID id = uuid(params, "issue");
 
-        return row(ctx, ISSUE_ROW + " WHERE i.id = $2", Tuple.of(activityKinds(), id))
+        return WorkSql.row(ctx, ISSUE_ROW + " WHERE i.id = $2", Tuple.of(activityKinds(), id))
                 .compose(row ->
                 {
                     if (row == null)
@@ -343,12 +340,12 @@ public final class WorkloadFormulas implements FormulaModule
 
         return period(ctx, params).compose(period ->
         {
-            Future<JsonArray> bugs = rows(ctx, """
+            Future<JsonArray> bugs = WorkSql.rows(ctx, """
                     SELECT key, origin_person_id AS "originPersonId", status, severity, environment,
                            reported_on AS "reportedOn", fixed_by_id AS "fixedById", proactive
                     FROM bugs WHERE origin_person_id = $1 OR fixed_by_id = $1""", Tuple.of(person));
 
-            Future<JsonArray> tickets = rows(ctx, """
+            Future<JsonArray> tickets = WorkSql.rows(ctx, """
                     SELECT key, person_id AS "personId", opened_on AS "openedOn", hours, csat
                     FROM support_tickets WHERE person_id = $1""", Tuple.of(person));
 
@@ -376,10 +373,10 @@ public final class WorkloadFormulas implements FormulaModule
 
     private static Future<Days> days(CalcContext ctx, UUID person)
     {
-        Future<JsonArray> holidays = rows(ctx, "SELECT holiday_on AS date, name, location FROM holidays");
+        Future<JsonArray> holidays = WorkSql.rows(ctx, "SELECT holiday_on AS date, name, location FROM holidays");
 
         Future<JsonObject> row = person == null ? Future.succeededFuture(null)
-                : row(ctx, "SELECT joined_on AS \"joinedOn\" FROM people WHERE id = $1", Tuple.of(person));
+                : WorkSql.row(ctx, "SELECT joined_on AS \"joinedOn\" FROM people WHERE id = $1", Tuple.of(person));
 
         JsonObject ref = new JsonObject().put("person", person == null ? null : person.toString());
 
@@ -415,11 +412,11 @@ public final class WorkloadFormulas implements FormulaModule
 
         Future<Days> days = days(ctx, person);
 
-        Future<JsonArray> worklogs = rows(ctx, """
+        Future<JsonArray> worklogs = WorkSql.rows(ctx, """
                 SELECT work_date AS day, sum(hours) AS hours FROM worklogs
                 WHERE person_id = $1 AND work_date BETWEEN $2 AND $3 GROUP BY work_date""", Tuple.of(person, from, to));
 
-        Future<JsonArray> commits = rows(ctx, """
+        Future<JsonArray> commits = WorkSql.rows(ctx, """
                 SELECT commit_date AS day FROM commit_days
                 WHERE person_id = $1 AND commit_date BETWEEN $2 AND $3 AND commit_count > 0""", Tuple.of(person, from, to));
 
@@ -486,13 +483,13 @@ public final class WorkloadFormulas implements FormulaModule
 
         if (PeriodCalendar.SPRINT.equals(kind))
         {
-            return rows(ctx, ISSUE_ROW + " WHERE i.assignee_id = $2 AND s.key = $3 ORDER BY i.key",
+            return WorkSql.rows(ctx, ISSUE_ROW + " WHERE i.assignee_id = $2 AND s.key = $3 ORDER BY i.key",
                     Tuple.of(activityKinds(), person, key));
         }
 
         if (PeriodCalendar.RELEASE.equals(kind))
         {
-            return rows(ctx, ISSUE_ROW + " WHERE i.assignee_id = $2 AND r.key = $3 ORDER BY i.key",
+            return WorkSql.rows(ctx, ISSUE_ROW + " WHERE i.assignee_id = $2 AND r.key = $3 ORDER BY i.key",
                     Tuple.of(activityKinds(), person, key));
         }
 
@@ -505,44 +502,12 @@ public final class WorkloadFormulas implements FormulaModule
         boolean overlapsActive = active != null && !LocalDate.parse(active.getString("from")).isAfter(to)
                 && !LocalDate.parse(active.getString("to")).isBefore(from);
 
-        return rows(ctx, ISSUE_ROW + """
+        return WorkSql.rows(ctx, ISSUE_ROW + """
                  WHERE i.assignee_id = $2
                    AND ((s.key IS DISTINCT FROM $5 AND coalesce(i.resolved_on, s.work_ends_on) BETWEEN $3 AND $4)
                         OR ($6 AND s.key = $5))
                 ORDER BY i.key""",
                 Tuple.of(activityKinds(), person, from, to).addString(activeKey).addBoolean(overlapsActive));
-    }
-
-    /**
-     * Rows of a Track 2 table, or none when the table is not there: a test database built from the
-     * platform migrations alone (Track 1's CalcService tests close every period). In the application
-     * every module's migrations run before the server starts, so the tables always exist.
-     */
-    private static Future<JsonArray> rows(CalcContext ctx, String statement, Tuple params)
-    {
-        return ctx.sql().queryList(statement, params).recover(error -> missingTable(error)
-                ? Future.succeededFuture(new JsonArray())
-                : Future.failedFuture(error));
-    }
-
-    private static Future<JsonArray> rows(CalcContext ctx, String statement)
-    {
-        return rows(ctx, statement, Tuple.tuple());
-    }
-
-    /**
-     * As {@link #rows}, for one row; null when there is none or the table is not there.
-     */
-    private static Future<JsonObject> row(CalcContext ctx, String statement, Tuple params)
-    {
-        return ctx.sql().queryOne(statement, params).recover(error -> missingTable(error)
-                ? Future.succeededFuture(null)
-                : Future.failedFuture(error));
-    }
-
-    private static boolean missingTable(Throwable error)
-    {
-        return error instanceof PgException pg && UNDEFINED_TABLE.equals(pg.getSqlState());
     }
 
     // ------------------------------------------------------------------ helpers

@@ -87,15 +87,45 @@ public final class Scope
     /** Rows whose {@code personColumn} is a visible person. */
     public Condition condition(String personColumn)
     {
-        return condition(personColumn, null);
+        return condition(personColumn, (Owner) null);
     }
 
     /**
-     * Rows whose {@code personColumn} is a visible person, or, with {@code ownerColumn}, rows the viewer
-     * owns (account owner of a customer visit). Column names come from repository code, never from a
-     * request.
+     * The column that names a row's owner (account owner of a customer visit) and what it holds: a
+     * person id ({@link #person}) or a user account id ({@link #user}), for owners who are users
+     * without a performance profile.
+     */
+    public record Owner(String column, boolean byUser)
+    {
+        public Owner
+        {
+            checkColumn(column);
+        }
+
+        /** {@code column} holds a person id; matched against the viewer's person. */
+        public static Owner person(String column)
+        {
+            return new Owner(column, false);
+        }
+
+        /** {@code column} holds a user account id; matched against the viewer's account. */
+        public static Owner user(String column)
+        {
+            return new Owner(column, true);
+        }
+    }
+
+    /**
+     * Rows whose {@code personColumn} is a visible person, or, with {@code ownerColumn} (a person id
+     * column), rows the viewer owns. Column names come from repository code, never from a request.
      */
     public Condition condition(String personColumn, String ownerColumn)
+    {
+        return condition(personColumn, ownerColumn == null ? null : Owner.person(ownerColumn));
+    }
+
+    /** As {@link #condition(String, String)}, with an owner column of either kind. */
+    public Condition condition(String personColumn, Owner owner)
     {
         checkColumn(personColumn);
 
@@ -110,13 +140,13 @@ public final class Scope
 
         values.add(personIds.stream().map(UUID::fromString).toArray(UUID[]::new));
 
-        if (ownerColumn != null && viewerPersonId != null)
+        String viewer = owner == null ? null : owner.byUser() ? viewerUserId : viewerPersonId;
+
+        if (viewer != null)
         {
-            checkColumn(ownerColumn);
+            sql = "(" + sql + " OR " + owner.column() + " = ?)";
 
-            sql = "(" + sql + " OR " + ownerColumn + " = ?)";
-
-            values.add(UUID.fromString(viewerPersonId));
+            values.add(UUID.fromString(viewer));
         }
 
         return new Condition(sql, values);
@@ -125,12 +155,17 @@ public final class Scope
     /** Adds this scope's condition to a list query. */
     public ListQuery applyTo(ListQuery query, String personColumn)
     {
-        return applyTo(query, personColumn, null);
+        return applyTo(query, personColumn, (Owner) null);
     }
 
     public ListQuery applyTo(ListQuery query, String personColumn, String ownerColumn)
     {
-        Condition c = condition(personColumn, ownerColumn);
+        return applyTo(query, personColumn, ownerColumn == null ? null : Owner.person(ownerColumn));
+    }
+
+    public ListQuery applyTo(ListQuery query, String personColumn, Owner owner)
+    {
+        Condition c = condition(personColumn, owner);
 
         return query.where(c.sql(), c.values().toArray());
     }

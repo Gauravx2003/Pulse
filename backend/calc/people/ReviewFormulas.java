@@ -19,11 +19,14 @@ import java.util.UUID;
  *   <li>{@code people.review360Results {cycle, person}}: the anonymity-safe results of one subject in
  *       one cycle (counts per group, averages of shown groups, weighted score, hidden strengths, blind
  *       spots, grouped comments). Null for an unknown cycle.</li>
+ *   <li>{@code people.reviewCycles {person}}: the appraisal input port (docs/calc.md §5) — the person's
+ *       360° cycles as subject, oldest first, {@code [{name, responses: [{group, status, scores}]}]} with
+ *       {@code status} "Submitted" for a submitted review and {@code scores} in {@link #RATED_VALUES} order
+ *       (null for Not observed), by due date. Training checkpoint cycles count too (same form, as in the
+ *       prototype's {@code aprParts}); declined requests are left out and reviewer keys never leave the
+ *       database. Null when the reviews tables are not installed (core-only tests)
+ *       or the person has no cycle.</li>
  * </ul>
- *
- * <p>The appraisal input port {@code people.reviewCycles} (docs/calc.md §5) comes with task 22.1: core
- * tests run on a schema without the reviews tables, so registering it needs Track 1's test setup to
- * include module migrations first.
  *
  * <p>The reviews module publishes {@link #REVIEWS} after every assignment, submission, decline or
  * removal.
@@ -48,7 +51,67 @@ public final class ReviewFormulas implements FormulaModule
     public List<Formula> formulas()
     {
         return List.of(
-                Formula.of("people.review360Results", Set.of("cycle", "person"), Set.of(REVIEWS), ReviewFormulas::results));
+                Formula.of("people.review360Results", Set.of("cycle", "person"), Set.of(REVIEWS), ReviewFormulas::results),
+                Formula.of("people.reviewCycles", Set.of("person"), Set.of(REVIEWS), ReviewFormulas::cycles));
+    }
+
+    private static Future<Object> cycles(CalcContext ctx, JsonObject params)
+    {
+        UUID person = UUID.fromString(params.getString("person"));
+
+        return ctx.sql().queryOne("SELECT to_regclass('review_requests') IS NOT NULL AS installed", Tuple.tuple()).compose(t ->
+        {
+            if (!t.getBoolean("installed"))
+            {
+                return Future.succeededFuture(null);
+            }
+
+            return ctx.sql().queryList("""
+                    SELECT c.id AS cycle, c.name, r.rater_group AS "group", r.status, r.scores
+                    FROM review_cycles c JOIN review_requests r ON r.cycle_id = c.id
+                    WHERE r.subject_id = $1 AND r.status <> 'declined'
+                    ORDER BY c.due_on, c.created_at, c.id
+                    """,
+                    Tuple.of(person)).map(ReviewFormulas::byCycle);
+        });
+    }
+
+    /** Rows of one subject's requests, ordered by cycle, as {@code people.reviewCycles} returns them. */
+    static Object byCycle(JsonArray rows)
+    {
+        JsonArray cycles = new JsonArray();
+
+        JsonObject current = null;
+
+        for (Object o : rows)
+        {
+            JsonObject r = (JsonObject) o;
+
+            if (current == null || !current.getString("id").equals(r.getString("cycle")))
+            {
+                current = new JsonObject().put("id", r.getString("cycle")).put("name", r.getString("name")).put("responses", new JsonArray());
+
+                cycles.add(current);
+            }
+
+            JsonObject answers = r.getJsonObject("scores", new JsonObject());
+
+            JsonArray scores = new JsonArray();
+
+            RATED_VALUES.forEach(v -> scores.add(answers.getValue(v)));
+
+            current.getJsonArray("responses").add(new JsonObject()
+                    .put("group", r.getString("group"))
+                    .put("status", "submitted".equals(r.getString("status")) ? "Submitted" : r.getString("status"))
+                    .put("scores", scores));
+        }
+
+        for (Object c : cycles)
+        {
+            ((JsonObject) c).remove("id");
+        }
+
+        return cycles.isEmpty() ? null : cycles;
     }
 
     private static Future<Object> results(CalcContext ctx, JsonObject params)

@@ -1,9 +1,14 @@
 package com.pulse.platform.module;
 
+import com.pulse.platform.db.SqlExecutor;
+import com.pulse.platform.ingest.SeedMapper;
 import com.pulse.platform.policy.VisibilityRelation;
+import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Descriptor every feature module implements.
@@ -47,6 +52,17 @@ public interface PulseModule {
         return "modules/" + id() + "/seed";
     }
 
+    /**
+     * Seed mappers for this module's ingest tables (task 5.4): the {@link com.pulse.platform.ingest.SeedConnector}
+     * reads {@code seed/extracted/*.json} through them at start-up (demo seed on) and on Sync now of a seeded
+     * tool, and {@link com.pulse.platform.ingest.IngestService} upserts the records. Ingest tables are never
+     * seeded by direct inserts.
+     */
+    default List<SeedMapper> seedMappers()
+    {
+        return List.of();
+    }
+
     /** Scheduled jobs run by the scheduler verticle. */
     default List<JobSpec> jobs() {
         return List.of();
@@ -68,8 +84,49 @@ public interface PulseModule {
         return List.of();
     }
 
+    /**
+     * Separation-of-duties actions this module adds to the platform list
+     * ({@link com.pulse.platform.policy.PolicyService#SELF_REFUSED}): action key to the sentence shown
+     * when someone tries it on their own record, e.g. {@code "kudos.give" -> "You can't give yourself
+     * kudos."}. Refuse with {@code ctx.policy().refuseSelf(user, action, ...)}, which writes the
+     * "refused" audit entry and answers 422 {@code self_action_refused}. A key the platform or another
+     * module already declares fails start-up.
+     */
+    default Map<String, String> selfRefusedActions() {
+        return Map.of();
+    }
+
     /** Providers that contribute items to the Action Center. */
     default List<ActionProvider> actionProviders() {
         return List.of();
+    }
+
+    /**
+     * Menu badge counts this module owns ({@link BadgeProvider}, spec platform/notifications "Menu
+     * badges"), e.g. stale work items or 360° reviews waiting. Use the same query as the screen's list.
+     */
+    default List<BadgeProvider> badges()
+    {
+        return List.of();
+    }
+
+    /**
+     * Erases this module's personal data of a deleted user (spec platform/privacy-retention "User
+     * deletion and anonymization", task 5.1). The users module calls every module's hook inside the
+     * delete transaction, after the platform has erased the account and the profile; a failed future
+     * rolls the whole deletion back.
+     *
+     * <p>Delete what the spec says is removed (for example OKRs, extra-work records, free-text pulse
+     * notes, 1:1 notes, kudos text the user wrote), unlink the user as a 360° reviewer and scrub
+     * comments about them, and keep aggregates keyed by the ids, which are now opaque pseudonymous
+     * ids. Never copy a name, email or free text anywhere.
+     *
+     * @param tx      the delete transaction; build repositories from it
+     * @param subject {@code {userId, personId}}; {@code personId} is null for an account without a
+     *                performance profile
+     */
+    default Future<Void> erasePersonalData(SqlExecutor tx, JsonObject subject)
+    {
+        return Future.succeededFuture();
     }
 }

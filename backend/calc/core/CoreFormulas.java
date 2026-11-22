@@ -57,6 +57,7 @@ public final class CoreFormulas implements FormulaModule
         return List.of(
                 Formula.of("core.people", Set.of(), Set.of(CalcService.PEOPLE), CoreFormulas::people),
                 Formula.of("core.period", Set.of("period"), Set.of(CalcService.SPRINTS), CoreFormulas::period),
+                Formula.of("core.periods", Set.of(), Set.of(CalcService.SPRINTS), CoreFormulas::periods),
                 Formula.of("core.cultureData", PERSON_PERIOD, Set.of(CalcService.PERFORMANCE), CoreFormulas::cultureData),
                 new Formula("core.culture", PERSON_PERIOD, Set.of(CalcService.PERFORMANCE), QUARTERS, CoreFormulas::culture),
                 Formula.of("core.discipline", PERSON, Set.of(), CoreFormulas::discipline),
@@ -79,6 +80,28 @@ public final class CoreFormulas implements FormulaModule
     private static Future<Object> period(CalcContext ctx, JsonObject params)
     {
         return ctx.calendar().map(cal -> cal.period(params.getString("period")));
+    }
+
+    /** Months listed by the period control: the current one and the eleven before it. */
+    static final int PERIOD_MONTHS = 12;
+
+    /**
+     * The choices of the shared period control (task 6.4): {@code {today, activeSprint, sprints,
+     * months, releases}}, each list newest first with the labels of {@link PeriodCalendar}.
+     */
+    private static Future<Object> periods(CalcContext ctx, JsonObject params)
+    {
+        return ctx.calendar().map(cal ->
+        {
+            JsonObject active = cal.activeSprint();
+
+            return new JsonObject()
+                    .put("today", cal.today().toString())
+                    .put("activeSprint", active == null ? null : active.getString("key"))
+                    .put("sprints", cal.sprints())
+                    .put("months", cal.months(PERIOD_MONTHS))
+                    .put("releases", cal.releases());
+        });
     }
 
     // ------------------------------------------------------------------ culture

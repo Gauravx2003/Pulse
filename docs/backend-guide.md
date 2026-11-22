@@ -95,10 +95,26 @@ public class KudosModule implements PulseModule
 ```
 
 Other hooks on `PulseModule`: `menu()` (only screens beyond the screen map), `jobs()`,
-`actionProviders()` and `visibilityRelations()` (section 4).
+`actionProviders()`, `visibilityRelations()` (section 4) and `erasePersonalData()` (below).
 
-`ModuleContext` gives you `vertx()`, `config()`, `sql()` (the shared `SqlExecutor`) and `policy()`
-(the `PolicyService`). Never use `pool()` directly.
+`ModuleContext` gives you `vertx()`, `config()`, `sql()` (the shared `SqlExecutor`), `policy()`
+(the `PolicyService`), `calc()` and `registry()` (the discovered modules). Never use `pool()` directly.
+
+**Deleting a user.** When a user is deleted (Users screen, task 5.1), the platform erases the account
+and the profile (name, email, password, sessions) and keeps their ids as opaque pseudonymous ids. Then it
+calls every module's `erasePersonalData(tx, {userId, personId})` inside the same transaction. A module
+that keeps personal data overrides it and removes what spec `platform/privacy-retention` says is removed
+(for example OKRs, extra-work records, free-text pulse notes, 1:1 notes, kudos text the user wrote),
+unlinks the user as a 360° reviewer and scrubs comments written about them. It keeps aggregates keyed by
+the ids. A failed future rolls the whole deletion back.
+
+```java
+@Override
+public Future<Void> erasePersonalData(SqlExecutor tx, JsonObject subject)
+{
+    return new KudosRepository(tx).deleteWrittenBy(UUID.fromString(subject.getString("userId")));
+}
+```
 
 ## 3. Routes: permission first, then schema, then the handler
 
@@ -190,7 +206,14 @@ Exceptions:
   ```
 
 - **Account owner sees their visits.** The visits repository passes an owner column (next section) and
-  the scope adds "rows the viewer owns".
+  the scope adds "rows the viewer owns". A plain column name (`"v.owner_id"`) holds a person id and is
+  matched against the viewer's person. When the owner is a user account, possibly one without a
+  performance profile, pass `Scope.Owner.user("v.owner_id")` and the column is matched against the
+  viewer's user id:
+
+  ```java
+  scopedOne(scope, "v.person_id", Scope.Owner.user("v.owner_id"), VISIT + " WHERE v.id = $1 AND {scope}", Tuple.of(id))
+  ```
 
 ### Repositories for personal data take the scope
 
@@ -312,7 +335,17 @@ policy.refuseSelf(user, "appraisal.increment.approve", subjectPersonId, null, po
 ```
 
 On the caller's own record this writes a refused audit entry and fails with 422
-`self_action_refused`. The action names are the keys of `PolicyService.SELF_REFUSED`.
+`self_action_refused`. The platform actions are the keys of `PolicyService.SELF_REFUSED`. A module adds
+its own by overriding `selfRefusedActions()` in its descriptor; reusing a platform or another module's
+key fails start-up:
+
+```java
+@Override
+public Map<String, String> selfRefusedActions()
+{
+    return Map.of("kudos.give", "You can't give yourself kudos.");
+}
+```
 
 **Concurrent edits.** Editable records carry `version`. Read the version the client loaded with
 `ExpectedVersion.of(rc, body)` (the body's `version`, or the `If-Match` header) and update through
@@ -339,7 +372,12 @@ most `BaseRepository.MAX_EXPORT_ROWS` (10,000) rows, and returns `{items, trunca
 
 Fail with `rc.fail(apiException)`, or return a failed future, or throw an `ApiException`
 inside a handler. The body is always
-`{"error": {"code", "message", "requestId"[, "field"][, "retryAfter"][, "currentVersion"]}}`.
+`{"error": {"code", "message", "requestId"[, "field"][, "retryAfter"][, "currentVersion"][, ...details]}}`.
+
+Anything else the client needs to act on goes in a detail, not in the message text:
+`ApiException.conflict("undo_conflict", "Some rows changed since the import").detail("conflicts", rows)`
+renders `error.conflicts`. `code`, `message`, `requestId` and the names above are reserved. Details are
+sent as they are, so put only data the caller may see.
 
 | Status | When | Code |
 |---|---|---|
@@ -354,6 +392,17 @@ inside a handler. The body is always
 | 500 | anything unexpected | `internal_error`: a generic message quoting the request id; the detail goes to the (redacted) log |
 
 For 422 use `ApiException.unprocessable("<rule_code>", "<sentence the user sees>")`.
+
+**Logs.** The access log (`AccessLog`) writes one line per request: method, path with every id replaced
+by `:id`, status, size, duration and request id. It never writes the query string, IP, referrer or user
+agent. Don't undo that in your own log lines: never log a raw path, a record id that identifies a
+person (for example a 360° request id), or free text. Client IPs belong in audit entries only.
+
+**Rules and thresholds.** Never hard-code a threshold, weight or point value. Formulas read them from
+`ctx.rules()` (the rule set in force; see [calc.md](calc.md)). The keys, groups, ranges and defaults are
+listed in `calc/core/RuleCatalogue.java`, the only place that holds them. Admins edit them on Rules &
+thresholds (`/api/v1/rules`, task 5.2). Each save creates a new rule version and drops the calculation
+cache on every instance.
 
 **Calculated numbers.** Formulas live in `calc/` as pure functions (verified against the prototype, see
 [oracle.md](oracle.md)), are registered and read through `ctx.calc()` ([calc.md](calc.md)), and return `null`
@@ -372,7 +421,72 @@ routes such as imports and exports:
 `router.post("/upload").handler(RateLimiter.perUser(ctx.vertx(), "imports", 10, 60))`. CSV and multipart
 bodies may be up to 5 MB, everything else 1 MB.
 
-## 7. Tests
+## 7. Tool data: seed mappers and IngestService
+
+Tables that mirror an external tool (issues, worklogs, pull requests, bugs, tickets, sprints, holidays
+...) carry the ingest columns `source text NOT NULL DEFAULT 'seed'`, `external_id text` and
+`synced_at timestamptz`, with `CREATE UNIQUE INDEX <table>_source_external_uq ON <table> (source,
+external_id)` (design.md decision 6). Never insert into such a table from a seed SQL file or a service:
+`IngestService` (`com.pulse.platform.ingest`) is the only write path. It finds ingest tables in the
+database by those three columns, so adding them to your table is all the registration it needs.
+
+Seed data reaches an ingest table through a `SeedMapper` that your module lists in its descriptor. The
+`SeedConnector` runs every mapper at start-up while `PULSE_DEMO_SEED=true` (after all SQL seeds, and in
+`TestApi` too) and again on **Sync now** of the mapper's tool:
+
+```java
+@Override
+public List<SeedMapper> seedMappers()
+{
+    return List.of(PlatformSeedMappers.mapper("jira", "issues", 210, "issues", i -> new JsonObject()
+            .put("external_id", i.getString("key"))                       // required, unique per source
+            .put("summary", i.getString("summary"))
+            .put("story_points", i.getValue("sp"))                        // cast to the column type
+            .put("assignee_id", SeedMapper.ref("people", i.getString("person")))));   // id of that seed row
+}
+```
+
+- `tool` is the Integrations tile (`jira`, `gh`, `tfs`, `sl`, `hr`, ...); `entity` is your table; the file
+  is `seed/extracted/<file>.json`. Implement `SeedMapper` yourself when one JSON row is not one record.
+- `order` sets load order: platform tables use 0–99, and a table that `$ref`s another must load after
+  it. A `$ref` that matches no row stores null.
+- Records may only name columns of the table; `id`, `source`, `external_id`, `synced_at`, `created_at`,
+  `updated_at` and `version` are set by the service. A bad record fails the whole batch.
+- The upsert is by (`source`, `external_id`): re-running creates no duplicates, moves `synced_at`, and
+  bumps `updated_at`/`version` only when a value changed. Nothing is ever deleted.
+- After each sync `CalcService` drops its cache (topic `CalcService.ALL`), so formulas see the new rows.
+
+Live connectors (group 24) implement `ConnectorPort` (`fetchChanges(since)` returning the same
+normalized batch, documented on the interface) and register on the `ConnectorRegistry`; nothing in your
+module changes when they arrive.
+
+## 7a. Notifications and menu badges
+
+Send an in-app notification from the transaction of the action that causes it, so both commit or roll
+back together. Build the notice with a trigger helper; never write the `notifications` table yourself.
+
+```java
+ctx.sql().inTransaction(tx -> repo(tx).verifyCheckin(id)
+        .compose(row -> ctx.notifications().notify(tx,
+                NotificationTriggers.checkinVerified(traineeUserId, planName, week, assignmentId))));
+```
+
+- `NotificationTriggers` has one helper per trigger of spec platform/notifications (360° assigned and
+  reminded, training, mentoring, visits, low pulse, attendance uploaded, stale nudge). The helpers build
+  the text from names, titles, keys and dates only. Text with a currency amount or salary word, or a link
+  that is not an in-app path, is refused with `IllegalArgumentException`.
+- A notice about another person carries that person and a policy domain; it is skipped (`notify` resolves
+  to null) when the recipient may not see them there. Deactivated recipients get nothing.
+- Need a trigger that has no helper yet? Ask Track 1 to add one rather than building the JSON by hand.
+
+Menu badges come from `PulseModule.badges()`: a `BadgeProvider` names the menu key (`work-items`,
+`effort`, `visits`, `training`, `reviews`, …) and counts for the signed-in user with **the same query as
+the list it points to**, so the badge always equals what the screen shows. Providers of one screen add up,
+and only screens in the caller's menu are counted. The Action center badge is the number of
+High-priority `ActionProvider` items unless a module declares a provider for `actions`. The shell reads them from
+`GET /api/v1/notifications/badges`.
+
+## 8. Tests
 
 Every endpoint needs a per-role contract test. Use `TestApi` (a real server on a throw-away schema with
 the demo seed) and `RoleMatrix`:
@@ -385,7 +499,7 @@ class KudosRoutesTest
     @BeforeAll
     static void start() throws Exception
     {
-        api = TestApi.start(18_330, null);    // pick a port no other test class uses
+        api = TestApi.start(18_330, null, "reviews");    // your module id; pick a port no other test class uses
     }
 
     @AfterAll
@@ -411,6 +525,11 @@ refusals carry no data and look the same. `{person:<email>}` and `{user:<email>}
 writes pass a body: `assertRoleMatrix(api, "POST /api/v1/...", body, expectations)`. `TestApi` also has
 `get`, `post`, `put`, `signIn`, `exec`, `count` and `queryOne` for arranging data and checking rows.
 
+`TestApi.start(port, config)` applies only the platform migrations and seed. Name your module (and any
+module whose tables yours uses) after the config, `TestApi.start(port, null, "reviews")`, to also run its
+`V3xx` migrations and `S3xx` seed files through the production migration runner. Don't read and `exec`
+the SQL files yourself.
+
 Run the tests with `DB_PASSWORD=pulse_secret_dev mvn test` from `backend/` while the compose PostgreSQL
 is up.
 
@@ -424,4 +543,6 @@ is up.
 - [ ] Editable records update through `updateVersioned` with `ExpectedVersion.of`.
 - [ ] Failures go through `rc.fail` / `ApiException` with a stable code.
 - [ ] Migrations and seeds are in your range; demo data is in `S<n>__demo_*.sql`.
+- [ ] Ingest tables (with `source`/`external_id`/`synced_at`) are seeded only through a `SeedMapper`.
+- [ ] Notifications go through `ctx.notifications().notify(tx, NotificationTriggers.…)` in the action's transaction.
 - [ ] A `RoleMatrix` contract test covers Admin, Manager, Employee and peer.

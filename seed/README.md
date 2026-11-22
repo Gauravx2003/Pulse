@@ -20,6 +20,13 @@ node --test seed/extract.test.mjs seed/build-sql.test.mjs
 They are generated: never edit them by hand. Like migrations, a seed file that has been applied
 must not change, so after a merge regenerate only into a new `S1xx` file (or reset the dev DB).
 
+Tables that mirror an external tool (the ones with `source`, `external_id`, `synced_at`) are not
+seeded by SQL files: the backend's `SeedConnector` reads `seed/extracted/*.json` (packaged onto the
+classpath as `seed/extracted/` by `backend/pom.xml`) through each module's `SeedMapper`s and writes
+through `IngestService` at start-up while `PULSE_DEMO_SEED=true` (task 5.4, docs/backend-guide.md §7).
+`S110` predates the connector and still inserts sprints, releases and holidays; the connector re-ingests
+the same keys idempotently.
+
 - Each file is a JSON array of rows. Keyed prototype maps are flattened, for example
   `ATT[person][date]` becomes `attendance.json` rows `{person, date, st, in, out}`.
 - Rows keep the prototype's own keys (`ps`, `S43`, `8.2`, …); loaders use them as `external_id`.

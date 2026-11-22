@@ -6,6 +6,9 @@ import com.pulse.platform.db.MigrationRunner;
 import com.pulse.platform.db.ScriptCatalog;
 import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.db.TestDb;
+import com.pulse.platform.ingest.SeedLoader;
+import com.pulse.platform.module.ModuleRegistry;
+import com.pulse.platform.module.PulseModule;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
@@ -15,16 +18,25 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.pgclient.PgPool;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * The real HTTP server on a throw-away schema with the platform migrations, base seed and demo seed
- * (needs PostgreSQL, see {@link TestDb}). Every request gets its own client IP unless one is given,
+ * (needs PostgreSQL, see {@link TestDb}). Module migrations and seeds are not applied unless the
+ * test names the modules: {@code TestApi.start(PORT, null, "reviews")} runs the platform scripts plus
+ * every {@code V3xx}/{@code S3xx} script of {@code modules/reviews/}, in version order, through the
+ * same runner as production. Every request gets its own client IP unless one is given,
  * so lockout and throttle counters do not couple tests.
  */
 public final class TestApi implements AutoCloseable
@@ -55,13 +67,30 @@ public final class TestApi implements AutoCloseable
     /** Starts the server on {@code port}; {@code extraConfig} is merged into the verticle config. */
     public static TestApi start(int port, JsonObject extraConfig) throws Exception
     {
+        return start(port, extraConfig, new String[0]);
+    }
+
+    /**
+     * As {@link #start(int, JsonObject)}, also applying the migrations and seed files (demo seed
+     * included) of the named modules. List a module whose tables yours depend on as well.
+     *
+     * @param modules module ids, e.g. {@code "reviews"}, {@code "imports"}; an unknown id fails
+     */
+    public static TestApi start(int port, JsonObject extraConfig, String... modules) throws Exception
+    {
+        ClassLoader loader = TestApi.class.getClassLoader();
+
+        // resolve the modules first, so a wrong id fails before a schema is created
+        ScriptCatalog catalog = ScriptCatalog.load(loader, ScriptCatalog.sourcesFor(selected(loader, modules)));
+
         TestDb db = TestDb.open();
         PgPool owner = db.ownerPool();
 
-        ScriptCatalog platform = ScriptCatalog.load(TestApi.class.getClassLoader(), List.of(ScriptCatalog.PLATFORM));
+        await(MigrationRunner.migrate(owner, catalog));
+        await(MigrationRunner.seed(owner, catalog, true));
 
-        await(MigrationRunner.migrate(owner, platform));
-        await(MigrationRunner.seed(owner, platform, true));
+        // the seed connector of task 5.4, as at start-up with PULSE_DEMO_SEED on
+        await(SeedLoader.run(db.vertx(), owner, loader, selected(loader, modules)));
 
         JsonObject config = new JsonObject()
                 .put("http.port", port)
@@ -72,6 +101,33 @@ public final class TestApi implements AutoCloseable
         await(db.vertx().deployVerticle(new HttpServerVerticle(), new DeploymentOptions().setConfig(config)));
 
         return new TestApi(db, owner, WebClient.create(db.vertx()), port, config);
+    }
+
+    private static List<PulseModule> selected(ClassLoader loader, String... ids)
+    {
+        if (ids == null || ids.length == 0)
+        {
+            return List.of();
+        }
+
+        Map<String, PulseModule> byId = ModuleRegistry.discover(loader).modules().stream()
+                .collect(Collectors.toMap(PulseModule::id, m -> m));
+
+        List<PulseModule> out = new ArrayList<>();
+
+        for (String id : new LinkedHashSet<>(Arrays.asList(ids)))
+        {
+            PulseModule module = byId.get(id);
+
+            if (module == null)
+            {
+                throw new IllegalArgumentException("No module '" + id + "'; known: " + new TreeSet<>(byId.keySet()));
+            }
+
+            out.add(module);
+        }
+
+        return out;
     }
 
     public JsonObject config()
@@ -146,6 +202,12 @@ public final class TestApi implements AutoCloseable
     public HttpResponse<Buffer> put(String path, Session session, JsonObject body) throws Exception
     {
         return send(client.put(port, "localhost", path), session, body);
+    }
+
+    /** DELETE with the session's cookie and CSRF token. */
+    public HttpResponse<Buffer> delete(String path, Session session) throws Exception
+    {
+        return send(client.delete(port, "localhost", path), session, null);
     }
 
     private static HttpResponse<Buffer> send(HttpRequest<Buffer> req, Session session, JsonObject body) throws Exception

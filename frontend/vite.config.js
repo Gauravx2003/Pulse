@@ -2,6 +2,9 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath, URL } from 'node:url';
 
+// Backend the dev server proxies to; the e2e run points it at its own backend (playwright.config.js).
+const apiTarget = process.env.PULSE_API_TARGET || 'http://localhost:8088';
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
@@ -14,11 +17,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8088',
+        target: apiTarget,
         changeOrigin: true
       },
       '/health': {
-        target: 'http://localhost:8088',
+        target: apiTarget,
         changeOrigin: true
       }
     }

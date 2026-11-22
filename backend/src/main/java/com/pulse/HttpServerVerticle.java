@@ -13,6 +13,7 @@ import com.pulse.platform.auth.PermissionCatalogue;
 import com.pulse.platform.config.RuntimeProfile;
 import com.pulse.platform.db.Db;
 import com.pulse.platform.db.SqlExecutor;
+import com.pulse.platform.http.AccessLog;
 import com.pulse.platform.http.BodyLimits;
 import com.pulse.platform.http.FailureHandler;
 import com.pulse.platform.http.OriginGuard;
@@ -24,14 +25,16 @@ import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.ModuleRegistry;
 import com.pulse.platform.module.PulseModule;
 import com.pulse.platform.nav.Navigation;
+import com.pulse.platform.notify.NotificationRoutes;
 import com.pulse.platform.policy.PolicyService;
+import com.pulse.platform.shell.ShellRepository;
+import com.pulse.platform.shell.ShellRoutes;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.CorsHandler;
-import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.pgclient.PgPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,7 +128,7 @@ public class HttpServerVerticle extends AbstractVerticle
                 .exposedHeaders(Set.of(RequestId.HEADER, "Retry-After")));
         router.route().handler(new OriginGuard(security.appOrigin()));
         router.route().handler(RateLimiter.perIp(vertx, "ip", security.ipPerMinute(), 60, authSettings.trustProxy()));
-        router.route().handler(LoggerHandler.create());
+        router.route().handler(new AccessLog());
         router.route().handler(new BodyLimits(security));
         FailureHandler failures = new FailureHandler();
 
@@ -148,11 +151,18 @@ public class HttpServerVerticle extends AbstractVerticle
 
         AuthService auth = new AuthService(vertx, sql, authSettings, catalogue.keys());
 
-        AuthRoutes.mount(router, API_PREFIX, auth, new PasswordService(vertx, sql, auth), Navigation.of(registry),
+        ShellRepository shell = new ShellRepository(sql);
+
+        // public, so it is mounted before the session guard that AuthRoutes installs
+        ShellRoutes.mountPublic(router, API_PREFIX, shell, RuntimeProfile.from(config()).demoSeed());
+
+        Navigation navigation = Navigation.of(registry);
+
+        AuthRoutes.mount(router, API_PREFIX, auth, new PasswordService(vertx, sql, auth), navigation,
                 RateLimiter.perUser(vertx, "user", security.userPerMinute(), 60));
 
         PolicyService policy = new PolicyService(sql, catalogue.keys(), registry.visibilityRelations(),
-                authSettings.trustProxy());
+                authSettings.trustProxy(), registry.selfRefusedActions());
 
         AuditEvents.register(registry.auditEvents());
 
@@ -160,7 +170,11 @@ public class HttpServerVerticle extends AbstractVerticle
 
         calc = new CalcService(sql, PulseClock.from(config(), RuntimeProfile.from(config())), formulas).listen(vertx);
 
-        ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy, calc);
+        ShellRoutes.mount(router, API_PREFIX, shell, policy, calc);
+
+        ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy, calc, registry);
+
+        NotificationRoutes.mount(router, API_PREFIX, moduleContext, navigation);
 
         for (PulseModule module : registry.modules())
         {

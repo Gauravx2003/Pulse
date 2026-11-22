@@ -94,6 +94,8 @@ public final class RoleMatrix
             {
                 case "GET" -> api.get(path, session);
                 case "POST" -> api.post(path, session, body == null ? new JsonObject() : body);
+                case "PUT" -> api.put(path, session, body == null ? new JsonObject() : body);
+                case "DELETE" -> api.delete(path, session);
                 default -> throw new IllegalArgumentException("Unsupported method " + method);
             };
 

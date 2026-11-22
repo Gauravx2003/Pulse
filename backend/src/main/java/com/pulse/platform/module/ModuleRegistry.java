@@ -128,12 +128,51 @@ public final class ModuleRegistry
         return all;
     }
 
+    /**
+     * Separation-of-duties actions declared by all modules ({@link PulseModule#selfRefusedActions()});
+     * the same key in two modules fails.
+     */
+    public Map<String, String> selfRefusedActions()
+    {
+        Map<String, String> all = new LinkedHashMap<>();
+
+        modules.values().forEach(m -> m.selfRefusedActions().forEach((action, message) -> {
+            if (all.putIfAbsent(action, message) != null)
+            {
+                throw new IllegalStateException("Separation-of-duties action '" + action
+                        + "' is declared by more than one module (again by '" + m.id() + "')");
+            }
+        }));
+
+        return all;
+    }
+
     /** Visibility relations contributed by all modules, in discovery order. */
     public List<VisibilityRelation> visibilityRelations()
     {
         List<VisibilityRelation> all = new ArrayList<>();
 
         modules.values().forEach(m -> all.addAll(m.visibilityRelations()));
+
+        return all;
+    }
+
+    /** Action Center providers of all modules, in discovery order. */
+    public List<ActionProvider> actionProviders()
+    {
+        List<ActionProvider> all = new ArrayList<>();
+
+        modules.values().forEach(m -> all.addAll(m.actionProviders()));
+
+        return all;
+    }
+
+    /** Menu badge providers of all modules, in discovery order. */
+    public List<BadgeProvider> badgeProviders()
+    {
+        List<BadgeProvider> all = new ArrayList<>();
+
+        modules.values().forEach(m -> all.addAll(m.badges()));
 
         return all;
     }

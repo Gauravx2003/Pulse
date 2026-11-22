@@ -15,7 +15,7 @@ import java.util.Map;
  * The one place that writes error responses (design.md decision 1, spec api-conventions "Error
  * contract", task 3.8): every route failure goes through {@code ctx.fail(status, exception)} to here,
  * and unmatched routes reach it through the router's error handlers. The body is always
- * {@code {"error": {"code", "message", "requestId"[, "field"][, "retryAfter"][, "currentVersion"]}}}:
+ * {@code {"error": {"code", "message", "requestId"[, "field"][, "retryAfter"][, "currentVersion"][, any ApiException.detail]}}}:
  *
  * <ul>
  *   <li>400 validation: {@code invalid_field} (with {@code field}), {@code invalid_parameter}, {@code invalid_body}</li>
@@ -91,7 +91,7 @@ public class FailureHandler implements Handler<RoutingContext>
 
             try
             {
-                log.error("Unhandled failure on {} {} (request {})", ctx.request().method(), ctx.request().path(),
+                log.error("Unhandled failure on {} {} (request {})", ctx.request().method(), AccessLog.safePath(ctx.request().path()),
                         requestId, failure);
             }
             finally

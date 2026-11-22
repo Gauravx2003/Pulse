@@ -6,6 +6,7 @@ import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.http.BodySchema;
 import com.pulse.platform.http.ExpectedVersion;
 import com.pulse.platform.http.Ids;
+import com.pulse.platform.module.BadgeProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import com.pulse.platform.policy.PolicyService;
@@ -45,6 +46,35 @@ public class ProbeModule implements PulseModule
     public String id()
     {
         return "probe";
+    }
+
+    /**
+     * Badges for the notifications tests (task 5.3): two Work items providers that add up (3 + 2 for a
+     * user with a profile), and an Effort provider that fails, whose badge must be left out.
+     */
+    @Override
+    public List<BadgeProvider> badges()
+    {
+        return List.of(badge("work-items", 3), badge("work-items", 2), badge("effort", -1));
+    }
+
+    private static BadgeProvider badge(String screen, int count)
+    {
+        return new BadgeProvider()
+        {
+            @Override
+            public String screen()
+            {
+                return screen;
+            }
+
+            @Override
+            public Future<Integer> countFor(JsonObject user, ModuleContext ctx)
+            {
+                return count < 0 ? Future.failedFuture(new IllegalStateException("probe badge failure"))
+                        : Future.succeededFuture(count);
+            }
+        };
     }
 
     @Override

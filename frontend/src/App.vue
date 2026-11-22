@@ -1,46 +1,36 @@
 <template>
-  <div class="pl pl-shell">
-    <nav class="pl-nav" aria-label="Main">
-      <div class="logo"><i></i>Pulse</div>
-      <RouterLink to="/" active-class="" exact-active-class="is-active">Home</RouterLink>
-      <template v-for="section in menu" :key="section.group">
-        <div class="sec pl-eyebrow">{{ section.group }}</div>
-        <RouterLink v-for="item in section.items" :key="item.key" :to="item.path" active-class="is-active">
-          {{ item.label }}
-        </RouterLink>
-      </template>
-      <p v-if="error" class="pl-caption">{{ error }}</p>
-    </nav>
-    <main class="app-main">
-      <RouterView />
-    </main>
-  </div>
+  <RouterView v-if="route.meta.bare" />
+  <AppShell v-else-if="session.status === 'signed-in'" @sign-out="onSignOut">
+    <NoAccess v-if="denied" />
+    <RouterView v-else />
+  </AppShell>
+  <PlToastHost />
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { fetchMe } from './api/me.js';
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import AppShell from './shell/AppShell.vue';
+import NoAccess from './shell/NoAccess.vue';
+import { allowed } from './shell/access.js';
+import { session, signOut } from './shell/session.js';
+import { PlToastHost, showToast } from './ui/index.js';
 
-const menu = ref([]);
-const error = ref('');
+const route = useRoute();
+const router = useRouter();
 
-onMounted(async () => {
+// A module route the user's permissions do not allow renders the no-access card in place of the
+// screen, so the screen never mounts and makes no request.
+const denied = computed(() => !allowed(route));
+
+async function onSignOut() {
   try {
-    menu.value = (await fetchMe()).menu ?? [];
-  } catch (e) {
-    error.value = 'Menu unavailable';
-    console.error(e);
+    await signOut();
+  } catch {
+    // the local session is cleared either way
   }
-});
+
+  await router.push({ name: 'sign-in' });
+  showToast('Signed out');
+}
 </script>
-
-<style scoped>
-.pl-shell {
-  min-height: 100vh;
-}
-
-.app-main {
-  padding: var(--space-8);
-  min-width: 0;
-}
-</style>

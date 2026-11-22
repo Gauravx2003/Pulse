@@ -1,6 +1,7 @@
 package com.pulse.platform.db;
 
 import com.pulse.platform.config.RuntimeProfile;
+import com.pulse.platform.ingest.SeedLoader;
 import com.pulse.platform.module.ModuleRegistry;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -9,7 +10,8 @@ import io.vertx.sqlclient.Tuple;
 
 /**
  * Startup step run once, before any HTTP verticle is deployed: migrations, the production guard,
- * then seed files (demo seeds only with PULSE_DEMO_SEED on).
+ * then seed files (demo seeds only with PULSE_DEMO_SEED on), then, with the demo seed on, the seed
+ * connector through IngestService (task 5.4).
  */
 public final class DatabaseBootstrap {
 
@@ -21,7 +23,10 @@ public final class DatabaseBootstrap {
         return vertx.executeBlocking(() -> ScriptCatalog.load(loader, ScriptCatalog.sourcesFor(registry.modules())))
                 .compose(catalog -> MigrationRunner.migrate(pool, catalog)
                         .compose(migrated -> refuseDemoAccountsInProduction(pool, profile))
-                        .compose(checked -> MigrationRunner.seed(pool, catalog, profile.demoSeed())))
+                        .compose(checked -> MigrationRunner.seed(pool, catalog, profile.demoSeed()))
+                        .compose(seeded -> profile.demoSeed()
+                                ? SeedLoader.run(vertx, pool, loader, registry.modules()).mapEmpty()
+                                : Future.<Void>succeededFuture()))
                 .mapEmpty();
     }
 

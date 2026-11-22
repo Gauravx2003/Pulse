@@ -6,6 +6,7 @@ import com.pulse.platform.db.MigrationRunner;
 import com.pulse.platform.db.ScriptCatalog;
 import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.db.TestDb;
+import com.pulse.platform.ingest.SeedLoader;
 import com.pulse.platform.module.ModuleRegistry;
 import com.pulse.platform.module.PulseModule;
 import io.vertx.core.DeploymentOptions;
@@ -87,6 +88,9 @@ public final class TestApi implements AutoCloseable
 
         await(MigrationRunner.migrate(owner, catalog));
         await(MigrationRunner.seed(owner, catalog, true));
+
+        // the seed connector of task 5.4, as at start-up with PULSE_DEMO_SEED on
+        await(SeedLoader.run(db.vertx(), owner, loader, selected(loader, modules)));
 
         JsonObject config = new JsonObject()
                 .put("http.port", port)
@@ -198,6 +202,12 @@ public final class TestApi implements AutoCloseable
     public HttpResponse<Buffer> put(String path, Session session, JsonObject body) throws Exception
     {
         return send(client.put(port, "localhost", path), session, body);
+    }
+
+    /** DELETE with the session's cookie and CSRF token. */
+    public HttpResponse<Buffer> delete(String path, Session session) throws Exception
+    {
+        return send(client.delete(port, "localhost", path), session, null);
     }
 
     private static HttpResponse<Buffer> send(HttpRequest<Buffer> req, Session session, JsonObject body) throws Exception

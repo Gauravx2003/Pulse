@@ -377,6 +377,67 @@ public final class PolicyService
         });
     }
 
+    /**
+     * The user accounts {@code user} may see and manage in the Users directory (task 5.1): every
+     * account for users.all; for users.team the accounts that currently report to them, without
+     * deactivated ones (spec privacy-retention "Deactivation versus deletion"); nobody otherwise.
+     */
+    public Future<UserScope> userScope(JsonObject user)
+    {
+        if (user == null || user.getString("id") == null)
+        {
+            return Future.failedFuture(ApiException.unauthorized("unauthenticated", "Sign in to continue."));
+        }
+
+        String userId = user.getString("id");
+        Set<String> held = permissions(user);
+
+        if (held.contains("users.all"))
+        {
+            return Future.succeededFuture(new UserScope(userId, true, Set.of()));
+        }
+
+        if (!held.contains("users.team"))
+        {
+            return Future.succeededFuture(new UserScope(userId, false, Set.of()));
+        }
+
+        return new PolicyRepository(sql).directReportUsers(userId, LocalDate.now(clock)).map(rows ->
+        {
+            Set<String> visible = new LinkedHashSet<>();
+
+            rows.forEach(row -> visible.add(((JsonObject) row).getString("user_id")));
+
+            return new UserScope(userId, false, visible);
+        });
+    }
+
+    /**
+     * Succeeds with the scope when {@code user} may see the account {@code targetUserId} in the Users
+     * directory; otherwise writes an {@code access.refused} audit entry and fails with
+     * {@link #noAccess()}, whether or not the account exists. Existence for users.all holders is
+     * checked by the caller, which answers 404.
+     */
+    public Future<UserScope> requireUserVisible(JsonObject user, String targetUserId)
+    {
+        return userScope(user).compose(scope ->
+        {
+            UUID id = uuid(targetUserId);
+
+            if (scope.all() || (id != null && scope.allows(id.toString())))
+            {
+                return Future.succeededFuture(scope);
+            }
+
+            JsonObject entry = AuditService.entry(user, AuditEvents.ACCESS_REFUSED, "user",
+                            targetUserId == null ? null : targetUserId.substring(0, Math.min(targetUserId.length(), 64)),
+                            new JsonObject().put("domain", "users"))
+                    .put("outcome", "refused");
+
+            return AuditService.record(sql, entry).transform(ignored -> Future.failedFuture(noAccess()));
+        });
+    }
+
     // ------------------------------------------------------------------ separation of duties
 
     /** {@code {sourceIp, requestId}} of a request, for audit entries. */

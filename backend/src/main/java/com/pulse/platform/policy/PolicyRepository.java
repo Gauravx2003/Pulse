@@ -26,6 +26,18 @@ final class PolicyRepository extends BaseRepository
                 Tuple.of(UUID.fromString(managerUserId), today));
     }
 
+    /**
+     * {@code [{user_id}]} of the accounts whose current line (on {@code today}) reports to the manager,
+     * without deactivated and deleted accounts (Users directory of a users.team holder).
+     */
+    Future<JsonArray> directReportUsers(String managerUserId, LocalDate today)
+    {
+        return queryList("SELECT u.id AS user_id FROM reporting_lines rl JOIN users u ON u.id = rl.user_id "
+                        + "WHERE rl.manager_id = $1 AND rl.valid_from <= $2 AND (rl.valid_to IS NULL OR rl.valid_to > $2) "
+                        + "AND u.status <> 'Deactivated' AND u.deleted_at IS NULL",
+                Tuple.of(UUID.fromString(managerUserId), today));
+    }
+
     /** {@code [{person_id}]} returned by a module's visibility relation for the viewer's person id. */
     Future<JsonArray> related(String relationSql, String viewerPersonId)
     {

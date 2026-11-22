@@ -121,6 +121,14 @@
                                         <exclude>**/.gitkeep</exclude>
                                     </excludes>
                                 </resource>
+                                <!-- Extracted seed JSON read by the seed connector (task 5.4) as seed/extracted/*.json. -->
+                                <resource>
+                                    <directory>${project.basedir}/../seed/extracted</directory>
+                                    <targetPath>seed/extracted</targetPath>
+                                    <includes>
+                                        <include>*.json</include>
+                                    </includes>
+                                </resource>
                             </resources>
                         </configuration>
                     </execution>

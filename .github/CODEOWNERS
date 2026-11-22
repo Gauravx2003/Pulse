@@ -17,6 +17,7 @@
 # ---- Track 1 modules ----
 /backend/modules/sample/                @Gauravx2003
 /frontend/src/modules/sample/           @Gauravx2003
+/frontend/src/modules/kit/              @Gauravx2003
 /backend/modules/users/                 @Gauravx2003
 /frontend/src/modules/users/            @Gauravx2003
 /backend/modules/rules/                 @Gauravx2003

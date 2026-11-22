@@ -179,6 +179,28 @@ public final class BodySchema
         });
     }
 
+    /**
+     * An object whose keys are not known up front (for example rule paths, checked by the service):
+     * at most {@code maxFields} keys of at most 100 characters each. The values are not checked here.
+     */
+    public BodySchema anyObject(String name, int maxFields)
+    {
+        return rule(name, (path, v) ->
+        {
+            if (!(v instanceof JsonObject o))
+            {
+                return "must be an object";
+            }
+
+            if (o.size() > maxFields)
+            {
+                return "must have at most " + maxFields + " fields";
+            }
+
+            return o.fieldNames().stream().anyMatch(k -> k.length() > 100) ? "has a field name over 100 characters" : null;
+        });
+    }
+
     /** A list of objects, each checked against {@code schema}. */
     public BodySchema objectList(String name, int maxItems, BodySchema schema)
     {

@@ -31,8 +31,9 @@ import java.util.UUID;
  *       Reads as null when the training tables are not installed.</li>
  * </ul>
  *
- * <p>The input port {@code people.trainingPlans} that {@code core.training} reads (docs/calc.md §5) is
- * not registered yet: the core tests run without the training tables (see ReviewFormulas).
+ * <p>{@code people.trainingPlans {person}} is the input port {@code core.training} reads (docs/calc.md §5):
+ * {@code [{weeks, rating}]}, null when the training tables are not installed, so the core-only tests
+ * still see "no training".
  */
 public final class TrainingFormulas implements FormulaModule
 {
@@ -53,6 +54,7 @@ public final class TrainingFormulas implements FormulaModule
         return List.of(
                 Formula.of("people.trainingRating", Set.of("assignment"), TOPICS, TrainingFormulas::rating),
                 Formula.of("people.trainingOverall", Set.of("person"), TOPICS, TrainingFormulas::overall),
+                Formula.of("people.trainingPlans", Set.of("person"), TOPICS, TrainingFormulas::trainingPlans),
                 Formula.of("people.onboarding", Set.of("person"), Set.of(TRAINING, CalcService.PEOPLE), TrainingFormulas::onboarding));
     }
 
@@ -160,6 +162,30 @@ public final class TrainingFormulas implements FormulaModule
 
     private static Future<Object> overall(CalcContext ctx, JsonObject params)
     {
+        return plans(ctx, params).map(plans ->
+        {
+            JsonObject person = TrainingRating.person(plans);
+
+            return (Object) person.put("band", TrainingRating.band(person.getDouble("score")));
+        });
+    }
+
+    /**
+     * The input port {@code people.trainingPlans}: every plan of the person with its rating, for
+     * {@code core.training} (Growth pillar); null when the training tables are not installed (core-only
+     * tests) or the person has no plan.
+     */
+    private static Future<Object> trainingPlans(CalcContext ctx, JsonObject params)
+    {
+        return ctx.sql().queryOne("SELECT to_regclass('training_assignments') IS NOT NULL AND to_regclass('review_cycles') IS NOT NULL "
+                        + "AS installed", Tuple.tuple())
+                .compose(t -> !t.getBoolean("installed") ? Future.succeededFuture(null)
+                        : plans(ctx, params).map(plans -> plans.isEmpty() ? null : (Object) plans));
+    }
+
+    /** {@code [{weeks, rating}]} of every plan of the person, with {@code rating} from {@code people.trainingRating}. */
+    private static Future<JsonArray> plans(CalcContext ctx, JsonObject params)
+    {
         return ctx.sql().queryList("""
                 SELECT a.id, v.weeks FROM training_assignments a
                 JOIN training_plan_versions v ON v.plan_id = a.plan_id AND v.plan_version = a.plan_version
@@ -185,9 +211,7 @@ public final class TrainingFormulas implements FormulaModule
                                     .put("rating", (JsonObject) all.resultAt(i)));
                         }
 
-                        JsonObject person = TrainingRating.person(plans);
-
-                        return (Object) person.put("band", TrainingRating.band(person.getDouble("score")));
+                        return plans;
                     });
                 });
     }

@@ -1,5 +1,8 @@
 package com.pulse.modules.training;
 
+import com.pulse.calc.core.CalcService;
+import com.pulse.calc.core.FormulaRegistry;
+import com.pulse.calc.core.PulseClock;
 import com.pulse.testsupport.Oracle;
 import com.pulse.testsupport.RoleMatrix;
 import com.pulse.testsupport.TestApi;
@@ -13,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -148,5 +152,34 @@ class TrainingRatingsTest
                     .put("final", overall.getBoolean("final"))
                     .put("n", overall.getInteger("n")));
         }
+    }
+
+    @Test
+    void theGrowthPillarReadsTheTrainingPlansPort() throws Exception
+    {
+        // core.training (Growth pillar) gets the plans through people.trainingPlans and agrees with the overall rating.
+        CalcService calc = new CalcService(api.sql(), PulseClock.of(Clock.systemUTC(), "2026-09-28", false), FormulaRegistry.discover());
+
+        int checked = 0;
+
+        for (Object o : api.sql().queryList("SELECT DISTINCT person_id::text AS id FROM training_assignments").toCompletionStage()
+                .toCompletableFuture().get())
+        {
+            JsonObject params = new JsonObject().put("person", ((JsonObject) o).getString("id"));
+
+            Object plans = TestApi.await(calc.get("people.trainingPlans", params));
+
+            Object core = TestApi.await(calc.get("core.training", params));
+
+            Object overall = TestApi.await(calc.get("people.trainingOverall", params));
+
+            assertTrue(plans instanceof JsonArray a && !a.isEmpty(), String.valueOf(plans));
+
+            assertEquals(((JsonObject) overall).getValue("score"), ((JsonObject) core).getValue("score"), String.valueOf(core));
+
+            checked++;
+        }
+
+        assertTrue(checked > 0);
     }
 }

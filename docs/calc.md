@@ -120,7 +120,7 @@ no data).
 | `people.onboarding` | person | `{assignment, plan, progress, mentor}` while a joiner (< 3 months) is on a started, unfinished onboarding plan, else null — registered by training (task 21.2) | `work.onboarding` (no utilization alert, left out of rebalance) |
 | `people.leaveDays` | person | full leave and absent days (`L`, `S`, `A`) as dates — registered by attendance (task 17.1) | capacity: pass as `WorkingDays` person `leave` |
 | `people.disciplineOverride` | person | `{score, reason}`, or null | `core.discipline` |
-| `people.trainingPlans` | person | `[{weeks, rating}]` with `rating` from `TrainingRating.rating` | `core.training` → Growth pillar |
+| `people.trainingPlans` | person | `[{weeks, rating}]` with `rating` from `TrainingRating.rating` — registered by training; null without the training tables | `core.training` → Growth pillar |
 | `people.reviewCycles` | person | `[{name, responses: [{group, status, scores}]}]`, oldest first | `core.appraisal` (360° and manager parts) |
 
 The parameter keys of the culture inputs are those of `CultureParameters`. The 12 `signal`

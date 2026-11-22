@@ -54,13 +54,17 @@ public class WorkService
 
     private final CalcService calc;
 
-    public WorkService(ModuleContext ctx)
+    private final NudgeService nudges;
+
+    public WorkService(ModuleContext ctx, NudgeService nudges)
     {
         this.ctx = ctx;
 
         this.policy = ctx.policy();
 
         this.calc = ctx.calc();
+
+        this.nudges = nudges;
     }
 
     /**
@@ -144,9 +148,9 @@ public class WorkService
     }
 
     /**
-     * The issue drawer: the issue, its assignee, signals, the date and time checks and the activity
-     * timeline, where bot and planning events are marked as not counted. A peer's issue answers 404 like
-     * a missing one.
+     * The issue drawer: the issue, its assignee, signals, the date and time checks, the nudge state
+     * (task 8.3) and the activity timeline, where bot and planning events are marked as not counted. A
+     * peer's issue answers 404 like a missing one.
      */
     public Future<JsonObject> issue(JsonObject user, String key)
     {
@@ -172,7 +176,10 @@ public class WorkService
                 Future<JsonObject> person = assignee == null ? Future.succeededFuture(null)
                         : new PersonRepository(ctx.sql()).identity(scope, UUID.fromString(assignee));
 
-                return Future.all(events, signals, person).map(all ->
+                Future<JsonObject> nudge = signals.compose(calcIssue -> nudges.state(user, id,
+                        ((JsonObject) calcIssue).getJsonArray("flags", new JsonArray())));
+
+                return Future.all(events, signals, person, nudge).map(all ->
                 {
                     JsonArray timeline = new JsonArray();
 
@@ -197,6 +204,7 @@ public class WorkService
                             .put("checks", calcIssue.getValue("checks"))
                             .put("remainingHours", calcIssue.getValue("remainingHours"))
                             .put("lastActivity", calcIssue.getValue("lastActivity"))
+                            .put("nudge", nudge.result())
                             .put("timeline", timeline);
                 });
             });

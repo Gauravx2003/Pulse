@@ -47,6 +47,12 @@ public final class WorkViewFormulas implements FormulaModule
     public static final String ONBOARDING = "work.onboarding";
 
     /**
+     * Whether managers may nudge the assignee of a stale issue: the Rules &amp; thresholds switch
+     * "Slack nudges" (rule {@code nudge}, task 8.3).
+     */
+    public static final String NUDGE_ENABLED = "work.nudgeEnabled";
+
+    /**
      * Sprints shown in "Utilization by sprint" (the prototype's last 8).
      */
     public static final int TREND_SPRINTS = 8;
@@ -72,7 +78,11 @@ public final class WorkViewFormulas implements FormulaModule
                 Formula.of(SPRINT_BREAKDOWN, Set.of("person", "period"), topics, WorkloadFormulas.safe(WorkViewFormulas::sprintBreakdown)),
                 Formula.of(RELEASE_CARD, Set.of("person", "period"), topics, WorkloadFormulas.safe(WorkViewFormulas::releaseCard)),
                 Formula.of(LIVE_ALERT, Set.of("person"), topics, WorkloadFormulas.safe(WorkViewFormulas::liveAlert)),
-                Formula.of(ONBOARDING, Set.of("person"), topics, WorkloadFormulas.safe(WorkViewFormulas::onboarding)));
+                Formula.of(ONBOARDING, Set.of("person"), topics, WorkloadFormulas.safe(WorkViewFormulas::onboarding)),
+                Formula.of(NUDGE_ENABLED, Set.of(), Set.of(), (ctx, params) ->
+                {
+                    return Future.succeededFuture(ctx.rules().getBoolean("nudge", true));
+                }));
     }
 
     // ------------------------------------------------------------------ formulas

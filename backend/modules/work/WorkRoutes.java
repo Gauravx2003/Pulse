@@ -6,9 +6,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 /**
- * Overview, Work items and the issue drawer under {@code /api/v1/work} (task 8.2), written to
- * {@code docs/backend-guide.md}: permission first, visibility from the policy service, failures through
- * {@code rc.fail}. Query parameters: {@code period} (a period key, default the active sprint), and for
+ * Overview, Work items, the issue drawer (task 8.2) and its Nudge action (task 8.3) under
+ * {@code /api/v1/work}, written to {@code docs/backend-guide.md}: permission first, visibility from the
+ * policy service, failures through {@code rc.fail}. Query parameters: {@code period} (a period key, default the active sprint), and for
  * work items {@code filter}, {@code q} and {@code sort}.
  */
 public final class WorkRoutes
@@ -16,15 +16,24 @@ public final class WorkRoutes
 
     private static final String[] VIEW = {"self.view", "team.view", "all.view"};
 
+    /**
+     * Nudges are for managers ("Let managers DM a nudge for stale issues"); the issue must also be visible.
+     */
+    private static final String[] NUDGE = {"team.view", "all.view"};
+
     private final PolicyService policy;
 
     private final WorkService work;
+
+    private final NudgeService nudges;
 
     WorkRoutes(ModuleContext ctx)
     {
         this.policy = ctx.policy();
 
-        this.work = new WorkService(ctx);
+        this.nudges = new NudgeService(ctx);
+
+        this.work = new WorkService(ctx, nudges);
     }
 
     void mount(Router router)
@@ -37,6 +46,9 @@ public final class WorkRoutes
 
         // GET /api/v1/work/issues/:key
         router.get("/issues/:key").handler(policy.requiresAny(VIEW)).handler(this::issue);
+
+        // POST /api/v1/work/issues/:key/nudge
+        router.post("/issues/:key/nudge").handler(policy.requiresAny(NUDGE)).handler(this::nudge);
     }
 
     private void overview(RoutingContext rc)
@@ -58,6 +70,18 @@ public final class WorkRoutes
     {
         work.issue(PolicyService.user(rc), rc.pathParam("key"))
                 .onSuccess(rc::json)
+                .onFailure(rc::fail);
+    }
+
+    private void nudge(RoutingContext rc)
+    {
+        nudges.nudge(PolicyService.user(rc), rc.pathParam("key"))
+                .onSuccess(sent ->
+                {
+                    rc.response().setStatusCode(201);
+
+                    rc.json(sent);
+                })
                 .onFailure(rc::fail);
     }
 }

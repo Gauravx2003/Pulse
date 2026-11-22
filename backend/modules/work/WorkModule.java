@@ -11,7 +11,8 @@ import java.util.List;
  * Track 2 work module (Overview and Work items). It registers the Track 2 data layer:
  * {@code migrations/V200__work_data_layer.sql} creates the tables shared by every Track 2 module
  * (task 7.1), {@link WorkSeedMappers} seeds the Jira and GitHub work data (task 7.2), and
- * {@link WorkRoutes} serves Overview, Work items and the issue drawer (task 8.2).
+ * {@link WorkRoutes} serves Overview, Work items and the issue drawer (task 8.2) with its Nudge action
+ * (task 8.3, {@code migrations/V230__nudges.sql}).
  */
 public class WorkModule implements PulseModule
 {
@@ -20,6 +21,12 @@ public class WorkModule implements PulseModule
     public String id()
     {
         return "work";
+    }
+
+    @Override
+    public List<String> auditEvents()
+    {
+        return NudgeService.AUDIT_EVENTS;
     }
 
     @Override

@@ -113,10 +113,11 @@ no data).
 |---|---|---|---|
 | `work.okrPillar` | person, period (quarter) | number 1–5, or null with no OKRs | `core.pillars` (OKR pillar) |
 | `work.cultureInputs` | person, period (quarter) | `{"<param key>": {raw, of?, high?}}` for the work-measured culture parameters | `core.cultureData` |
-| `people.cultureInputs` | person, period (quarter) | the same, for the people-measured parameters | `core.cultureData` |
+| `people.cultureInputs` | person, period (quarter) | the same, for the people-measured parameters (registered; `office_presence` so far) | `core.cultureData` |
 | `work.extraMileItems` | person, period (quarter) | `[{state, points, values}]` | `core.culture` (bonus) |
 | `work.disciplineInputs` | person | `{days, stale, replan, status, block, logSame, bulk, dod, review, standup}`, as `Discipline.metrics` | `core.discipline` |
 | `people.attendanceDiscipline` | person | `{score, absent}` from `Attendance.stats` for the quarter | `core.discipline` (rule h) |
+| `people.leaveDays` | person | full leave and absent days (`L`, `S`, `A`) as dates — registered by attendance (task 17.1) | capacity: pass as `WorkingDays` person `leave` |
 | `people.disciplineOverride` | person | `{score, reason}`, or null | `core.discipline` |
 | `people.trainingPlans` | person | `[{weeks, rating}]` with `rating` from `TrainingRating.rating` | `core.training` → Growth pillar |
 | `people.reviewCycles` | person | `[{name, responses: [{group, status, scores}]}]`, oldest first | `core.appraisal` (360° and manager parts) |

@@ -147,9 +147,9 @@ Priority order inside the track (do in this order; the last two are the first to
 
 ## 17. Attendance
 
-- [ ] 17.1 Write migration V310 and seed for attendance_records (with the ingest columns `source` default `'seed'`, `external_id` and `synced_at`, unique on (source, external_id); CSV uploads write `source = 'csv'`) and attendance_uploads, with the seed loaded through `IngestService`; implement the attendance service using `attStats` from task 4.6 (statuses, notice, office policy, punctuality, score, check-in visibility to the direct manager only); verify tests for every scenario in `time/attendance`, including sick leave never penalized.
-- [ ] 17.2 Implement upload (Replace months and Merge days) behind `attendance.upload`, notification to managers, cache invalidation so capacity, Discipline rule h and Collaboration presence update, and undo that reverts them; verify an end-to-end test: upload, rule h changes, undo, rule h returns.
-- [ ] 17.3 Register the attendance action providers (past month not uploaded, upload due, absences and policy items); verify they appear in the Action center for `hr@` and `rahul@`.
+- [x] 17.1 Write migration V310 and seed for attendance_records (with the ingest columns `source` default `'seed'`, `external_id` and `synced_at`, unique on (source, external_id); CSV uploads write `source = 'csv'`) and attendance_uploads, with the seed loaded through `IngestService`; implement the attendance service using `attStats` from task 4.6 (statuses, notice, office policy, punctuality, score, check-in visibility to the direct manager only); verify tests for every scenario in `time/attendance`, including sick leave never penalized.
+- [x] 17.2 Implement upload (Replace months and Merge days) behind `attendance.upload`, notification to managers, cache invalidation so capacity, Discipline rule h and Collaboration presence update, and undo that reverts them; verify an end-to-end test: upload, rule h changes, undo, rule h returns.
+- [x] 17.3 Register the attendance action providers (past month not uploaded, upload due, absences and policy items); verify they appear in the Action center for `hr@` and `rahul@`.
 - [ ] 17.4 Build the Attendance screens (Team and Person tabs, grid, calendar, leave list, month by month, monthly uploads, banner); verify Playwright, phone-width grid and the UI audit.
 
 ## 18. Customer visits

@@ -36,7 +36,7 @@ class ActionCenterRoutesTest
     static void start() throws Exception
     {
         api = TestApi.start(PORT, new JsonObject().put("today", "2026-09-28"), "work", "pull_requests", "bugs", "effort", "progress",
-                "okrs", "integrations", "visits", "action_center");
+                "okrs", "roadmap", "integrations", "visits", "action_center");
     }
 
     @AfterAll

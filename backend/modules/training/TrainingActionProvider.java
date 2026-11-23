@@ -7,6 +7,7 @@ import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.Tuple;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -72,6 +73,13 @@ public final class TrainingActionProvider implements ActionProvider
             return Future.succeededFuture(List.of());
         }
 
+        // No items while the training tables are not installed (a test schema with other modules only).
+        return ctx.sql().queryOne("SELECT to_regclass('training_assignments') IS NOT NULL AS installed", Tuple.tuple())
+                .compose(t -> t.getBoolean("installed") ? items(user, ctx) : Future.succeededFuture(List.of()));
+    }
+
+    private Future<List<JsonObject>> items(JsonObject user, ModuleContext ctx)
+    {
         AssignmentService assignments = new AssignmentService(ctx);
 
         return assignments.list(user, null).compose(rows ->

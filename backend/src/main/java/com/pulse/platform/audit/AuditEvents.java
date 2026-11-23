@@ -41,6 +41,9 @@ public final class AuditEvents
     /** An Admin recalculated a closed period, replacing its snapshot (task 4.9). */
     public static final String CALC_RECALCULATED = "calc.recalculated";
 
+    /** An Admin ran a scheduled job by hand (task 5.5, spec platform/jobs-scheduler "Manual trigger"). */
+    public static final String JOB_TRIGGERED = "job.triggered";
+
     // ------------------------------------------------------------------ business
     public static final String DISCIPLINE_OVERRIDE = "discipline.override";
     public static final String BUG_ATTRIBUTION_OVERRIDE = "bugs.attribution.override";
@@ -121,7 +124,7 @@ public final class AuditEvents
 
         for (String e : new String[] {ROLE_CREATED, ROLE_PERMISSIONS_CHANGED, ROLE_DELETED, USER_CREATED,
                 USER_UPDATED, USER_DEACTIVATED, USER_DELETED, CREDENTIAL_CHANGED, RULES_CHANGED, RULES_RESET,
-                CALC_RECALCULATED})
+                CALC_RECALCULATED, JOB_TRIGGERED})
         {
             events.put(e, "administration");
         }

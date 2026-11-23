@@ -7,6 +7,7 @@ import com.pulse.platform.http.BodySchema;
 import com.pulse.platform.http.ExpectedVersion;
 import com.pulse.platform.http.Ids;
 import com.pulse.platform.module.BadgeProvider;
+import com.pulse.platform.module.JobSpec;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import com.pulse.platform.policy.PolicyService;
@@ -75,6 +76,16 @@ public class ProbeModule implements PulseModule
                         : Future.succeededFuture(count);
             }
         };
+    }
+
+    /** A job that always fails, for the scheduler's retry and failure tests (task 5.5); never due in practice. */
+    static final String FAILING_JOB = "probe.always-fails";
+
+    @Override
+    public List<JobSpec> jobs()
+    {
+        return List.of(JobSpec.of(FAILING_JOB, "0 0 29 2 *", "Fails every attempt (tests only)",
+                ctx -> Future.failedFuture(new IllegalStateException("probe failure password=hunter2"))));
     }
 
     @Override

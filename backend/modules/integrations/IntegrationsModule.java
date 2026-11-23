@@ -1,6 +1,7 @@
 package com.pulse.modules.integrations;
 
 import com.pulse.platform.module.ActionProvider;
+import com.pulse.platform.module.JobSpec;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import io.vertx.ext.web.Router;
@@ -35,6 +36,13 @@ public class IntegrationsModule implements PulseModule
     public void routes(Router router, ModuleContext ctx)
     {
         new IntegrationsRoutes(ctx).mount(router);
+    }
+
+    /** The expiring-token check (task 5.5). */
+    @Override
+    public List<JobSpec> jobs()
+    {
+        return List.of(TokenExpiryJob.spec());
     }
 
     @Override

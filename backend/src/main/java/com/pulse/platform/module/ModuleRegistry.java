@@ -176,4 +176,24 @@ public final class ModuleRegistry
 
         return all;
     }
+
+    /** Scheduled jobs of all modules, in discovery order (task 5.5); the scheduler rejects a repeated name. */
+    public List<JobSpec> jobs()
+    {
+        List<JobSpec> all = new ArrayList<>();
+
+        modules.values().forEach(m -> all.addAll(m.jobs()));
+
+        return all;
+    }
+
+    /** Raw-event tables of all modules that the retention purge empties after their window. */
+    public List<RetentionRule> retention()
+    {
+        List<RetentionRule> all = new ArrayList<>();
+
+        modules.values().forEach(m -> all.addAll(m.retention()));
+
+        return all;
+    }
 }

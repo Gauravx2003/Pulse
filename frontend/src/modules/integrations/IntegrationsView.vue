@@ -77,6 +77,39 @@
       </PlCard>
     </div>
 
+    <PlCard
+      title="Scheduled jobs"
+      subtitle="Times are Asia/Kolkata · a failed job is retried, then shows here and in the Action center"
+      :loading="loading"
+    >
+      <PlTable :columns="JOB_COLUMNS" :rows="jobRows" row-key="name" label="Scheduled jobs" empty-text="No scheduled jobs.">
+        <template #cell-job="{ row }">
+          <b class="pl-mono">{{ row.name }}</b>
+          <div class="pl-caption">{{ row.description }}</div>
+        </template>
+        <template #cell-next="{ value }"><span class="pl-caption">{{ value }}</span></template>
+        <template #cell-last="{ row }">
+          <span v-if="row.lastOutcome" class="last-run">
+            <Badge :text="row.lastOutcome" :tone="row.lastTone" />
+            <span class="pl-caption">{{ row.lastAt }}</span>
+          </span>
+          <span v-else class="pl-caption">Never</span>
+          <div v-if="row.lastError" class="pl-caption">{{ row.lastError }}</div>
+        </template>
+        <template #cell-actions="{ row }">
+          <button
+            type="button"
+            class="pl-btn pl-btn-sm"
+            :aria-label="`Run ${row.name} now`"
+            :disabled="runningJob !== ''"
+            @click="runJob(row.name)"
+          >
+            {{ runningJob === row.name ? 'Running…' : 'Run now' }}
+          </button>
+        </template>
+      </PlTable>
+    </PlCard>
+
     <PlCard title="Credentials" subtitle="Only Admins see this page · secrets are encrypted and shown as the last 4 characters">
       <PlTable :columns="CRED_COLUMNS" :rows="credRows" row-key="id" label="Credentials" :loading="loading" empty-text="No credentials stored.">
         <template #cell-tool="{ row }"><b>{{ row.tool }}</b></template>
@@ -134,7 +167,9 @@
 <script setup>
 // Integrations (reference 11.3 "Screen detail — Integrations", section 5; spec admin/integrations-
 // connectors). Admin only (integrations.manage). Phase 1 is a seeded simulation: Sync now and Test
-// connection make no outbound call, and credentials are stored as masked placeholders.
+// connection make no outbound call, and credentials are stored as masked placeholders. The Scheduled
+// jobs card (task 5.5, spec platform/jobs-scheduler) lists each job's next and last run and lets the
+// Admin run one now.
 import { computed, onMounted, ref } from 'vue';
 import { api } from '@/api/client.js';
 import { Badge, IntegrationTile } from '@/kit/index.js';
@@ -160,7 +195,22 @@ const CRED_COLUMNS = [
   { key: 'actions', label: 'Actions' },
 ];
 
+const JOB_COLUMNS = [
+  { key: 'job', label: 'Job' },
+  { key: 'next', label: 'Next run' },
+  { key: 'last', label: 'Last run' },
+  { key: 'actions', label: 'Actions' },
+];
+
+const JOB_OUTCOMES = {
+  succeeded: { text: 'Succeeded', tone: 'ok' },
+  failed: { text: 'Failed', tone: 'danger' },
+  running: { text: 'Retrying', tone: 'accent' },
+};
+
 const tiles = ref([]);
+const jobs = ref([]);
+const runningJob = ref('');
 const details = ref({});
 const jira = ref(null);
 const syncLog = ref([]);
@@ -212,6 +262,23 @@ const credRows = computed(() =>
     })),
 );
 
+const jobRows = computed(() =>
+  jobs.value.map((j) => {
+    const last = j.lastRun;
+    const outcome = last ? (JOB_OUTCOMES[last.outcome] ?? { text: last.outcome, tone: '' }) : null;
+
+    return {
+      name: j.name,
+      description: j.description,
+      next: j.nextRunAt ? formatDateTime(j.nextRunAt) : 'Not scheduled',
+      lastOutcome: outcome?.text ?? '',
+      lastTone: outcome?.tone ?? '',
+      lastAt: last ? formatDateTime(last.startedAt) : '',
+      lastError: last?.outcome === 'failed' || last?.outcome === 'running' ? last.error : '',
+    };
+  }),
+);
+
 function rotationText(d) {
   if (d.tile.state === 'token_expiring') {
     return d.tile.status;
@@ -233,17 +300,19 @@ async function load() {
   loadError.value = '';
 
   try {
-    const [toolsRes, jiraRes, logRes, activityRes] = await Promise.all([
+    const [toolsRes, jiraRes, logRes, activityRes, jobsRes] = await Promise.all([
       api.get('/integrations/tools'),
       api.get('/integrations/jira/config'),
       api.get('/integrations/sync-log'),
       api.get('/integrations/credential-log'),
+      api.get('/jobs'),
     ]);
 
     tiles.value = toolsRes.tiles ?? [];
     jira.value = { ...jiraRes, boards: [...(jiraRes.boards ?? [])] };
     syncLog.value = logRes.items ?? [];
     activity.value = activityRes.items ?? [];
+    jobs.value = jobsRes.items ?? [];
 
     const all = await Promise.all(connected.value.map((t) => api.get(`/integrations/tools/${t.id}`)));
 
@@ -324,6 +393,24 @@ async function syncNow() {
   }
 }
 
+/** Runs a scheduled job now (task 5.5); the answer comes after its first attempt. */
+async function runJob(name) {
+  runningJob.value = name;
+
+  try {
+    const { run } = await api.post(`/jobs/${encodeURIComponent(name)}/run`);
+    const outcome = JOB_OUTCOMES[run.outcome]?.text ?? run.outcome;
+
+    showToast(run.outcome === 'skipped' ? `${name} is still running · skipped` : `${name} · ${outcome}`);
+
+    jobs.value = (await api.get('/jobs')).items ?? [];
+  } catch {
+    // shown by the API client
+  } finally {
+    runningJob.value = '';
+  }
+}
+
 onMounted(load);
 </script>
 
@@ -360,6 +447,13 @@ onMounted(load);
   align-items: center;
   gap: var(--space-2);
   font-size: 14px;
+}
+
+.last-run {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .row-actions {

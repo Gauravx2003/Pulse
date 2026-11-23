@@ -9,6 +9,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Tuple;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -47,6 +50,22 @@ public class PulseRepository extends ScopedRepository
     {
         return pulseScope(scope).compose(s -> scopedOne(s, "w.person_id",
                 ANSWER + " WHERE w.person_id = $1 AND {scope} ORDER BY w.week_start DESC LIMIT 1", Tuple.of(personId)));
+    }
+
+    /**
+     * Those of {@code people} whose answers the scope may read, as id strings.
+     */
+    public Future<Set<String>> visible(Scope scope, List<UUID> people)
+    {
+        return pulseScope(scope).compose(s -> scopedList(s, "p.id", "SELECT p.id FROM people p WHERE p.id = ANY($1) AND {scope}",
+                Tuple.of((Object) people.toArray(UUID[]::new)))).map(rows ->
+        {
+            Set<String> out = new HashSet<>();
+
+            rows.forEach(row -> out.add(((JsonObject) row).getString("id")));
+
+            return out;
+        });
     }
 
     /**

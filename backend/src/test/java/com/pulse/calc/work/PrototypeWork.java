@@ -380,8 +380,27 @@ final class PrototypeWork
     }
 
     /**
-     * A stand-in for Track 3's optional ports, answering from the prototype's leave, visits and visit
-     * points.
+     * Evaluates a prototype expression with {@code id} bound to the prototype id of
+     * {@code params.person}; null for someone the prototype does not have.
+     */
+    private Object proto(String expression, io.vertx.core.json.JsonObject params)
+    {
+        String id = prototypeId(params.getString("person"));
+
+        return id == null ? null : oracle.eval("(function(id){return " + expression + "})('" + id + "')");
+    }
+
+    /**
+     * The prototype id ("ps") of a people.id.
+     */
+    String prototypeId(String personId)
+    {
+        return people.entrySet().stream().filter(e -> e.getValue().equals(personId)).map(Map.Entry::getKey).findFirst().orElse(null);
+    }
+
+    /**
+     * A stand-in for Track 3's optional ports, answering from the prototype's leave, visits, visit
+     * points, onboarding, last 1:1s, kudos, training plans and team wins.
      */
     FormulaModule ports()
     {
@@ -404,7 +423,24 @@ final class PrototypeWork
                         Formula.of("people.visitPointsByRef", Set.of("person"), Set.of(),
                                 (ctx, params) -> Future.succeededFuture(visitPoints)),
                         Formula.of("people.onboarding", Set.of("person"), Set.of(),
-                                (ctx, params) -> Future.succeededFuture(onboarding.get(params.getString("person")))));
+                                (ctx, params) -> Future.succeededFuture(onboarding.get(params.getString("person")))),
+                        Formula.of("people.lastOneOnOne", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("LAST11[id]||null", params))),
+                        Formula.of("people.kudosReceived", Set.of("person", "period"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("KUDOS.filter(function(k){return k.to===person(id).name}).length",
+                                        params))),
+                        Formula.of("people.trainingBehind", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("trFor(id).map(function(a){return {plan:a.plan.name,"
+                                        + "overdue:trOverdue(a).length}})", params))),
+                        Formula.of("people.trainingLoad", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("(function(){var u=userOfPerson(id);return {plans:trFor(id)"
+                                        + ".filter(trActiveStage).map(function(a){return {hoursPerWeek:a.plan.modules.reduce(function(t,m){"
+                                        + "return t+(+m.hours||0)},0)/a.plan.weeks,end:trEnd(a)}}),mentees:u?mentees(u.id)"
+                                        + ".filter(trActiveStage).length:0}})()", params))),
+                        Formula.of("people.wins", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("teamWins([person(id)]).filter(function(w){"
+                                        + "return w.what.indexOf('Fixed a bug')!==0}).map(function(w){return {what:w.what,text:w.text,"
+                                        + "at:w.at}})", params))));
             }
         };
     }

@@ -246,6 +246,28 @@ public final class Workload
     }
 
     /**
+     * The open issues of a live sprint, {@code [{key, rem, due}]} with the remaining hours of
+     * {@link #remainingHours}, for the sprint forecast ({@link ActionCenter#forecast}).
+     */
+    public static JsonArray openIssues(List<JsonObject> issues, double hoursPerPoint)
+    {
+        JsonArray out = new JsonArray();
+
+        for (JsonObject issue : issues)
+        {
+            if (!"Done".equals(issue.getString("status")))
+            {
+                out.add(new JsonObject()
+                        .put("key", issue.getString("key"))
+                        .put("rem", remainingHours(issue, hoursPerPoint))
+                        .put("due", issue.getString("dueOn")));
+            }
+        }
+
+        return out;
+    }
+
+    /**
      * {@code metrics}: the live sprint of one person: open, done and stale issue keys, remaining hours,
      * days of work, capacity (working days from today to the sprint's last working day), utilization
      * with its band, story points and the oldest idle stale issue. Stale here means any of Stale,

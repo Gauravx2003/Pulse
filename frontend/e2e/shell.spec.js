@@ -73,7 +73,8 @@ test('wrong password shows the auth line and Enter submits', async ({ page }) =>
 test('Sprint 42 chosen on Effort carries to Bugs & support; Attendance keeps its own choice', async ({ page }) => {
   await signIn(page, DEMO.employee);
   await menu(page).getByRole('link', { name: 'Effort' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Effort' })).toBeVisible();
+  // Effort is a real screen now (task 11.3): its H1 is the person, its eyebrow names the screen
+  await expect(page.locator('.pl-hdr .pl-eyebrow')).toHaveText('Effort');
 
   const period = page.getByRole('combobox', { name: 'Period', exact: true });
 
@@ -82,7 +83,8 @@ test('Sprint 42 chosen on Effort carries to Bugs & support; Attendance keeps its
   await expect(period.locator('option:checked')).toHaveText(/^Sprint 42/);
 
   await menu(page).getByRole('link', { name: 'Bugs & support' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Bugs & support' })).toBeVisible();
+  // Bugs & support is a real screen now (task 12.2): its H1 is the person, its eyebrow names the screen
+  await expect(page.locator('.pl-hdr .pl-eyebrow')).toHaveText('Bugs & support');
   await expect(period).toHaveValue('s:S42');
 
   await menu(page).getByRole('link', { name: 'Attendance' }).click();

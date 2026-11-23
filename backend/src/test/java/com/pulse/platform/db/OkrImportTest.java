@@ -5,6 +5,7 @@ import com.pulse.modules.okrs.OkrImportPort;
 import com.pulse.modules.okrs.OkrImportService;
 import com.pulse.modules.okrs.OkrService;
 import com.pulse.modules.okrs.OkrsModule;
+import com.pulse.platform.audit.AuditEvents;
 import com.pulse.modules.work.WorkModule;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -59,6 +60,8 @@ class OkrImportTest
     @BeforeAll
     static void load() throws Exception
     {
+        AuditEvents.register(new OkrsModule().auditEvents());
+
         db = TestDb.open();
 
         owner = db.ownerPool();

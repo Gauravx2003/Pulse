@@ -538,4 +538,27 @@ class AttendanceRoutesTest
 
         return null;
     }
+
+    @Test
+    void theMonthEndJobRemindsUploadersOnce() throws Exception
+    {
+        // This month has no upload (the seed stops in August): every attendance.upload holder is told, once.
+        String month = YearMonth.from(TODAY).toString();
+
+        String notices = "SELECT count(*) FROM notifications n JOIN users u ON u.id = n.user_id WHERE n.kind = 'attendance.upload_due' "
+                + "AND n.link LIKE '%" + month + "' AND u.email = 'hr@pulse.demo'";
+
+        JsonObject run = ok(api.post("/api/v1/jobs/attendance.month-end-reminder/run", as(RoleMatrix.ADMIN), new JsonObject()))
+                .getJsonObject("run");
+
+        assertEquals(1, api.count(notices), run.encode());
+
+        ok(api.post("/api/v1/jobs/attendance.month-end-reminder/run", as(RoleMatrix.ADMIN), new JsonObject()));
+
+        assertEquals(1, api.count(notices));
+
+        // Managers don't upload, so they are not reminded.
+        assertEquals(0, api.count("SELECT count(*) FROM notifications n JOIN users u ON u.id = n.user_id WHERE n.kind = 'attendance.upload_due' "
+                + "AND u.email = 'rahul@pulse.demo'"));
+    }
 }

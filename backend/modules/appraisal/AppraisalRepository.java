@@ -98,4 +98,18 @@ final class AppraisalRepository extends ScopedRepository
                 """,
                 Tuple.tuple().addValue(id).addValue(from).addValue(to).addValue(by).addValue(sendBackReason));
     }
+
+    /** The person's latest 360° cycle (not a training checkpoint) with a submitted review of them, or null. */
+    Future<JsonObject> latest360(UUID personId)
+    {
+        return queryOne("SELECT to_regclass('review_requests') IS NOT NULL AS installed", Tuple.tuple()).compose(t -> !t.getBoolean("installed")
+                ? Future.succeededFuture(null)
+                : queryOne("""
+                        SELECT c.id, c.name FROM review_cycles c
+                        WHERE c.kind = '360' AND EXISTS (SELECT 1 FROM review_requests r WHERE r.cycle_id = c.id AND r.subject_id = $1
+                                                         AND r.status = 'submitted')
+                        ORDER BY c.due_on DESC LIMIT 1
+                        """,
+                        Tuple.of(personId)));
+    }
 }

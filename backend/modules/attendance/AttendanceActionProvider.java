@@ -7,6 +7,7 @@ import com.pulse.platform.policy.Scope;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.Tuple;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -64,6 +65,13 @@ public final class AttendanceActionProvider implements ActionProvider
 
     @Override
     public Future<List<JsonObject>> actionsFor(JsonObject user, ModuleContext ctx)
+    {
+        // No items while the attendance tables are not installed (a test schema with other modules only).
+        return ctx.sql().queryOne("SELECT to_regclass('attendance_uploads') IS NOT NULL AS installed", Tuple.tuple())
+                .compose(t -> t.getBoolean("installed") ? items(user, ctx) : Future.succeededFuture(List.of()));
+    }
+
+    private Future<List<JsonObject>> items(JsonObject user, ModuleContext ctx)
     {
         AttendanceService service = new AttendanceService(ctx);
 

@@ -525,6 +525,158 @@ final class AppraisalService
         }));
     }
 
+    // ------------------------------------------------------------------ evidence and export
+
+    /** Evidence formulas: label, formula, whether it takes the quarter. Missing ones read as "No data yet". */
+    private static final String[][] EVIDENCE = {
+            {"okrPillar", "work.okrPillar", "quarter"},
+            {"culture", "core.culture", "quarter"},
+            {"extraMile", "work.extraMileItems", "quarter"},
+            {"bugs", "work.bugStats", ""},
+            {"pullRequests", "work.prPersonView", ""},
+            {"visits", "people.visitStats", "all"},
+            {"training", "people.trainingOverall", ""}};
+
+    /**
+     * The evidence panel of one person (spec "Evidence panel"): their table row, the quarterly index, the
+     * year's evidence (OKR pillar, culture values, extra-mile, bugs and support, visits, pull requests,
+     * training rating) and the latest 360° comments grouped and unattributed. Audited as a salary read.
+     */
+    Future<JsonObject> evidence(JsonObject user, String personId, JsonObject request)
+    {
+        String quarter = "q:" + today().getYear() + "-Q" + ((today().getMonthValue() - 1) / 3 + 1);
+
+        JsonObject person = new JsonObject().put("person", personId);
+
+        return load(user).compose(t ->
+        {
+            JsonObject row = find(t, personId);
+
+            if (row == null)
+            {
+                return Future.failedFuture(PolicyService.notFound());
+            }
+
+            Future<Object> history = optional("core.indexHistory", person);
+
+            Future<Object> index = optional("core.index", person.copy().put("period", quarter));
+
+            List<Future<Object>> items = new ArrayList<>();
+
+            for (String[] e : EVIDENCE)
+            {
+                JsonObject params = person.copy();
+
+                if ("quarter".equals(e[2]))
+                {
+                    params.put("period", quarter);
+                }
+                else if ("all".equals(e[2]))
+                {
+                    params.put("period", "all");
+                }
+
+                items.add(optional(e[1], params));
+            }
+
+            return Future.all(history, index, Future.all(items), comments(personId)).compose(all ->
+            {
+                JsonObject evidence = new JsonObject();
+
+                for (int i = 0; i < EVIDENCE.length; i++)
+                {
+                    evidence.put(EVIDENCE[i][0], items.get(i).result());
+                }
+
+                JsonArray quarters = history.result() instanceof JsonArray h ? h.copy() : new JsonArray();
+
+                quarters.add(index.result());
+
+                JsonObject out = new JsonObject()
+                        .put("row", row)
+                        .put("quarterlyIndex", quarters)
+                        .put("evidence", evidence)
+                        .put("comments360", all.<JsonObject>resultAt(3));
+
+                return AuditService.record(ctx.sql(), AuditService.entry(user, AuditEvents.SALARY_READ, "person", personId,
+                        new JsonObject().put("view", "evidence"))).map(out);
+            });
+        });
+    }
+
+    /** A formula's raw value, or null when it is not registered (yet) or fails. */
+    private Future<Object> optional(String formula, JsonObject params)
+    {
+        if (!ctx.calc().has(formula))
+        {
+            return Future.succeededFuture(null);
+        }
+
+        return ctx.calc().get(formula, params).map(ResultGuard::unguard).otherwise((Object) null);
+    }
+
+    /**
+     * Keep and start comments of the person's latest 360° cycle that has results, grouped by rater group
+     * without any reviewer identity ({@code people.review360Results} applies the anonymity threshold);
+     * the self review is left out. {@code {cycle, groups}} or null.
+     */
+    private Future<JsonObject> comments(String personId)
+    {
+        return new AppraisalRepository(ctx.sql()).latest360(UUID.fromString(personId)).compose(cycle ->
+        {
+            if (cycle == null)
+            {
+                return Future.succeededFuture((JsonObject) null);
+            }
+
+            return optional("people.review360Results", new JsonObject().put("cycle", cycle.getString("id")).put("person", personId)).map(r ->
+            {
+                JsonObject grouped = r instanceof JsonObject o && o.getJsonObject("comments") != null ? o.getJsonObject("comments").copy() : new JsonObject();
+
+                grouped.remove("self");
+
+                return new JsonObject().put("cycle", cycle.getString("name")).put("groups", grouped);
+            });
+        });
+    }
+
+    /**
+     * Approved and released proposals of the viewer's people as payroll CSV rows (the only export that
+     * carries CTC); audited as a salary export.
+     */
+    Future<JsonArray> export(JsonObject user)
+    {
+        return Future.all(load(user), cycle()).compose(all ->
+        {
+            JsonObject t = all.resultAt(0);
+
+            JsonArray rows = new JsonArray();
+
+            for (Object o : t.getJsonArray("people"))
+            {
+                JsonObject r = (JsonObject) o;
+
+                JsonObject p = r.getJsonObject("proposal");
+
+                if (APPROVED.equals(p.getString("status")) || RELEASED.equals(p.getString("status")))
+                {
+                    rows.add(new JsonObject()
+                            .put("name", r.getString("name"))
+                            .put("level", r.getString("level"))
+                            .put("current_ctc_lakh", r.getValue("ctc"))
+                            .put("increment_pct", p.getValue("pct"))
+                            .put("new_ctc_lakh", r.getValue("newCtc"))
+                            .put("promotion", p.getBoolean("promotion") ? "yes" : "no")
+                            .put("status", p.getString("status"))
+                            .put("effective_on", all.<JsonObject>resultAt(1).getString("effectiveOn")));
+                }
+            }
+
+            return AuditService.record(ctx.sql(), AuditService.entry(user, AuditEvents.SALARY_EXPORT, "appraisal",
+                    t.getJsonObject("cycle").getString("id"), new JsonObject().put("rows", rows.size()))).map(rows);
+        });
+    }
+
     // ------------------------------------------------------------------ cycle
 
     Future<JsonObject> setEffectiveOn(JsonObject user, LocalDate effectiveOn, int expectedVersion)

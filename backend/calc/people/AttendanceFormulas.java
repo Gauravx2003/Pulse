@@ -114,7 +114,7 @@ public final class AttendanceFormulas implements FormulaModule
             }
 
             return ctx.sql().queryList("SELECT day FROM attendance_records WHERE person_id = $1 AND status = ANY($2) ORDER BY day",
-                            Tuple.of(UUID.fromString(params.getString("person")), FULL_DAY_OFF.toArray(new String[0])))
+                            Tuple.of(UUID.fromString(params.getString("person")), (Object) FULL_DAY_OFF.toArray(new String[0])))
                     .map(rows ->
                     {
                         JsonArray days = new JsonArray();

@@ -53,6 +53,11 @@ public final class WorkViewFormulas implements FormulaModule
     public static final String NUDGE_ENABLED = "work.nudgeEnabled";
 
     /**
+     * One person's row of the Team utilization heatmap (task 9.1): {@code {cells, now, onboarding}}.
+     */
+    public static final String HEATMAP_ROW = "work.heatmapRow";
+
+    /**
      * Sprints shown in "Utilization by sprint" (the prototype's last 8).
      */
     public static final int TREND_SPRINTS = 8;
@@ -79,6 +84,7 @@ public final class WorkViewFormulas implements FormulaModule
                 Formula.of(RELEASE_CARD, Set.of("person", "period"), topics, WorkloadFormulas.safe(WorkViewFormulas::releaseCard)),
                 Formula.of(LIVE_ALERT, Set.of("person"), topics, WorkloadFormulas.safe(WorkViewFormulas::liveAlert)),
                 Formula.of(ONBOARDING, Set.of("person"), topics, WorkloadFormulas.safe(WorkViewFormulas::onboarding)),
+                Formula.of(HEATMAP_ROW, Set.of("person"), topics, WorkloadFormulas.safe(WorkViewFormulas::heatmapRow)),
                 Formula.of(NUDGE_ENABLED, Set.of(), Set.of(), (ctx, params) ->
                 {
                     return Future.succeededFuture(ctx.rules().getBoolean("nudge", true));
@@ -543,13 +549,51 @@ public final class WorkViewFormulas implements FormulaModule
         return ctx.optional("people.onboarding", params).map(plan -> plan instanceof JsonObject o ? o : null);
     }
 
+    /**
+     * {@code work.heatmapRow {person}}: {@link TeamViews#heatmapRow} over the person's daily load, with the
+     * live utilization ("Now", none while onboarding); null without an active sprint.
+     */
+    private static Future<Object> heatmapRow(CalcContext ctx, JsonObject params)
+    {
+        UUID person = WorkloadFormulas.uuid(params, "person");
+
+        Future<Object> load = ctx.get(DAILY_LOAD, params);
+
+        Future<Object> live = ctx.get(WorkloadFormulas.LIVE_SPRINT, params);
+
+        Future<Object> onboarding = ctx.get(ONBOARDING, params);
+
+        Future<JsonObject> joined = WorkSql.row(ctx, "SELECT joined_on AS \"joinedOn\" FROM people WHERE id = $1", Tuple.of(person));
+
+        return Future.all(load, live, onboarding, joined).map(all ->
+        {
+            if (!(load.result() instanceof JsonObject days) || days.getJsonArray("days") == null)
+            {
+                return null;
+            }
+
+            boolean onPlan = onboarding.result() instanceof JsonObject plan && !plan.getBoolean("notApplicable", false);
+
+            Integer util = live.result() instanceof JsonObject metrics && metrics.getValue("util") instanceof Number n
+                    ? (Integer) (int) Math.round(n.doubleValue())
+                    : null;
+
+            String joinedOn = joined.result() == null ? null : joined.result().getString("joinedOn");
+
+            return (Object) new JsonObject()
+                    .put("cells", TeamViews.heatmapRow(days.getJsonArray("days"), joinedOn, onPlan, util, ctx.rules()))
+                    .put("now", onPlan ? null : util)
+                    .put("onboarding", onPlan);
+        });
+    }
+
     // ------------------------------------------------------------------ helpers
 
     /**
      * The sprints of a period, newest first: the sprint itself, the sprints starting inside a release, or
      * the sprints overlapping a month.
      */
-    private static List<JsonObject> sprintsOf(JsonObject period, JsonArray sprints, JsonArray releases)
+    static List<JsonObject> sprintsOf(JsonObject period, JsonArray sprints, JsonArray releases)
     {
         String kind = period.getString("kind");
 

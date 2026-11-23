@@ -1,0 +1,3782 @@
+[
+  {
+    "person": "ps",
+    "date": "2026-04-01",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-03",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-06",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-07",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-08",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-09",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-10",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-13",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-14",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-16",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-17",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-20",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-21",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-22",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-23",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-24",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-27",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-29",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-04-30",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-01",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-04",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-05",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-06",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-07",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-08",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-11",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-12",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-13",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-14",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-15",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-18",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-19",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-21",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-22",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-25",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-26",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-27",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-28",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-05-29",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-01",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-02",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-04",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-05",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-08",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-09",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-11",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-12",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-15",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-17",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-18",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-19",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-22",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-23",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-24",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-25",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-26",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-06-30",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-01",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-02",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-03",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-06",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-07",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-08",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-09",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-10",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-13",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-14",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-15",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-16",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-17",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-20",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-22",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-23",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-24",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-27",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-28",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-29",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-30",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-07-31",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-03",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-05",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-06",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-07",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-10",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-11",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-12",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-13",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-18",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-19",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-21",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-24",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-25",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-26",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-27",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-28",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-08-31",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-01",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-02",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-03",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-04",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-07",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-08",
+    "hours": 8
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-09",
+    "hours": 8.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-10",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-11",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-12",
+    "hours": 4
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-14",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-17",
+    "hours": 5.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-18",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-21",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-22",
+    "hours": 6.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-23",
+    "hours": 7.5
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-24",
+    "hours": 6
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-25",
+    "hours": 7
+  },
+  {
+    "person": "ps",
+    "date": "2026-09-28",
+    "hours": 3
+  },
+  {
+    "person": "am",
+    "date": "2026-04-01",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-02",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-04-03",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-06",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-07",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-04-08",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-09",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-04-10",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-13",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-14",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-04-15",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-16",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-04-17",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-20",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-21",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-04-22",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-23",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-04-24",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-27",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-28",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-04-29",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-04-30",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-05-01",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-04",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-05-05",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-06",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-07",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-08",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-11",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-05-12",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-13",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-14",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-15",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-18",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-05-19",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-20",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-21",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-22",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-25",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-05-27",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-28",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-05-29",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-01",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-02",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-03",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-04",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-06-05",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-08",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-09",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-10",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-11",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-06-12",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-15",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-16",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-17",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-18",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-06-19",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-22",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-23",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-24",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-25",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-06-26",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-29",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-06-30",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-01",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-07-02",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-03",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-06",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-07-07",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-08",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-07-09",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-10",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-13",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-07-14",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-15",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-07-16",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-17",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-20",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-07-21",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-24",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-27",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-07-28",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-29",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-07-30",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-07-31",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-03",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-08-04",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-05",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-06",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-07",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-10",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-08-12",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-13",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-14",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-17",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-08-18",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-19",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-20",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-21",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-24",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-08-25",
+    "hours": 7.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-26",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-27",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-28",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-08-31",
+    "hours": 7
+  },
+  {
+    "person": "am",
+    "date": "2026-09-01",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-02",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-03",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-09-04",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-07",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-08",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-09",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-10",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-09-11",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-14",
+    "hours": 4.5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-15",
+    "hours": 5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-16",
+    "hours": 5.5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-17",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-09-18",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-21",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-09-22",
+    "hours": 6
+  },
+  {
+    "person": "am",
+    "date": "2026-09-23",
+    "hours": 6.5
+  },
+  {
+    "person": "am",
+    "date": "2026-09-28",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-01",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-02",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-03",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-06",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-07",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-08",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-09",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-10",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-14",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-15",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-16",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-17",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-20",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-21",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-23",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-24",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-27",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-29",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-04-30",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-01",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-04",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-05",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-07",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-08",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-11",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-12",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-13",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-14",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-18",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-19",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-20",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-21",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-22",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-25",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-26",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-27",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-28",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-05-29",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-01",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-03",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-04",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-05",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-09",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-10",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-12",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-15",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-16",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-18",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-19",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-22",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-23",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-24",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-25",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-29",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-06-30",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-01",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-02",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-03",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-06",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-07",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-08",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-09",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-10",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-14",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-15",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-16",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-17",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-20",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-21",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-23",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-24",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-27",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-29",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-07-30",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-03",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-04",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-05",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-07",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-10",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-12",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-13",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-14",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-17",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-19",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-20",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-21",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-25",
+    "hours": 6
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-26",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-27",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-28",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-08-31",
+    "hours": 5.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-01",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-03",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-04",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-07",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-09",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-10",
+    "hours": 4.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-14",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-15",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-16",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-18",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-21",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-22",
+    "hours": 3.5
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-23",
+    "hours": 5
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-24",
+    "hours": 4
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-25",
+    "hours": 3
+  },
+  {
+    "person": "nj",
+    "date": "2026-09-28",
+    "hours": 3
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-01",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-02",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-03",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-06",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-07",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-08",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-09",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-10",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-13",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-14",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-15",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-16",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-17",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-20",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-21",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-22",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-23",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-24",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-27",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-28",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-29",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-04-30",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-01",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-04",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-05",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-06",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-07",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-08",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-11",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-13",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-14",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-15",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-18",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-19",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-20",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-21",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-22",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-25",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-26",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-27",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-28",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-05-29",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-01",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-02",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-03",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-04",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-05",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-08",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-09",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-10",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-11",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-12",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-15",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-16",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-17",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-18",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-19",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-22",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-24",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-25",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-26",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-29",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-06-30",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-01",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-02",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-03",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-06",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-07",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-08",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-09",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-10",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-13",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-14",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-15",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-16",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-17",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-20",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-21",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-22",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-23",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-24",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-27",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-28",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-29",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-30",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-07-31",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-03",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-04",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-05",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-06",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-07",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-08",
+    "hours": 2
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-10",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-11",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-12",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-13",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-14",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-17",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-18",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-19",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-20",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-21",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-24",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-25",
+    "hours": 5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-26",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-27",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-28",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-08-31",
+    "hours": 4.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-01",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-02",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-03",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-04",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-07",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-08",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-09",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-10",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-11",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-14",
+    "hours": 5.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-15",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-16",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-17",
+    "hours": 7
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-18",
+    "hours": 7.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-21",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-22",
+    "hours": 6.5
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-23",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-24",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-25",
+    "hours": 6
+  },
+  {
+    "person": "kr",
+    "date": "2026-09-28",
+    "hours": 3
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-01",
+    "hours": 7.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-02",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-03",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-06",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-07",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-09",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-10",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-14",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-15",
+    "hours": 7.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-16",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-17",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-20",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-22",
+    "hours": 7.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-23",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-24",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-27",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-28",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-29",
+    "hours": 7.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-04-30",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-01",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-05",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-06",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-07",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-11",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-12",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-13",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-14",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-15",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-18",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-19",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-20",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-21",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-22",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-25",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-26",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-27",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-05-29",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-01",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-02",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-03",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-04",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-05",
+    "hours": 7.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-08",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-09",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-10",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-11",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-15",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-16",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-17",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-18",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-19",
+    "hours": 7.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-22",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-23",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-25",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-26",
+    "hours": 7.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-29",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-06-30",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-01",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-02",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-03",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-06",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-08",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-09",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-10",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-13",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-14",
+    "hours": 7.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-16",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-17",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-22",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-23",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-24",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-27",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-28",
+    "hours": 7.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-29",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-30",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-07-31",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-04",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-05",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-06",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-07",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-10",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-11",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-12",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-13",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-14",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-17",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-18",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-19",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-20",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-21",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-24",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-25",
+    "hours": 5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-26",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-28",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-08-31",
+    "hours": 4.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-01",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-02",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-03",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-04",
+    "hours": 7.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-07",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-08",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-09",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-10",
+    "hours": 7
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-14",
+    "hours": 5.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-15",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-16",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-21",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-24",
+    "hours": 6
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-25",
+    "hours": 6.5
+  },
+  {
+    "person": "dp",
+    "date": "2026-09-28",
+    "hours": 3
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-01",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-02",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-03",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-06",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-07",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-08",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-09",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-10",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-13",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-14",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-15",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-16",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-17",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-20",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-21",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-22",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-23",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-24",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-27",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-28",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-29",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-04-30",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-01",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-04",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-05",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-06",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-08",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-11",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-12",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-14",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-15",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-18",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-19",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-20",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-21",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-22",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-25",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-26",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-27",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-28",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-05-29",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-01",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-02",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-03",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-04",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-05",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-08",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-09",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-10",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-11",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-12",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-15",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-16",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-17",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-18",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-19",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-22",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-23",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-24",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-25",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-26",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-29",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-06-30",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-01",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-02",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-03",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-06",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-07",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-08",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-09",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-10",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-13",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-14",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-15",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-16",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-17",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-21",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-22",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-23",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-24",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-27",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-28",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-29",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-07-30",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-03",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-04",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-05",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-06",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-07",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-10",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-11",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-12",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-13",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-14",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-17",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-18",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-19",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-20",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-21",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-24",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-25",
+    "hours": 8.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-26",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-27",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-08-28",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-01",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-02",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-03",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-04",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-08",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-09",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-10",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-11",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-12",
+    "hours": 3
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-14",
+    "hours": 5.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-15",
+    "hours": 6
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-16",
+    "hours": 6.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-17",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-18",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-21",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-22",
+    "hours": 7.5
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-23",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-24",
+    "hours": 8
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-25",
+    "hours": 7
+  },
+  {
+    "person": "sk",
+    "date": "2026-09-28",
+    "hours": 3
+  },
+  {
+    "person": "rk",
+    "date": "2026-09-14",
+    "hours": 4.5
+  },
+  {
+    "person": "rk",
+    "date": "2026-09-15",
+    "hours": 5
+  },
+  {
+    "person": "rk",
+    "date": "2026-09-16",
+    "hours": 5.5
+  },
+  {
+    "person": "rk",
+    "date": "2026-09-17",
+    "hours": 6
+  },
+  {
+    "person": "rk",
+    "date": "2026-09-18",
+    "hours": 6.5
+  },
+  {
+    "person": "rk",
+    "date": "2026-09-21",
+    "hours": 4.5
+  },
+  {
+    "person": "rk",
+    "date": "2026-09-22",
+    "hours": 5
+  },
+  {
+    "person": "rk",
+    "date": "2026-09-23",
+    "hours": 5.5
+  },
+  {
+    "person": "rk",
+    "date": "2026-09-24",
+    "hours": 6
+  },
+  {
+    "person": "rk",
+    "date": "2026-09-25",
+    "hours": 6.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-03",
+    "hours": 7
+  },
+  {
+    "person": "an",
+    "date": "2026-08-04",
+    "hours": 7.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-05",
+    "hours": 4.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-06",
+    "hours": 5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-07",
+    "hours": 5.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-10",
+    "hours": 7
+  },
+  {
+    "person": "an",
+    "date": "2026-08-12",
+    "hours": 4.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-13",
+    "hours": 5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-14",
+    "hours": 5.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-17",
+    "hours": 7
+  },
+  {
+    "person": "an",
+    "date": "2026-08-18",
+    "hours": 7.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-19",
+    "hours": 4.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-20",
+    "hours": 5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-21",
+    "hours": 5.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-24",
+    "hours": 7
+  },
+  {
+    "person": "an",
+    "date": "2026-08-25",
+    "hours": 7.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-26",
+    "hours": 4.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-27",
+    "hours": 5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-28",
+    "hours": 5.5
+  },
+  {
+    "person": "an",
+    "date": "2026-08-31",
+    "hours": 7
+  },
+  {
+    "person": "an",
+    "date": "2026-09-01",
+    "hours": 5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-02",
+    "hours": 5.5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-03",
+    "hours": 6
+  },
+  {
+    "person": "an",
+    "date": "2026-09-04",
+    "hours": 6.5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-07",
+    "hours": 4.5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-08",
+    "hours": 5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-09",
+    "hours": 5.5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-10",
+    "hours": 6
+  },
+  {
+    "person": "an",
+    "date": "2026-09-11",
+    "hours": 6.5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-14",
+    "hours": 4.5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-15",
+    "hours": 5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-16",
+    "hours": 5.5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-17",
+    "hours": 6
+  },
+  {
+    "person": "an",
+    "date": "2026-09-18",
+    "hours": 6.5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-21",
+    "hours": 4.5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-22",
+    "hours": 5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-23",
+    "hours": 5.5
+  },
+  {
+    "person": "an",
+    "date": "2026-09-24",
+    "hours": 6
+  },
+  {
+    "person": "an",
+    "date": "2026-09-25",
+    "hours": 6.5
+  }
+]

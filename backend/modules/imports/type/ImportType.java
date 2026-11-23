@@ -40,6 +40,9 @@ import java.util.List;
  */
 public interface ImportType
 {
+    /** Key of the uploaded file's name in the {@code actor} passed to {@link #commit}. */
+    String IMPORT_FILE = "importFile";
+
     /** Registry key and URL segment, lower-case, e.g. {@code "attendance"}. */
     String id();
 
@@ -101,6 +104,7 @@ public interface ImportType
      * }</pre>
      *
      * @param rows  ready rows only, in file order
+     * @param actor as in {@link #check}, plus {@link #IMPORT_FILE}: the uploaded file's name
      * @param tx    the commit transaction; every statement must use it
      */
     Future<JsonObject> commit(JsonArray rows, String mode, JsonObject actor, SqlExecutor tx, PolicyService policy);

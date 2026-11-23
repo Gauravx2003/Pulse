@@ -1,6 +1,7 @@
 package com.pulse.modules.visits;
 
 import com.pulse.platform.module.ActionProvider;
+import com.pulse.platform.module.BadgeProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import io.vertx.ext.web.Router;
@@ -30,6 +31,12 @@ public class VisitsModule implements PulseModule
     public List<ActionProvider> actionProviders()
     {
         return VisitActionProvider.all();
+    }
+
+    @Override
+    public List<BadgeProvider> badges()
+    {
+        return List.of(new VisitsBadge());
     }
 
     @Override

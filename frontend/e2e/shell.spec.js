@@ -90,7 +90,8 @@ test('Sprint 42 chosen on Effort carries to Bugs & support; Attendance keeps its
   await menu(page).getByRole('link', { name: 'Attendance' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Attendance' })).toBeVisible();
   await expect(period).not.toHaveValue('s:S42');
-  await expect(page.getByRole('button', { name: 'Month' })).toHaveAttribute('aria-pressed', 'true');
+  // Attendance's own dropdown (months, sprints, quarters; task 17.4) opens on the last uploaded month.
+  await expect(period).toHaveValue(/^m:/);
 
   // the choice survives a reload within the session
   await menu(page).getByRole('link', { name: 'Effort' }).click();

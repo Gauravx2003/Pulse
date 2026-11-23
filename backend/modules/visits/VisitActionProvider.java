@@ -54,7 +54,7 @@ public final class VisitActionProvider implements ActionProvider
         {
             case REPORT_DUE -> user.getString("personId") == null
                     ? Future.succeededFuture(List.of())
-                    : repo.reportDue(UUID.fromString(user.getString("personId")), VisitService.today())
+                    : repo.reportDue(UUID.fromString(user.getString("personId")), VisitService.today(ctx))
                             .map(rows -> items(rows, "Medium", "Visit report due: ", "Open"));
             case FEEDBACK_DUE -> repo.feedbackDue(UUID.fromString(user.getString("id")))
                     .map(rows -> items(rows, "Medium", "Customer feedback needed: ", "Open"));

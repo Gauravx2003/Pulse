@@ -104,6 +104,23 @@ class VisitsRoutesTest
                 .put("contact", "CIO office");
     }
 
+    /** Notifications of this kind the user has. */
+    private static long notices(String email, String kind) throws Exception
+    {
+        return api.count("SELECT count(*) FROM notifications n JOIN users u ON u.id = n.user_id WHERE u.email = '" + email
+                + "' AND n.kind = '" + kind + "'");
+    }
+
+    /** The user's menu badge for a screen (0 when absent). */
+    private static int badge(TestApi.Session session, String screen) throws Exception
+    {
+        HttpResponse<Buffer> res = api.get("/api/v1/notifications/badges", session);
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        return res.bodyAsJsonObject().getJsonObject("badges").getInteger(screen, 0);
+    }
+
     @Test
     void visitsFollowVisibility() throws Exception
     {
@@ -193,6 +210,13 @@ class VisitsRoutesTest
 
         assertEquals("verified", verified.getString("status"));
 
+        // Points from calc/people: escalation + 2 extra days + CSAT 4.8 (weekend days depend on today's date).
+        double total = verified.getJsonObject("points").getDouble("total");
+
+        assertTrue(total >= 1.5 + 1.0 + 0.5 + 1, verified.encodePrettily());
+
+        assertTrue(verified.getJsonArray("values").contains("Resilience"), verified.encodePrettily());
+
         assertEquals(1, api.count("SELECT count(*) FROM audit_log WHERE action = 'visit.verify' AND outcome = 'success'"));
 
         // A reported visit can no longer be deleted.
@@ -281,5 +305,81 @@ class VisitsRoutesTest
         HttpResponse<Buffer> res = api.post("/api/v1/visits/items", RoleMatrix.session(api, RoleMatrix.PEER), visit("2027-04-01", "2027-04-01"));
 
         assertEquals(403, res.statusCode());
+    }
+
+    @Test
+    void statsComeFromTheCalculationService() throws Exception
+    {
+        // Priya in Q3 2026 (seed): VIS-102 health check on a Thursday, CSAT 4 (1.5 points) and VIS-104
+        // troubleshooting Tuesday-Wednesday, CSAT 5 (1.5 + 0.5 + 1 = 3), both verified.
+        HttpResponse<Buffer> res = api.get("/api/v1/visits/stats?personId=" + priyaPerson + "&period=q:2026-Q3",
+                RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        JsonObject stats = ok(res, 200);
+
+        assertEquals(2, stats.getInteger("reported"), stats.encodePrettily());
+
+        assertEquals(4.5, stats.getDouble("points"));
+
+        assertEquals(4.5, stats.getDouble("pointsConfirmed"));
+
+        assertEquals(4.5, stats.getDouble("csat"));
+
+        assertEquals(403, api.get("/api/v1/visits/stats?personId=" + priyaPerson, RoleMatrix.session(api, RoleMatrix.PEER)).statusCode());
+
+        assertEquals(400, api.get("/api/v1/visits/stats?personId=" + priyaPerson + "&period=nonsense",
+                RoleMatrix.session(api, RoleMatrix.MANAGER)).statusCode());
+    }
+
+    // ------------------------------------------------------------------ notifications and badge
+
+    @Test
+    void theEngineerHearsOfPlannedVisitsAndTheManagerRemindsOfOverdueReports() throws Exception
+    {
+        TestApi.Session rahul = RoleMatrix.session(api, RoleMatrix.MANAGER);
+
+        TestApi.Session priya = RoleMatrix.session(api, RoleMatrix.EMPLOYEE);
+
+        long planned = notices(RoleMatrix.EMPLOYEE, "visit.planned");
+
+        // The manager plans a visit for the engineer: the engineer is told.
+        ok(api.post("/api/v1/visits/items", rahul, visit(LocalDate.now().plusDays(40).toString(), LocalDate.now().plusDays(41).toString())), 201);
+
+        assertEquals(planned + 1, notices(RoleMatrix.EMPLOYEE, "visit.planned"));
+
+        // The engineer logs their own past visit: no "planned" notice to themselves.
+        String id = ok(api.post("/api/v1/visits/items", priya, visit(LocalDate.now().minusDays(50).toString(),
+                LocalDate.now().minusDays(49).toString())), 201).getString("id");
+
+        assertEquals(planned + 1, notices(RoleMatrix.EMPLOYEE, "visit.planned"));
+
+        long due = notices(RoleMatrix.EMPLOYEE, "visit.report_due");
+
+        assertEquals(403, api.post("/api/v1/visits/items/" + id + "/remind", priya, new JsonObject()).statusCode());
+
+        HttpResponse<Buffer> reminded = api.post("/api/v1/visits/items/" + id + "/remind", rahul, new JsonObject());
+
+        assertEquals(200, reminded.statusCode(), reminded.bodyAsString());
+
+        assertEquals(due + 1, notices(RoleMatrix.EMPLOYEE, "visit.report_due"));
+    }
+
+    @Test
+    void theVisitsBadgeCountsTheEngineersOverdueReports() throws Exception
+    {
+        TestApi.Session priya = RoleMatrix.session(api, RoleMatrix.EMPLOYEE);
+
+        HttpResponse<Buffer> list = api.get("/api/v1/visits/items", priya);
+
+        assertEquals(200, list.statusCode(), list.bodyAsString());
+
+        long overdue = list.bodyAsJsonObject().getJsonArray("items").stream()
+                .map(x -> (JsonObject) x)
+                .filter(v -> priyaPerson.equals(v.getString("personId")) && "report_due".equals(v.getString("status"))).count();
+
+        assertTrue(overdue > 0, list.bodyAsString());
+
+        // Priya owns no accounts and verifies nothing, so her badge is her overdue reports.
+        assertEquals(overdue, badge(priya, "visits"));
     }
 }

@@ -281,6 +281,28 @@ class ImportTypesTest
     }
 
     @Test
+    void hrImportsATeamOkrRowForTheOrganisationsOneTeam() throws Exception
+    {
+        // hr@ (Admin, okr.team, all.view) has no profile and neither do their direct reports; every person
+        // with a profile is in Platform, so the Team row belongs to Platform (Track 2's suggestion).
+        TestApi.Session hr = RoleMatrix.session(api, RoleMatrix.ADMIN);
+
+        String csv = "quarter,level,owner_email,objective,key_result,start,target\n"
+                + "Q4 2026,Team,,HR-wide safer releases,Change failure rate,11,6\n";
+
+        JsonObject checked = check(hr, "okrs", "", csv, 200);
+
+        assertEquals(0, checked.getInteger("errors"), checked.getJsonArray("errorList").encodePrettily());
+
+        assertEquals(1, checked.getInteger("new"));
+
+        commit(hr, "okrs", checked);
+
+        assertEquals(1, api.count("SELECT count(*) FROM objectives WHERE level = 'Team' AND team = 'Platform' "
+                + "AND title = 'HR-wide safer releases'"));
+    }
+
+    @Test
     void anEmployeeMayImportOnlyTheirOwnRows() throws Exception
     {
         TestApi.Session priya = RoleMatrix.session(api, RoleMatrix.EMPLOYEE);

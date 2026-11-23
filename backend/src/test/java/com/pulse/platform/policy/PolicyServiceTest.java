@@ -42,7 +42,7 @@ class PolicyServiceTest
     @BeforeAll
     static void start() throws Exception
     {
-        api = TestApi.start(PORT, null);
+        api = TestApi.start(PORT, null, "reviews", "training");
 
         api.exec("CREATE TABLE probe_mentors (mentor_id uuid NOT NULL, mentee_id uuid NOT NULL)");
 

@@ -46,10 +46,12 @@ public final class PermissionCatalogue
 
     /**
      * Platform permissions beyond the reference matrix: {@code audit.read} guards the audit log (spec
-     * audit-log "Access to the audit log"); like every permission, Admin holds it.
+     * audit-log "Access to the audit log") and {@code jobs.run} the scheduled jobs (spec jobs-scheduler
+     * "Manual trigger"); like every permission, Admin holds them.
      */
     private static final List<String[]> PLATFORM = List.<String[]>of(
-            new String[] {"audit.read", "Admin", "Read and export the audit log"});
+            new String[] {"audit.read", "Admin", "Read and export the audit log"},
+            new String[] {"jobs.run", "Admin", "See scheduled jobs and run one on demand"});
 
     /** Area shown for permissions a module registers. */
     public static final String MODULE_AREA = "Modules";

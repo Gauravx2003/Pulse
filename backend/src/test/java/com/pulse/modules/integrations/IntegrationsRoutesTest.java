@@ -261,6 +261,42 @@ class IntegrationsRoutesTest
     }
 
     @Test
+    void testConnectionChecksTheFormAndStoresNothing() throws Exception
+    {
+        String token = "ATATT3xFfGF0-test-only-token-Qa7W";
+        JsonObject values = new JsonObject().put("site", "https://probe.atlassian.net").put("email", "bot@company.com")
+                .put("token", token);
+        long logBefore = api.count("SELECT count(*) FROM credential_log");
+        long auditBefore = api.count("SELECT count(*) FROM audit_log WHERE action = 'credential.changed'");
+
+        HttpResponse<Buffer> res = api.post(BASE + "/tools/jira/test", admin,
+                new JsonObject().put("method", "API token").put("values", values));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+        assertTrue(res.bodyAsJsonObject().getBoolean("ok"));
+        assertTrue(res.bodyAsJsonObject().getBoolean("simulated"));
+        assertFalse(res.bodyAsJsonObject().getJsonArray("scopes").isEmpty());
+        assertFalse(res.bodyAsString().contains(token), "the secret is never echoed");
+        assertEquals(0, api.count("SELECT count(*) FROM integration_settings WHERE credentials::text LIKE '%probe.atlassian%'"),
+                "a test stores nothing");
+        assertEquals(logBefore, api.count("SELECT count(*) FROM credential_log"));
+        assertEquals(auditBefore, api.count("SELECT count(*) FROM audit_log WHERE action = 'credential.changed'"));
+
+        HttpResponse<Buffer> bad = api.post(BASE + "/tools/jira/test", admin, new JsonObject()
+                .put("method", "API token").put("values", values.copy().put("site", "https://evil.example.com")));
+
+        assertEquals(400, bad.statusCode());
+        assertEquals("values.site", TestApi.error(bad).getString("field"));
+
+        RoleMatrix.assertRoleMatrix(api, "POST " + BASE + "/tools/jira/test",
+                new JsonObject().put("method", "API token").put("values", values), Map.of(
+                        RoleMatrix.ADMIN, 200,
+                        RoleMatrix.MANAGER, 403,
+                        RoleMatrix.EMPLOYEE, 403,
+                        RoleMatrix.PEER, 403));
+    }
+
+    @Test
     void disconnectThenSyncIsRefused() throws Exception
     {
         HttpResponse<Buffer> res = api.delete(BASE + "/tools/cf/credentials", admin);

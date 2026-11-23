@@ -4,7 +4,7 @@ export const KIND_LABELS = { sprint: 'Sprint', month: 'Month', release: 'Release
 const PREFIX = { s: 'sprint', m: 'month', r: 'release', q: 'quarter' };
 
 export function kindOf(key) {
-  if (!key) {
+  if (typeof key !== 'string' || !key) {
     return null;
   }
 
@@ -17,14 +17,15 @@ export function kindOf(key) {
 
 /**
  * The period a kind opens on: the active sprint, the current month or the live release, else the
- * newest one. Lists from GET /periods are newest first.
+ * newest one. Lists from GET /periods are newest first. When no sprint is active (today is after the
+ * last sprint), the server sends `activeSprint: { notApplicable: true }` instead of a key.
  */
 export function defaultKey(periods, kind) {
   if (!periods) {
     return null;
   }
 
-  if (kind === 'sprint' && periods.activeSprint) {
+  if (kind === 'sprint' && typeof periods.activeSprint === 'string' && periods.activeSprint) {
     return periods.activeSprint;
   }
 

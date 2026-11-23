@@ -1,5 +1,5 @@
 <template>
-  <div class="pl-page">
+  <div class="pl-page" data-screen-placeholder>
     <PlPageHeader :eyebrow="item.group" :title="item.label" caption="This screen is being built.">
       <template v-if="kinds" #actions>
         <PlPeriodControl v-model="period.key.value" :kinds="kinds" :periods="period.periods.value" />

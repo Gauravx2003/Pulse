@@ -58,6 +58,23 @@ const { key, periods, kinds } = useSharedPeriod(['sprint', 'month']);
 - **Person.** `personState.id` is the person picked in the top-bar selector, or `null` for the signed-in user. The selector lists `GET /api/v1/people`, which is the server-side policy scope.
 - Both reset at sign-in and sign-out. To register your own per-session state, call `onViewReset(fn)` from `src/shell/viewState.js`.
 
+## Notifications and menu badges
+
+The bell and the menu badges come from `GET /api/v1/notifications` and `GET /api/v1/notifications/badges`
+(`src/shell/notifications.js`). The shell refreshes them when it mounts, on navigation (at most every
+15 s) and every minute. After an action that clears a badge (you verify effort or submit a review),
+call `refreshNotifications()` so the count updates at once. Badge counts are served by the backend's
+`BadgeProvider`s (docs/backend-guide.md §7a). Never count them in the UI.
+
+A notification's `link` is an in-app path such as `/reviews?tab=360&request=<id>`. Your screen should
+read its query and open that tab or form.
+
+## Dates and times
+
+`src/ui/format.js`: `formatDate` ("28 Sep"), `formatDateWithYear` ("28 Sep 2026") and `formatDateTime`
+("28 Sep, 09:05"). They always use Asia/Kolkata and the 24-hour clock, and show "—" for a missing value.
+Don't use `toLocaleString`, which follows the browser's zone and its 12-hour locale.
+
 ## Primitives (`@/ui`)
 
 `PlPageHeader`, `PlKpiRow`, `PlCard` (with `loading` and `empty`), `PlTable` (scrolls inside its card and shows "—" for missing values), `PlTabs`, `PlPeriodControl`, `PlModal`, `PlDrawer`, `PlConfirm` (for destructive actions), `PlAlert`, `PlEmpty`, `PlLoading`, `PlField`, `PlFormError` and `showToast(text)`.
@@ -75,4 +92,6 @@ cd frontend && npm run test:e2e
 
 - The run starts its own Vite server on port 5174 and its own backend on port 8089, against the database `pulse_e2e`, which it creates on first use.
 - The demo seed is on and today is pinned to 28 Sep 2026.
-- Sign in as any demo account with `signIn(page, 'priya@pulse.demo')` from `e2e/helpers.js`.
+- Sign in as any demo account with `signIn(page, 'priya@pulse.demo')` from `e2e/helpers.js`, or use `signInViaApi` for tests that visit many pages.
+- Run the UI audit (`npm run audit:ui`, docs/ui-audit.md) before you open a pull request that touches a screen.
+- `e2e/db.js` runs SQL against the e2e database, to reset state an earlier run changed. Use it only for set-up.

@@ -460,6 +460,32 @@ Live connectors (group 24) implement `ConnectorPort` (`fetchChanges(since)` retu
 normalized batch, documented on the interface) and register on the `ConnectorRegistry`; nothing in your
 module changes when they arrive.
 
+## 7a. Notifications and menu badges
+
+Send an in-app notification from the transaction of the action that causes it, so both commit or roll
+back together. Build the notice with a trigger helper; never write the `notifications` table yourself.
+
+```java
+ctx.sql().inTransaction(tx -> repo(tx).verifyCheckin(id)
+        .compose(row -> ctx.notifications().notify(tx,
+                NotificationTriggers.checkinVerified(traineeUserId, planName, week, assignmentId))));
+```
+
+- `NotificationTriggers` has one helper per trigger of spec platform/notifications (360° assigned and
+  reminded, training, mentoring, visits, low pulse, attendance uploaded, stale nudge). The helpers build
+  the text from names, titles, keys and dates only. Text with a currency amount or salary word, or a link
+  that is not an in-app path, is refused with `IllegalArgumentException`.
+- A notice about another person carries that person and a policy domain; it is skipped (`notify` resolves
+  to null) when the recipient may not see them there. Deactivated recipients get nothing.
+- Need a trigger that has no helper yet? Ask Track 1 to add one rather than building the JSON by hand.
+
+Menu badges come from `PulseModule.badges()`: a `BadgeProvider` names the menu key (`work-items`,
+`effort`, `visits`, `training`, `reviews`, …) and counts for the signed-in user with **the same query as
+the list it points to**, so the badge always equals what the screen shows. Providers of one screen add up,
+and only screens in the caller's menu are counted. The Action center badge is the number of
+High-priority `ActionProvider` items unless a module declares a provider for `actions`. The shell reads them from
+`GET /api/v1/notifications/badges`.
+
 ## 8. Tests
 
 Every endpoint needs a per-role contract test. Use `TestApi` (a real server on a throw-away schema with
@@ -518,4 +544,5 @@ is up.
 - [ ] Failures go through `rc.fail` / `ApiException` with a stable code.
 - [ ] Migrations and seeds are in your range; demo data is in `S<n>__demo_*.sql`.
 - [ ] Ingest tables (with `source`/`external_id`/`synced_at`) are seeded only through a `SeedMapper`.
+- [ ] Notifications go through `ctx.notifications().notify(tx, NotificationTriggers.…)` in the action's transaction.
 - [ ] A `RoleMatrix` contract test covers Admin, Manager, Employee and peer.

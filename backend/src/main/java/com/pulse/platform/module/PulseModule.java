@@ -102,6 +102,15 @@ public interface PulseModule {
     }
 
     /**
+     * Menu badge counts this module owns ({@link BadgeProvider}, spec platform/notifications "Menu
+     * badges"), e.g. stale work items or 360° reviews waiting. Use the same query as the screen's list.
+     */
+    default List<BadgeProvider> badges()
+    {
+        return List.of();
+    }
+
+    /**
      * Erases this module's personal data of a deleted user (spec platform/privacy-retention "User
      * deletion and anonymization", task 5.1). The users module calls every module's hook inside the
      * delete transaction, after the platform has erased the account and the profile; a failed future

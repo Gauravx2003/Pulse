@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Task 13.2: the Action center's insight sections on a real server with the Track 2 demo seed and "today"
  * pinned to 28 Sep 2026: the role matrix of every section, people signals (spec "Signal set" and
  * "Visibility"), the sprint forecast ("Does not fit"), next-sprint capacity ("Team total"), skills
- * coverage ("Single owner"), the team pulse and the digest preview.
+ * coverage ("Single owner"), the team pulse, the digest preview and the page's one-request overview.
  */
 class ActionCenterInsightsRoutesTest
 {
@@ -30,7 +30,7 @@ class ActionCenterInsightsRoutesTest
 
     private static final String API = "/api/v1/action_center";
 
-    private static final List<String> SECTIONS = List.of("signals", "forecast", "capacity", "coverage", "pulse", "wins", "digest");
+    private static final List<String> SECTIONS = List.of("signals", "forecast", "capacity", "coverage", "pulse", "wins", "digest", "overview");
 
     private static TestApi api;
 
@@ -169,6 +169,23 @@ class ActionCenterInsightsRoutesTest
         assertEquals(items.getJsonObject("counts").getInteger("High"), digest.getInteger("high"));
         assertTrue(digest.getJsonArray("items").size() <= 5);
         assertTrue(digest.getJsonArray("watch").stream().anyMatch(w -> "Priya Shah".equals(((JsonObject) w).getString("name"))));
+    }
+
+    @Test
+    void theOverviewHasEverySectionOfThePageInOneRequest() throws Exception
+    {
+        JsonObject body = get(RoleMatrix.MANAGER, "overview");
+
+        JsonObject sections = body.getJsonObject("sections");
+
+        assertTrue(body.getJsonObject("errors").isEmpty(), body.getJsonObject("errors").encode());
+
+        for (String section : List.of("items", "signals", "forecast", "capacity", "coverage", "pulse", "wins"))
+        {
+            assertTrue(sections.containsKey(section), section);
+        }
+
+        assertEquals(get(RoleMatrix.MANAGER, "signals"), sections.getJsonObject("signals"));
     }
 
     private static JsonObject get(String who, String section) throws Exception

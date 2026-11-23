@@ -6,8 +6,14 @@ import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Track 2 Action center module (task 13.1, spec insight/action-center): the manager's landing page.
@@ -15,11 +21,14 @@ import java.util.function.Function;
  * {@link com.pulse.platform.module.ActionProvider}; a module adds items by listing a provider in its
  * descriptor, with no change here. The insight sections (task 13.2) are {@code GET /signals},
  * {@code /forecast}, {@code /capacity}, {@code /coverage}, {@code /pulse}, {@code /wins} and
- * {@code /digest} ({@link ActionCenterInsights}). A manager view: {@code team.view} or {@code all.view},
- * so an Employee gets 403 (the "You don't have access" card).
+ * {@code /digest} ({@link ActionCenterInsights}); {@code /overview} returns the page's sections in one
+ * request (task 13.4). A manager view: {@code team.view} or {@code all.view}, so an Employee gets 403
+ * (the "You don't have access" card).
  */
 public class ActionCenterModule implements PulseModule
 {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ActionCenterModule.class);
 
     private static final String[] MANAGER = {"team.view", "all.view"};
 
@@ -62,6 +71,45 @@ public class ActionCenterModule implements PulseModule
 
         // GET /api/v1/action_center/digest
         section(router, policy, "/digest", user -> insights.digest(user, items(ctx, user)));
+
+        // GET /api/v1/action_center/overview: every section of the page in one request
+        section(router, policy, "/overview", user -> overview(user, Map.of(
+                "items", () -> items(ctx, user),
+                "signals", () -> insights.signals(user),
+                "forecast", () -> insights.forecast(user),
+                "capacity", () -> insights.capacity(user),
+                "coverage", () -> insights.coverage(user),
+                "pulse", () -> insights.pulse(user),
+                "wins", () -> insights.wins(user))));
+    }
+
+    /**
+     * {@code {sections: {name: body}, errors: {name: message}}}: the page's sections in one request, so the
+     * landing page costs one call; a section that fails is named in {@code errors} and the others still
+     * show. The failure is logged with the request, not sent.
+     */
+    private static Future<JsonObject> overview(JsonObject user, Map<String, Supplier<Future<JsonObject>>> sections)
+    {
+        JsonObject bodies = new JsonObject();
+
+        JsonObject errors = new JsonObject();
+
+        List<Future<JsonObject>> all = new ArrayList<>();
+
+        sections.forEach((name, read) -> all.add(read.get()
+                .onSuccess(body -> bodies.put(name, body))
+                .recover(e ->
+                {
+                    LOG.warn("Action center section {} failed", name, e);
+
+                    errors.put(name, "This section could not be loaded.");
+
+                    return Future.succeededFuture(null);
+                })));
+
+        return Future.join(new ArrayList<>(all)).transform(done -> Future.succeededFuture(new JsonObject()
+                .put("sections", bodies)
+                .put("errors", errors)));
     }
 
     private static Future<JsonObject> items(ModuleContext ctx, JsonObject user)

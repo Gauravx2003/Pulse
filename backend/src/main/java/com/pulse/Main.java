@@ -3,6 +3,7 @@ package com.pulse;
 import com.pulse.platform.config.RuntimeProfile;
 import com.pulse.platform.db.DatabaseBootstrap;
 import com.pulse.platform.db.Db;
+import com.pulse.platform.jobs.SchedulerVerticle;
 import com.pulse.platform.module.ModuleRegistry;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -14,9 +15,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Process entry point: checks the runtime profile, discovers modules, runs migrations and seed
- * files once, then deploys the HTTP verticle. Migrations run here, not in a verticle, so they run
- * exactly once per process, as the owner account; the HTTP verticle then uses the shared app-role
- * pool ({@link Db#pool}).
+ * files once, then deploys the HTTP verticle and the single scheduler verticle (task 5.5). Migrations
+ * run here, not in a verticle, so they run exactly once per process, as the owner account; the HTTP
+ * verticle then uses the shared app-role pool ({@link Db#pool}).
  */
 public class Main {
 
@@ -49,6 +50,9 @@ public class Main {
                 .compose(registry -> DatabaseBootstrap.run(vertx, migrationPool, registry, loader, profile))
                 .eventually(v -> migrationPool.close())
                 .compose(migrated -> vertx.deployVerticle(new HttpServerVerticle(),
-                        new DeploymentOptions().setConfig(config)));
+                        new DeploymentOptions().setConfig(config)))
+                // exactly one scheduler instance (design decision 1): more would fire every job more than once
+                .compose(httpId -> vertx.deployVerticle(new SchedulerVerticle(),
+                        new DeploymentOptions().setConfig(config).setInstances(1)).map(httpId));
     }
 }

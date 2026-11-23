@@ -63,8 +63,16 @@ public interface PulseModule {
         return List.of();
     }
 
-    /** Scheduled jobs run by the scheduler verticle. */
+    /** Scheduled jobs run by the scheduler verticle (task 5.5); see {@link JobSpec}. */
     default List<JobSpec> jobs() {
+        return List.of();
+    }
+
+    /**
+     * Raw tool-event tables this module owns, purged by the retention job after their window
+     * (spec platform/privacy-retention); see {@link RetentionRule}.
+     */
+    default List<RetentionRule> retention() {
         return List.of();
     }
 

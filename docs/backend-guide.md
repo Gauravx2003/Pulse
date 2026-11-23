@@ -486,6 +486,44 @@ and only screens in the caller's menu are counted. The Action center badge is th
 High-priority `ActionProvider` items unless a module declares a provider for `actions`. The shell reads them from
 `GET /api/v1/notifications/badges`.
 
+## 7b. Scheduled jobs and retention
+
+Declare a job in your descriptor; the platform runs it (task 5.5, spec `platform/jobs-scheduler`):
+
+```java
+@Override
+public List<JobSpec> jobs()
+{
+    return List.of(JobSpec.of("attendance.month-end-reminder", "0 10 L * *",
+            "Reminds attendance uploaders that the month's HR export is due",
+            ctx -> remind(ctx)));          // Future<JsonObject> counts, e.g. {"notified": 4}
+}
+```
+
+- **Schedule**: five-field cron (`minute hour day month weekday`) in Asia/Kolkata; `L` in the day field
+  is the last day of the month. Config `jobs.schedules.<name>` moves a job without a code change.
+- **Runs**: every run writes a `job_runs` row (outcome, attempts, counts, error). A failed attempt is
+  retried (`jobs.attempts`, default 3; `jobs.backoffMs`, default 60 s, doubling). After the last retry
+  the run is `failed`, and it shows on the Integrations screen and as a High Admin item in the Action center.
+- **No overlap**: a tick or trigger while the previous run of the same job is unfinished records `skipped`.
+- **Body**: never block the event loop; make it safe to run twice (a retry starts it again). Read
+  "today" from `ctx.calc().clock()`; the schedule itself follows the real wall clock.
+- **Manual run**: Admins (`jobs.run`) use **Run now** on Integrations, or
+  `POST /api/v1/jobs/{name}/run`, which audits `job.triggered` and answers with the run after its first attempt.
+- **Tests**: trigger the job through that endpoint and assert the `run` and your side effects
+  (see `JobsTest`). `TestApi` does not deploy the scheduler, so nothing fires on its own during tests.
+
+Raw tool-event tables are purged after 13 months by `platform.retention-purge`. List yours so the
+purge covers them; the aggregates derived from them stay:
+
+```java
+@Override
+public List<RetentionRule> retention()
+{
+    return List.of(RetentionRule.rawEvents("issue_events", "at"));
+}
+```
+
 ## 8. Tests
 
 Every endpoint needs a per-role contract test. Use `TestApi` (a real server on a throw-away schema with

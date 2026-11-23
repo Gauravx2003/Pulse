@@ -58,6 +58,11 @@ public final class WorkViewFormulas implements FormulaModule
     public static final String HEATMAP_ROW = "work.heatmapRow";
 
     /**
+     * The band [tone, label] of a person's utilization in a period (task 8.4: the closed-period KPI).
+     */
+    public static final String UTILIZATION_BAND = "work.utilizationBand";
+
+    /**
      * Sprints shown in "Utilization by sprint" (the prototype's last 8).
      */
     public static final int TREND_SPRINTS = 8;
@@ -85,6 +90,9 @@ public final class WorkViewFormulas implements FormulaModule
                 Formula.of(LIVE_ALERT, Set.of("person"), topics, WorkloadFormulas.safe(WorkViewFormulas::liveAlert)),
                 Formula.of(ONBOARDING, Set.of("person"), topics, WorkloadFormulas.safe(WorkViewFormulas::onboarding)),
                 Formula.of(HEATMAP_ROW, Set.of("person"), topics, WorkloadFormulas.safe(WorkViewFormulas::heatmapRow)),
+                Formula.of(UTILIZATION_BAND, Set.of("person", "period"), topics, WorkloadFormulas.safe((ctx, params) ->
+                        ctx.get(WorkloadFormulas.UTILIZATION, params)
+                                .map(util -> util instanceof Number n ? (Object) Workload.band(n.doubleValue(), ctx.rules()) : null))),
                 Formula.of(NUDGE_ENABLED, Set.of(), Set.of(), (ctx, params) ->
                 {
                     return Future.succeededFuture(ctx.rules().getBoolean("nudge", true));

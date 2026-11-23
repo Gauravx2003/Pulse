@@ -119,7 +119,7 @@ class WorkViewFormulasTest
         for (String id : people.keySet())
         {
             Object prototype = oracle.eval("(function(p){var vals=SPRINTS.slice(0,8).slice().reverse().map(function(sp){var pp=perOf('s:'+sp.id);"
-                    + "if(JOINED[p.id]&&sp.end<JOINED[p.id])return null;return {period:pp.key,short:pp.short,util:utilOf(p,pp),live:pp.live}})"
+                    + "if(JOINED[p.id]&&sp.end<JOINED[p.id])return null;return {period:pp.key,short:pp.short,util:utilOf(p,pp),live:pp.live,band:band(utilOf(p,pp))}})"
                     + ".filter(Boolean),past=vals.filter(function(v){return !v.live}),"
                     + "avg=past.length?Math.round(past.reduce(function(a,v){return a+v.util},0)/past.length):null;"
                     + "return {sprints:vals,overall:avg,band:avg===null?null:band(avg),finished:past.length}})(person('" + id + "'))");

@@ -89,7 +89,7 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 - [x] 8.1 Port the workload formulas into `calc/work/`, exposed through `CalcService` (utilization and bands, remaining-hours fallback chain, stale, not started, overdue, no estimate, date-and-time checks, sprint metrics, cycle time, reopen rate); verify by comparing against the oracle (`perMetrics`, `monthStats`, `qStats`) for every seeded person and sprint using the harness of task 4.2.
 - [x] 8.2 Implement the Overview endpoint (live sprint, month, closed sprint, release, onboarding joiner) and Work items endpoint (filters, search, sort, daily load, history, issue timeline); verify tests for each scenario in `work/work-items` including idle across a holiday.
 - [x] 8.3 Implement the issue drawer data and the Nudge action (outbox message, per-issue and per-sender rate limit, record); verify a test that the second nudge inside the window is refused.
-- [ ] 8.4 Build the Overview and Work items screens (Vue) including the issue drawer, period controls and onboarding badge; verify Playwright flows as `priya@` and `rahul@` and the UI audit script on both screens.
+- [x] 8.4 Build the Overview and Work items screens (Vue) including the issue drawer, period controls and onboarding badge; verify Playwright flows as `priya@` and `rahul@` and the UI audit script on both screens.
 
 ## 9. Team utilization
 

@@ -267,9 +267,12 @@ public class WorkService
 
         Future<Object> release = calc.get(WorkViewFormulas.RELEASE_CARD, withPeriod);
 
-        return Future.all(metrics, utilization, sprints, release).map(all -> new JsonObject()
+        Future<Object> band = calc.get(WorkViewFormulas.UTILIZATION_BAND, withPeriod);
+
+        return Future.all(List.of(metrics, utilization, sprints, release, band)).map(all -> new JsonObject()
                 .put("metrics", metrics.result())
                 .put("utilization", utilization.result())
+                .put("utilizationBand", band.result())
                 .put("sprints", ((JsonObject) sprints.result()).getJsonArray("sprints"))
                 .put("release", ResultGuard.isNotApplicable(release.result()) ? null : release.result()));
     }
@@ -339,7 +342,9 @@ public class WorkService
 
         Future<Object> issues = calc.get(WorkViewFormulas.PERIOD_ISSUES, withPeriod);
 
-        return Future.all(List.of(metrics, utilization, sprints, release, issues)).map(all ->
+        Future<Object> band = calc.get(WorkViewFormulas.UTILIZATION_BAND, withPeriod);
+
+        return Future.all(List.of(metrics, utilization, sprints, release, issues, band)).map(all ->
         {
             List<JsonObject> items = list(((JsonObject) issues.result()).getJsonArray("items"));
 
@@ -357,6 +362,7 @@ public class WorkService
             return new JsonObject()
                     .put("metrics", metrics.result())
                     .put("utilization", utilization.result())
+                    .put("utilizationBand", band.result())
                     .put("sprints", ((JsonObject) sprints.result()).getJsonArray("sprints"))
                     .put("release", ResultGuard.isNotApplicable(release.result()) ? null : release.result())
                     .put("chips", chips)

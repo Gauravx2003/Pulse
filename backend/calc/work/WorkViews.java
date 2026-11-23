@@ -63,9 +63,9 @@ public final class WorkViews
     }
 
     /**
-     * Utilization by sprint: each sprint's utilization (the active one is a forecast) and the overall
-     * average of the finished sprints, rounded, with its band; {@code overall} is null with no finished
-     * sprint.
+     * Utilization by sprint: each sprint's utilization (the active one is a forecast) with its band, and
+     * the overall average of the finished sprints, rounded, with its band; {@code overall} is null with no
+     * finished sprint.
      */
     public static JsonObject utilizationTrend(JsonArray sprints, JsonObject rules)
     {
@@ -73,9 +73,15 @@ public final class WorkViews
 
         int finished = 0;
 
+        JsonArray banded = new JsonArray();
+
         for (Object item : sprints)
         {
             JsonObject sprint = (JsonObject) item;
+
+            Double util = Workload.number(sprint, "util");
+
+            banded.add(sprint.copy().put("band", util == null ? null : Workload.band(util, rules)));
 
             if (!sprint.getBoolean("live", false))
             {
@@ -88,7 +94,7 @@ public final class WorkViews
         Integer overall = finished == 0 ? null : (int) Math.round(sum / finished);
 
         return new JsonObject()
-                .put("sprints", sprints)
+                .put("sprints", banded)
                 .put("overall", overall)
                 .put("band", overall == null ? null : Workload.band(overall, rules))
                 .put("finished", finished);

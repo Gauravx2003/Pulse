@@ -182,4 +182,27 @@ class TrainingRatingsTest
 
         assertTrue(checked > 0);
     }
+
+    @Test
+    void menteeCountIsTheDifferentPeopleMentoredOnAStartedPlan() throws Exception
+    {
+        CalcService calc = new CalcService(api.sql(), PulseClock.of(Clock.systemUTC(), "2026-09-28", false), FormulaRegistry.discover());
+
+        for (Object o : api.sql().queryList("SELECT DISTINCT p.id::text AS id FROM training_assignments a JOIN people p ON p.user_id = a.mentor_id")
+                .toCompletionStage().toCompletableFuture().get())
+        {
+            String person = ((JsonObject) o).getString("id");
+
+            long expected = api.count("SELECT count(DISTINCT a.person_id) FROM training_assignments a JOIN people p ON p.user_id = a.mentor_id "
+                    + "WHERE p.id = '" + person + "' AND a.start_on <= '2026-09-28'");
+
+            assertEquals(expected, ((Number) TestApi.await(calc.get("people.menteeCount", new JsonObject().put("person", person)))).longValue());
+        }
+
+        // Someone who mentors nobody has 0 (not "no data").
+        String hr = api.queryOne("SELECT p.id::text AS id FROM people p WHERE NOT EXISTS (SELECT 1 FROM training_assignments a "
+                + "WHERE a.mentor_id = p.user_id) LIMIT 1").getString("id");
+
+        assertEquals(0, ((Number) TestApi.await(calc.get("people.menteeCount", new JsonObject().put("person", hr)))).intValue());
+    }
 }

@@ -29,6 +29,9 @@ import java.util.UUID;
  *       {@code {assignment, plan, progress, mentor}} while a new joiner (joined less than 3 months ago) is on
  *       a started, unfinished onboarding plan, else null. Utilization alerts and rebalance leave them out.
  *       Reads as null when the training tables are not installed.</li>
+ *   <li>{@code people.menteeCount {person}}: Track 2's promotion-readiness port ("mentored 2 engineers",
+ *       spec growth/roadmap) — the number of different people the person has mentored on a training plan
+ *       that has started (running or finished); null when the training tables are not installed.</li>
  * </ul>
  *
  * <p>{@code people.trainingPlans {person}} is the input port {@code core.training} reads (docs/calc.md §5):
@@ -55,11 +58,24 @@ public final class TrainingFormulas implements FormulaModule
                 Formula.of("people.trainingRating", Set.of("assignment"), TOPICS, TrainingFormulas::rating),
                 Formula.of("people.trainingOverall", Set.of("person"), TOPICS, TrainingFormulas::overall),
                 Formula.of("people.trainingPlans", Set.of("person"), TOPICS, TrainingFormulas::trainingPlans),
+                Formula.of("people.menteeCount", Set.of("person"), Set.of(TRAINING, CalcService.PEOPLE), TrainingFormulas::menteeCount),
                 Formula.of("people.onboarding", Set.of("person"), Set.of(TRAINING, CalcService.PEOPLE), TrainingFormulas::onboarding));
     }
 
     /** Months after joining during which a person counts as a new joiner (prototype {@code isNewJoiner}). */
     static final int NEW_JOINER_MONTHS = 3;
+
+    private static Future<Object> menteeCount(CalcContext ctx, JsonObject params)
+    {
+        UUID person = UUID.fromString(params.getString("person"));
+
+        return ctx.sql().queryOne("SELECT to_regclass('training_assignments') IS NOT NULL AS installed", Tuple.tuple()).compose(t ->
+                !t.getBoolean("installed") ? Future.succeededFuture(null) : ctx.sql().queryOne("""
+                        SELECT count(DISTINCT a.person_id)::int AS n FROM training_assignments a JOIN people p ON p.user_id = a.mentor_id
+                        WHERE p.id = $1 AND a.start_on <= $2
+                        """,
+                        Tuple.of(person, ctx.today())).map(row -> (Object) row.getInteger("n")));
+    }
 
     private static Future<Object> onboarding(CalcContext ctx, JsonObject params)
     {

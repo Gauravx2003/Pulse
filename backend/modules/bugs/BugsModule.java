@@ -1,10 +1,13 @@
 package com.pulse.modules.bugs;
 
+import com.pulse.calc.work.BugAttribution;
 import com.pulse.modules.work.WorkSeedMappers;
 import com.pulse.platform.ingest.SeedMapper;
+import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
 
 import java.util.List;
 
@@ -12,7 +15,9 @@ import java.util.List;
  * Track 2 bugs and support module (task group 12). Its tables are part of the Track 2 data layer
  * ({@code work} module, V200); it seeds the prototype's bugs and support tickets through
  * {@code IngestService} (task 7.2), both under the Jira tile: in the demo the support desk is Jira Service
- * Management, as the Zendesk tile is not connected. The API arrives with task 12.1.
+ * Management, as the Zendesk tile is not connected. {@link BugsRoutes} serves the Person and Team views,
+ * disputes, take it, pick up, resolve and the support queue (task 12.1); Pulse's own decisions are kept
+ * apart from the synced rows ({@code work} migration V240).
  */
 public class BugsModule implements PulseModule
 {
@@ -21,6 +26,18 @@ public class BugsModule implements PulseModule
     public String id()
     {
         return "bugs";
+    }
+
+    @Override
+    public List<String> auditEvents()
+    {
+        return BugService.AUDIT_EVENTS;
+    }
+
+    @Override
+    public void routes(Router router, ModuleContext ctx)
+    {
+        new BugsRoutes(ctx).mount(router);
     }
 
     @Override
@@ -39,6 +56,11 @@ public class BugsModule implements PulseModule
         {
             JsonObject b = (JsonObject) item;
 
+            // The prototype's origin is the blame on the fixing PR; a "causedBy" link, when the data has one, wins.
+            String blame = b.getString("blame", b.getString("origin"));
+
+            JsonObject attribution = BugAttribution.resolve(b.getString("causedBy"), blame);
+
             out.add(new JsonObject()
                     .put("external_id", b.getString("key"))
                     .put("key", b.getString("key"))
@@ -46,7 +68,10 @@ public class BugsModule implements PulseModule
                     .put("severity", b.getString("sev"))
                     .put("status", b.getString("status"))
                     .put("environment", b.getString("env"))
-                    .put("origin_person_id", SeedMapper.ref("people", b.getString("origin")))
+                    .put("origin_person_id", SeedMapper.ref("people", attribution.getString("person")))
+                    .put("attribution_method", attribution.getString("method"))
+                    .put("caused_by_person_id", SeedMapper.ref("people", b.getString("causedBy")))
+                    .put("blame_person_id", SeedMapper.ref("people", blame))
                     .put("origin_ref", b.getString("originRef"))
                     .put("found_by", b.getString("found"))
                     .put("assignee_id", SeedMapper.ref("people", b.getString("assignee")))

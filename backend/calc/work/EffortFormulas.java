@@ -280,13 +280,13 @@ public final class EffortFormulas implements FormulaModule
 
             Future<JsonArray> support = WorkSql.rows(ctx, """
                     SELECT key, title, customer, how_taken AS "howTaken", hours, status, opened_on AS "openedOn", csat
-                    FROM support_tickets
+                    FROM support_tickets_current
                     WHERE person_id = $1 AND status = 'Resolved' AND opened_on BETWEEN $2 AND $3""", range);
 
             Future<JsonArray> proactive = WorkSql.rows(ctx, """
                     SELECT b.key, b.title, b.status, b.origin_ref AS "originRef", b.reported_on AS "reportedOn",
                            b.resolved_on AS "resolvedOn", o.name AS owner
-                    FROM bugs b LEFT JOIN people o ON o.id = b.origin_person_id
+                    FROM bugs_current b LEFT JOIN people o ON o.id = b.origin_person_id
                     WHERE b.fixed_by_id = $1 AND b.origin_person_id IS DISTINCT FROM $1 AND b.proactive
                       AND b.status = 'Resolved' AND b.resolved_on BETWEEN $2 AND $3""", range);
 

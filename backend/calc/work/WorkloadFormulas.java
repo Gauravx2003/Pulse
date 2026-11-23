@@ -351,11 +351,11 @@ public final class WorkloadFormulas implements FormulaModule
             Future<JsonArray> bugs = WorkSql.rows(ctx, """
                     SELECT key, origin_person_id AS "originPersonId", status, severity, environment,
                            reported_on AS "reportedOn", fixed_by_id AS "fixedById", proactive
-                    FROM bugs WHERE origin_person_id = $1 OR fixed_by_id = $1""", Tuple.of(person));
+                    FROM bugs_current WHERE origin_person_id = $1 OR fixed_by_id = $1""", Tuple.of(person));
 
             Future<JsonArray> tickets = WorkSql.rows(ctx, """
                     SELECT key, person_id AS "personId", opened_on AS "openedOn", hours, csat
-                    FROM support_tickets WHERE person_id = $1""", Tuple.of(person));
+                    FROM support_tickets_current WHERE person_id = $1""", Tuple.of(person));
 
             return Future.all(bugs, tickets).map(all ->
             {

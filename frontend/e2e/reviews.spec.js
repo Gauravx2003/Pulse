@@ -33,6 +33,17 @@ test.beforeEach(async ({ context }) => {
 });
 
 test.describe.serial('360° assign, notify, submit and publish', () => {
+  // This suite's own notices would change other suites' unread counts; only its kinds, as suites run in parallel.
+  let notificationsSince = '';
+
+  test.beforeAll(() => {
+    notificationsSince = sql('SELECT now()::text');
+  });
+
+  test.afterAll(() => {
+    sql(`DELETE FROM notifications WHERE created_at >= '${notificationsSince}' AND kind LIKE 'review360.%'`);
+  });
+
   test.beforeAll(() => {
     // Q3 running again, without an earlier run's request from Neha about Priya.
     sql(`UPDATE review_cycles SET status = 'running', published_at = NULL WHERE ${Q3}`);

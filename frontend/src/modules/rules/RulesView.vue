@@ -2,6 +2,8 @@
   <div class="pl-page">
     <PlPageHeader eyebrow="Settings" title="Rules & thresholds" caption="Changes apply instantly across every screen.">
       <template #actions>
+        <!-- Holiday calendar import (task 16.4): the CSV pipeline's upload, open to rules.manage holders. -->
+        <RouterLink class="pl-btn" :to="{ path: '/imports', query: { type: 'holidays' } }">Import holiday calendar</RouterLink>
         <button type="button" class="pl-btn" :disabled="loading || !groups.length" @click="askReset">Reset defaults</button>
       </template>
     </PlPageHeader>

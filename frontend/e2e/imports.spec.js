@@ -93,3 +93,12 @@ test('rahul@ sees only OKRs, Users and Customer visits; ?type opens the upload',
   await expect(card(page, 'Attendance')).toHaveCount(0);
   await expect(card(page, 'Holiday calendar')).toHaveCount(0);
 });
+
+test('Rules & thresholds links to the Holiday calendar import', async ({ page, context }) => {
+  await distinctIp(context);
+  await signInViaApi(page, DEMO.admin);
+  await page.goto('/rules');
+
+  await page.getByRole('link', { name: 'Import holiday calendar' }).click();
+  await expect(page.getByRole('dialog', { name: 'Import Holiday calendar' })).toBeVisible();
+});

@@ -41,6 +41,17 @@ test.beforeEach(async ({ context }) => {
 });
 
 test.describe.serial('Visit lifecycle across rahul@, priya@ and sana@', () => {
+  // This suite's own notices would change other suites' unread counts; only its kinds, as suites run in parallel.
+  let notificationsSince = '';
+
+  test.beforeAll(() => {
+    notificationsSince = sql('SELECT now()::text');
+  });
+
+  test.afterAll(() => {
+    sql(`DELETE FROM notifications WHERE created_at >= '${notificationsSince}' AND kind LIKE 'visit.%'`);
+  });
+
   test.beforeAll(() => {
     sql(`DELETE FROM visits WHERE customer IN ('${PLANNED}', '${LOGGED}')`);
   });

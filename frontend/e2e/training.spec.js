@@ -49,6 +49,17 @@ test.beforeEach(async ({ context }) => {
 });
 
 test.describe.serial('Training lifecycle', () => {
+  // This suite's own notices would change other suites' unread counts; only its kinds, as suites run in parallel.
+  let notificationsSince = '';
+
+  test.beforeAll(() => {
+    notificationsSince = sql('SELECT now()::text');
+  });
+
+  test.afterAll(() => {
+    sql(`DELETE FROM notifications WHERE created_at >= '${notificationsSince}' AND (kind LIKE 'training.%' OR kind LIKE 'mentoring.%')`);
+  });
+
   test.beforeAll(() => {
     // Start clean: Rohit's earlier run of this plan and this week's onboarding check-in.
     sql(`DELETE FROM review_requests WHERE cycle_id IN (SELECT id FROM review_cycles WHERE assignment_id IN (

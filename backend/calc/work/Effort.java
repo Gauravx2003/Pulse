@@ -96,6 +96,104 @@ public final class Effort
     }
 
     /**
+     * Below this share of {@code dayHours} a logged day reads as short ({@code calendar}).
+     */
+    public static final double SHORT_DAY_PCT = 50;
+
+    /**
+     * {@code calendar}: the Daily log of a period, one cell per day from the day facts of
+     * {@code work.periodWork}: before joining, future, holiday, leave, customer visit, weekend work or a
+     * day off, code only (commits, no worklog), else a working day by hours logged against {@code dayHours}
+     * (short below {@value #SHORT_DAY_PCT}%, normal to 100%, long to rule {@code over}, then very long).
+     * {@code tone} is the heat tone of the cell, '' for leave, holiday and visit.
+     *
+     * @return {@code [{date, kind, label, hours, tone}]}
+     */
+    public static JsonArray dailyLog(JsonArray facts, LocalDate today, JsonObject rules)
+    {
+        double dayHours = rules.getDouble("dayHours", 8.0);
+
+        double over = rules.getDouble("over", 120.0);
+
+        JsonArray out = new JsonArray();
+
+        for (Object item : facts)
+        {
+            JsonObject f = (JsonObject) item;
+
+            LocalDate date = LocalDate.parse(f.getString("date"));
+
+            double hours = Workload.orZero(Workload.number(f, "hours"));
+
+            String label = (hours == Math.rint(hours) ? String.valueOf((long) hours) : String.valueOf(hours)) + "h";
+
+            String kind;
+
+            String tone = "";
+
+            if (f.getBoolean("beforeJoining", false))
+            {
+                kind = "prejoin";
+
+                label = "";
+            }
+            else if (date.isAfter(today))
+            {
+                kind = "future";
+
+                label = "";
+            }
+            else if (f.getBoolean("holiday", false))
+            {
+                kind = "holiday";
+
+                label = "Hol";
+            }
+            else if (f.getBoolean("leave", false))
+            {
+                kind = "leave";
+
+                label = "Leave";
+            }
+            else if (f.getBoolean("visit", false))
+            {
+                kind = "visit";
+
+                label = "Visit";
+            }
+            else if (!f.getBoolean("weekday", true))
+            {
+                kind = hours > 0 ? "weekend" : "off";
+
+                tone = hours > 0 ? "accent" : "";
+
+                label = hours > 0 ? label : "";
+            }
+            else if (hours == 0 && f.getBoolean("commits", false))
+            {
+                kind = "codeOnly";
+
+                tone = "info";
+
+                label = "Code";
+            }
+            else
+            {
+                double pct = hours / dayHours * 100;
+
+                kind = pct > 100 ? "long" : "work";
+
+                tone = pct < SHORT_DAY_PCT ? "info" : pct <= 100 ? "ok" : pct <= over ? "warn" : "danger";
+            }
+
+            out.add(new JsonObject().put("date", f.getString("date")).put("kind", kind).put("label", label).put("hours", hours)
+                    .put("tone", tone));
+        }
+
+        return out;
+    }
+
+    /**
      * The points each item scores for the culture bonus (spec work/effort-extra-mile "Caps"): confirmed
      * items count in the order they were confirmed ({@code decidedAt}, then date) until the person's
      * month of the work reaches {@code monthCap}, visits separately up to {@code visitCap}; the excess

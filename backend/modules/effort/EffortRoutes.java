@@ -13,7 +13,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Confirm and reject of extra-mile items under {@code /api/v1/effort} (task 11.2), written to
+ * The Effort screens (task 11.3) and confirm and reject of extra-mile items (task 11.2) under
+ * {@code /api/v1/effort}, written to
  * {@code docs/backend-guide.md}: {@code effort.confirm} first, then the body schema, visibility and
  * separation of duties in {@link EffortService}. A single decision carries the item's {@code version}
  * (body or {@code If-Match}).
@@ -43,6 +44,15 @@ public final class EffortRoutes
 
     void mount(Router router)
     {
+        // GET /api/v1/effort/people/:personId?period=m:2026-09
+        router.get("/people/:personId").handler(policy.requiresAny("self.view", "team.view", "all.view"))
+                .handler(rc -> effort.person(PolicyService.user(rc), Ids.path(rc, "personId").toString(), rc.queryParams().get("period"))
+                        .onSuccess(rc::json).onFailure(rc::fail));
+
+        // GET /api/v1/effort/team?period=s:S43
+        router.get("/team").handler(policy.requiresAny("team.view", "all.view"))
+                .handler(rc -> effort.team(PolicyService.user(rc), rc.queryParams().get("period")).onSuccess(rc::json).onFailure(rc::fail));
+
         // POST /api/v1/effort/items/:id/confirm  {"version": 1}
         router.post("/items/:id/confirm").handler(policy.requires("effort.confirm")).handler(DECIDE.handler())
                 .handler(rc -> decide(rc, EffortService.CONFIRMED));

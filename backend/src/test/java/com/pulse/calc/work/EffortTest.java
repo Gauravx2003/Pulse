@@ -159,6 +159,36 @@ class EffortTest
     }
 
     @Test
+    void theDailyLogMarksEachKindOfDay()
+    {
+        JsonObject rules = new JsonObject().put("dayHours", 8).put("over", 120);
+
+        JsonArray facts = new JsonArray()
+                .add(fact("2026-09-01", true, 0, false).put("beforeJoining", true))
+                .add(fact("2026-09-02", true, 0, false).put("holiday", true))
+                .add(fact("2026-09-03", true, 0, false).put("leave", true))
+                .add(fact("2026-09-04", true, 6, false).put("visit", true))
+                .add(fact("2026-09-05", false, 3, false))
+                .add(fact("2026-09-06", false, 0, false))
+                .add(fact("2026-09-07", true, 0, true))
+                .add(fact("2026-09-08", true, 3, false))
+                .add(fact("2026-09-09", true, 7.5, false))
+                .add(fact("2026-09-10", true, 9, false))
+                .add(fact("2026-09-11", true, 10, false))
+                .add(fact("2026-09-30", true, 0, false));
+
+        JsonArray log = Effort.dailyLog(facts, LocalDate.parse("2026-09-28"), rules);
+
+        List<String> kinds = log.stream().map(d -> ((JsonObject) d).getString("kind")).toList();
+
+        assertEquals(List.of("prejoin", "holiday", "leave", "visit", "weekend", "off", "codeOnly", "work", "work", "long", "long", "future"), kinds);
+        assertEquals(List.of("", "", "", "", "accent", "", "info", "info", "ok", "warn", "danger", ""),
+                log.stream().map(d -> ((JsonObject) d).getString("tone")).toList());
+        assertEquals("7.5h", log.getJsonObject(8).getString("label"));
+        assertEquals("Code", log.getJsonObject(6).getString("label"));
+    }
+
+    @Test
     void confirmedPointsAboveTheMonthlyCapDoNotScore()
     {
         JsonObject rules = new JsonObject().put("monthCap", 6).put("visitCap", 8).put("pts", new JsonObject().put("incident", 2));
@@ -276,6 +306,11 @@ class EffortTest
     /**
      * A prototype EXTRA item in the shape of the extra_items rows.
      */
+    private static JsonObject fact(String date, boolean weekday, double hours, boolean commits)
+    {
+        return new JsonObject().put("date", date).put("weekday", weekday).put("hours", hours).put("commits", commits);
+    }
+
     private static JsonObject scoredItem(String id, String kind, String occurredOn, String decidedAt, String state)
     {
         return new JsonObject().put("id", id).put("kind", kind).put("ref", id).put("isDone", true).put("state", state)

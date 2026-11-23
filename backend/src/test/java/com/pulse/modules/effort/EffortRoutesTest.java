@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -50,6 +51,56 @@ class EffortRoutesTest
                 RoleMatrix.MANAGER, 200,
                 RoleMatrix.EMPLOYEE, 403,
                 RoleMatrix.PEER, 403));
+    }
+
+    @Test
+    void theTeamTabIsForManagersAndThePersonTabFollowsVisibility() throws Exception
+    {
+        RoleMatrix.assertRoleMatrix(api, "GET /api/v1/effort/team?period=m:2026-09", Map.of(
+                RoleMatrix.ADMIN, 200,
+                RoleMatrix.MANAGER, 200,
+                RoleMatrix.EMPLOYEE, 403,
+                RoleMatrix.PEER, 403));
+
+        RoleMatrix.assertRoleMatrix(api, "GET /api/v1/effort/people/{person:priya@pulse.demo}?period=m:2026-09", Map.of(
+                RoleMatrix.ADMIN, 200,
+                RoleMatrix.MANAGER, 200,
+                RoleMatrix.EMPLOYEE, 200,
+                RoleMatrix.PEER, 403));
+    }
+
+    @Test
+    void thePersonTabHasTimeTheDailyLogItemsAndThePeriodTable() throws Exception
+    {
+        String priya = api.queryOne("SELECT id FROM people WHERE source = 'seed' AND external_id = 'ps'").getString("id");
+
+        HttpResponse<Buffer> res = api.get("/api/v1/effort/people/" + priya + "?period=m:2026-09", RoleMatrix.session(api, RoleMatrix.EMPLOYEE));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        JsonObject body = res.bodyAsJsonObject();
+
+        assertEquals(30, body.getJsonObject("dailyLog").getJsonArray("days").size(), "every day of September");
+        assertTrue(body.getJsonObject("effort").getDouble("logged") > 0);
+        assertFalse(body.getJsonObject("effort").getJsonArray("items").isEmpty());
+        assertEquals("m:2026-09", body.getJsonArray("periods").getJsonObject(0).getString("period"));
+        assertFalse(body.getBoolean("canConfirm"), "Priya cannot confirm her own items");
+    }
+
+    @Test
+    void theTeamTabListsPeopleRequestersAndTheItemsToReview() throws Exception
+    {
+        HttpResponse<Buffer> res = api.get("/api/v1/effort/team?period=m:2026-09", RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        JsonObject body = res.bodyAsJsonObject();
+
+        assertEquals(8, body.getJsonArray("people").size());
+        assertFalse(body.getJsonArray("requesters").isEmpty());
+        assertTrue(body.getJsonArray("review").stream().allMatch(i -> "pending".equals(((JsonObject) i).getString("state"))
+                && ((JsonObject) i).getInteger("version") != null));
+        assertTrue(body.getBoolean("canConfirm"));
     }
 
     @Test

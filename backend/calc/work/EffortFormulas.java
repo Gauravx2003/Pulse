@@ -2,6 +2,8 @@ package com.pulse.calc.work;
 
 import com.pulse.calc.core.CalcContext;
 import com.pulse.calc.core.CalcService;
+import com.pulse.calc.core.CultureParameters;
+import com.pulse.calc.core.CultureScore;
 import com.pulse.calc.core.Formula;
 import com.pulse.calc.core.FormulaModule;
 import com.pulse.calc.core.PeriodCalendar;
@@ -46,11 +48,21 @@ public final class EffortFormulas implements FormulaModule
 
     public static final String DETECTED = "work.extraDetected";
 
+    /**
+     * The Daily log calendar of a person's period (task 11.3).
+     */
+    public static final String DAILY_LOG = "work.dailyLog";
+
+    /**
+     * "Culture value updates from extra work" (task 11.3): per credited value this quarter.
+     */
+    public static final String CULTURE_UPDATES = "work.cultureUpdates";
+
     private static final String ITEM_ROW = """
             SELECT x.id, x.detection_key AS "detectionKey", x.kind, x.ref, x.title, x.requested_by AS "requestedBy",
                    x.detection_note AS "detectionNote", x.evidence_source AS "evidenceSource", x.occurred_on AS "occurredOn",
                    x.hours, x.is_done AS "isDone", x.values_credited AS "valuesCredited", x.state,
-                   x.decided_at AS "decidedAt"
+                   x.decided_at AS "decidedAt", x.version, x.person_id AS "personId"
             FROM extra_items x
             """;
 
@@ -70,7 +82,9 @@ public final class EffortFormulas implements FormulaModule
                 new Formula(EFFORT, Set.of("person", "period"), topics, Set.of(PeriodCalendar.SPRINT), safe(EffortFormulas::effort)),
                 Formula.of(TEAM, Set.of("team", "period"), topics, safe(EffortFormulas::team)),
                 Formula.of(CULTURE_ITEMS, Set.of("person", "period"), topics, safe(EffortFormulas::cultureItems)),
-                Formula.of(DETECTED, Set.of("person", "period"), topics, safe(EffortFormulas::detected)));
+                Formula.of(DETECTED, Set.of("person", "period"), topics, safe(EffortFormulas::detected)),
+                Formula.of(DAILY_LOG, Set.of("person", "period"), topics, safe(EffortFormulas::dailyLog)),
+                Formula.of(CULTURE_UPDATES, Set.of("person"), Set.of(EXTRA_ITEMS, CalcService.PERFORMANCE), safe(EffortFormulas::cultureUpdates)));
     }
 
     // ------------------------------------------------------------------ formulas
@@ -213,6 +227,84 @@ public final class EffortFormulas implements FormulaModule
 
                 return (Object) Effort.scored(list(items.result()), ctx.rules(), visitPoints);
             });
+        });
+    }
+
+    /**
+     * {@code work.dailyLog {person, period}}: {@link Effort#dailyLog} over the period's day facts.
+     */
+    private static Future<Object> dailyLog(CalcContext ctx, JsonObject params)
+    {
+        UUID person = uuid(params, "person");
+
+        return period(ctx, params).compose(period -> WorkloadFormulas.dayFacts(ctx, person, period)
+                .map(facts -> (Object) new JsonObject()
+                        .put("period", period.getString("key"))
+                        .put("dayHours", ctx.rules().getDouble("dayHours", 8.0))
+                        .put("days", Effort.dailyLog(facts, ctx.today(), ctx.rules()))));
+    }
+
+    /**
+     * {@code work.cultureUpdates {person}}: this quarter's culture values that extra work credited, each
+     * as {@code {value, rating360, bonus, score}}: the combined 360 rating, the extra-mile bonus within its
+     * caps ({@code CultureScore.valueBonus} over {@code work.extraMileItems}) and the score shown
+     * ({@code core.culture}, null without 360 ratings).
+     */
+    private static Future<Object> cultureUpdates(CalcContext ctx, JsonObject params)
+    {
+        UUID person = uuid(params, "person");
+
+        LocalDate today = ctx.today();
+
+        int q = (today.getMonthValue() - 1) / 3 + 1;
+
+        JsonObject withQuarter = new JsonObject().put("person", person.toString()).put("period", "q:" + today.getYear() + "-Q" + q);
+
+        Future<Object> items = ctx.get(CULTURE_ITEMS, withQuarter);
+
+        Future<Object> scores = ctx.optional("core.culture", withQuarter);
+
+        Future<JsonArray> ratings = WorkSql.rows(ctx, """
+                SELECT value_name AS value, rating FROM culture_ratings
+                WHERE person_id = $1 AND quarter = $2 AND rater_group = 'Combined'""", Tuple.of(person, today.getYear() + "-Q" + q));
+
+        return Future.all(items, scores, ratings).map(all ->
+        {
+            JsonArray bonus = CultureScore.valueBonus(items.result() instanceof JsonArray a ? a : new JsonArray(), ctx.rules());
+
+            JsonArray score = scores.result() instanceof JsonArray s ? s : null;
+
+            JsonArray out = new JsonArray();
+
+            for (int i = 0; i < CultureParameters.VALUES.size(); i++)
+            {
+                double b = bonus.getDouble(i);
+
+                if (b <= 0)
+                {
+                    continue;
+                }
+
+                String value = CultureParameters.VALUES.get(i);
+
+                Object rating = null;
+
+                for (Object r : ratings.result())
+                {
+                    if (value.equals(((JsonObject) r).getString("value")))
+                    {
+                        rating = ((JsonObject) r).getValue("rating");
+                    }
+                }
+
+                out.add(new JsonObject()
+                        .put("value", value)
+                        .put("rating360", rating)
+                        .put("bonus", b)
+                        .put("score", score == null ? null : score.getValue(i)));
+            }
+
+            return (Object) out;
         });
     }
 

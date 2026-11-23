@@ -412,7 +412,7 @@ public final class WorkloadFormulas implements FormulaModule
     /**
      * One fact per day of the period, as {@link PeriodWork} reads them.
      */
-    private static Future<JsonArray> dayFacts(CalcContext ctx, UUID person, JsonObject period)
+    static Future<JsonArray> dayFacts(CalcContext ctx, UUID person, JsonObject period)
     {
         LocalDate from = LocalDate.parse(period.getString("from"));
 

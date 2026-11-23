@@ -81,7 +81,7 @@ class WorkloadFormulasTest
 
         List<FormulaModule> modules = new ArrayList<>(FormulaRegistry.discover().modules());
 
-        modules.add(prototype.ports());
+        prototype.replacePorts(modules);
 
         calc = new CalcService(new SqlExecutor(db.pool(Db.DEFAULT_APP_ROLE)),
                 PulseClock.of(Clock.systemUTC(), "2026-09-28", false), FormulaRegistry.of(modules));

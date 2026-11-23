@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.pulse.platform.db.TestDb.await;
 
@@ -341,6 +342,41 @@ final class PrototypeWork
                 SELECT x.key, x.title, x.priority, x.person_id, x.hours, x.status, x.opened_on, x.csat, 'test', x.key
                 FROM json_to_recordset($1::json) AS x(key text, title text, priority text, person_id uuid, hours numeric,
                      status text, opened_on date, csat smallint)""", Tuple.of(tickets)));
+    }
+
+    /**
+     * Puts the stand-in ports in place of Track 3's real formulas of the same names: drops those names
+     * from the discovered modules (the registry refuses duplicates), then adds {@link #ports()}.
+     */
+    void replacePorts(List<FormulaModule> modules)
+    {
+        FormulaModule stubs = ports();
+
+        Set<String> stubbed = stubs.formulas().stream().map(Formula::name).collect(Collectors.toSet());
+
+        modules.replaceAll(m -> filtered(m, stubbed));
+
+        modules.add(stubs);
+    }
+
+    private static FormulaModule filtered(FormulaModule module, Set<String> dropped)
+    {
+        List<Formula> kept = module.formulas().stream().filter(f -> !dropped.contains(f.name())).toList();
+
+        return new FormulaModule()
+        {
+            @Override
+            public String id()
+            {
+                return module.id();
+            }
+
+            @Override
+            public List<Formula> formulas()
+            {
+                return kept;
+            }
+        };
     }
 
     /**

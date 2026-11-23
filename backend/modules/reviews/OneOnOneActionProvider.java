@@ -7,6 +7,7 @@ import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.Tuple;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -45,6 +46,13 @@ public final class OneOnOneActionProvider implements ActionProvider
             return Future.succeededFuture(List.of());
         }
 
+        // No items while the 1:1 tables are not installed (a test schema with other modules only).
+        return ctx.sql().queryOne("SELECT to_regclass('one_on_ones') IS NOT NULL AS installed", Tuple.tuple())
+                .compose(t -> t.getBoolean("installed") ? items(user, ctx) : Future.succeededFuture(List.of()));
+    }
+
+    private Future<List<JsonObject>> items(JsonObject user, ModuleContext ctx)
+    {
         LocalDate today = ctx.calc() == null ? LocalDate.now(PolicyService.ZONE) : ctx.calc().clock().today();
 
         OneOnOneRepository repo = new OneOnOneRepository(ctx.sql());

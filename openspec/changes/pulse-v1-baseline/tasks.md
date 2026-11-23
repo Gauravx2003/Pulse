@@ -154,7 +154,7 @@ Priority order inside the track (do in this order; the last two are the first to
 
 ## 18. Customer visits
 
-- [ ] 18.1 Implement visits (lifecycle, validation incl. overlap with leave and visits, report, feedback by the account owner, verify and reject, points via formulas in `calc/people/` exposed through `CalcService`, verified against the oracle `visitPts` (line ~1288) and `vStats` (line ~1306), capacity and On duty effect, notifications) and the action providers; verify tests for every scenario in `time/customer-visits` including the 5-point example.
+- [x] 18.1 Implement visits (lifecycle, validation incl. overlap with leave and visits, report, feedback by the account owner, verify and reject, points via formulas in `calc/people/` exposed through `CalcService`, verified against the oracle `visitPts` (line ~1288) and `vStats` (line ~1306), capacity and On duty effect, notifications) and the action providers; verify tests for every scenario in `time/customer-visits` including the 5-point example.
 - [ ] 18.2 Build the Customer visits screens (Team, Person, account-owner view, plan and log modal, report, feedback, detail); verify Playwright as `rahul@`, `priya@` and `sana@` and the UI audit.
 
 ## 19. Culture values
@@ -172,12 +172,12 @@ Priority order inside the track (do in this order; the last two are the first to
 ## 21. Training and mentoring
 
 - [ ] 21.1 Implement the plan library, assignment (skips, load warning, notifications), lifecycle with the 422 on a failed assessment, check-ins, checkpoints through the 360° form, assessment, final reviews, sign-off, acknowledgements, mentoring tools and suggestions, with `trRating` taken from task 4.7; verify tests for every scenario in `growth/training-mentoring` and a rating comparison against the oracle for all seeded assignments.
-- [ ] 21.2 Register the training action providers (final review due, blockers, behind sessions) and the onboarding effect on utilization; verify they appear for `rahul@` and that onboarding joiners are excluded from rebalance.
+- [x] 21.2 Register the training action providers (final review due, blockers, behind sessions) and the onboarding effect on utilization; verify they appear for `rahul@` and that onboarding joiners are excluded from rebalance.
 - [ ] 21.3 Build the Training screens (My training, Mentoring, Trainees & assignments, plan detail with the multi-plan picker, Plan library with pass rate, average outcome and trainee rating, Mentors table and all modals); verify Playwright as `rohit@`, `sara@` and `rahul@` through assign, check-in, assessment, final review and sign-off, and the UI audit.
 
 ## 22. Appraisal
 
-- [ ] 22.1 Implement appraisal (score and bands via `aprRecommend` from task 4.8, 20% cap, budget 12% editable, per-cycle effective date, exceptions with reasons, submit blocked over budget, approve and send back, release letters, self-approval refusal, frozen at submit, evidence panel without reviewer identity, CTC only to appraisal roles, export with audit); verify tests for every scenario in `appraisal/appraisal`.
+- [x] 22.1 Implement appraisal (score and bands via `aprRecommend` from task 4.8, 20% cap, budget 12% editable, per-cycle effective date, exceptions with reasons, submit blocked over budget, approve and send back, release letters, self-approval refusal, frozen at submit, evidence panel without reviewer identity, CTC only to appraisal roles, export with audit); verify tests for every scenario in `appraisal/appraisal`.
 - [ ] 22.2 Build the Appraisal & increments screens (KPIs, distribution, standards modal, people table with inline percent, evidence modal, Release letters, Approve all) and register the draft and waiting-for-approval action providers; verify Playwright as `rahul@` and `hr@` and that `priya@` gets no access.
 
 # ALL TRACKS — Integration and acceptance (after tracks merge)

@@ -336,6 +336,14 @@ public final class Workload
         return rules.getDouble("focus", 6.0);
     }
 
+    /**
+     * Working days the issue has been idle (see {@link #idleDays}); null when it has no last activity.
+     */
+    public static Integer idle(JsonObject issue, LocalDate today, Predicate<LocalDate> working)
+    {
+        return issue.getString("lastActivity") == null ? null : idleDays(lastActivityDay(issue), today, working);
+    }
+
     private static LocalDate lastActivityDay(JsonObject issue)
     {
         String last = issue.getString("lastActivity");

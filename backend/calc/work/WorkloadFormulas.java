@@ -251,7 +251,8 @@ public final class WorkloadFormulas implements FormulaModule
                                 .put("noEstimate", Workload.noEstimate(row))
                                 .put("checks", Workload.checks(row, ctx.today(), ctx.rules(), days.result().person()))
                                 .put("remainingHours", Workload.remainingHours(row, hoursPerPoint))
-                                .put("lastActivity", row.getString("lastActivity"));
+                                .put("lastActivity", row.getString("lastActivity"))
+                                .put("idle", Workload.idle(row, ctx.today(), days.result().person()));
                     });
                 });
     }

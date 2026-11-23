@@ -6,6 +6,7 @@ import com.pulse.calc.work.WorkloadFormulas;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
+import com.pulse.platform.notify.NotificationTriggers;
 import com.pulse.platform.outbox.OutboxRepository;
 import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
@@ -18,7 +19,8 @@ import java.util.UUID;
 /**
  * The Nudge action of the issue drawer (task 8.3, spec work/work-items "Nudge"). A manager who can see
  * the issue sends its assignee a Slack or Teams message about a stale or not-started issue. The
- * message goes to the outbox in the same transaction as the {@code nudges} record and the audit entry.
+ * message goes to the outbox, and the in-app "stale-work nudge" notification to the assignee, in the same
+ * transaction as the {@code nudges} record and the audit entry.
  * Rate limits: one nudge per issue and sender every {@link #ISSUE_WINDOW_SECONDS}, and at most
  * {@link #SENDER_LIMIT} nudges per sender every {@link #SENDER_WINDOW_SECONDS}; a refused nudge answers
  * 429 {@code nudge_rate_limited} with {@code retryAfter}.
@@ -102,7 +104,10 @@ public final class NudgeService
                             return Future.failedFuture(refused);
                         }
 
-                        return send(user, sender, issue, issueId, assigneeId, recipient.result(), channel.result());
+                        Integer idle = ((JsonObject) signals.result()).getInteger("idle");
+
+                        return send(user, sender, issue, issueId, assigneeId, recipient.result(), channel.result(),
+                                idle == null ? 0 : idle);
                     });
                 });
     }
@@ -166,7 +171,7 @@ public final class NudgeService
     }
 
     private Future<JsonObject> send(JsonObject user, UUID sender, JsonObject issue, UUID issueId, UUID assigneeId,
-                                    JsonObject recipient, String channel)
+                                    JsonObject recipient, String channel, int idleDays)
     {
         String key = issue.getString("key");
 
@@ -210,8 +215,9 @@ public final class NudgeService
                                 .put("issueKey", key)
                                 .put("link", "/work/issues/" + key);
 
-                        // TODO(5.3): also post the in-app "stale-work nudge" notification once the notifications service exists.
                         return new OutboxRepository(tx).enqueue(channel, recipient.getString("email"), "Nudge: " + key, body, payload)
+                                .compose(v -> ctx.notifications().notify(tx,
+                                        NotificationTriggers.staleNudge(recipient.getString("userId"), key, idleDays)))
                                 .compose(v -> AuditService.record(tx, AuditService.entry(user, NUDGED, "issue", issueId.toString(),
                                         new JsonObject()
                                                 .put("key", key)

@@ -91,6 +91,15 @@ class NudgeRoutesTest
         assertEquals("slack", message.getString("channel"));
         assertEquals("priya@pulse.demo", message.getString("recipient"));
 
+        // the in-app "stale-work nudge" to the assignee (spec platform/notifications), once
+        JsonObject notice = api.queryOne("""
+                SELECT n.text, n.link FROM notifications n JOIN users u ON u.id = n.user_id
+                WHERE lower(u.email) = 'priya@pulse.demo' AND n.kind = 'work.stale_nudge' AND n.text LIKE '%PLAT-2271%'""");
+
+        assertTrue(notice.getString("text").matches("Nudge: PLAT-2271 has had no activity for \\d+ days?"), notice.getString("text"));
+        assertEquals("/work-items?issue=PLAT-2271", notice.getString("link"));
+        assertEquals(1, api.count("SELECT count(*) FROM notifications WHERE kind = 'work.stale_nudge' AND text LIKE '%PLAT-2271%'"));
+
         // the limit is per sender: another manager may still nudge the same issue
         assertEquals(201, nudge("PLAT-2271", RoleMatrix.ADMIN).statusCode());
 

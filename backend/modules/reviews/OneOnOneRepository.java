@@ -39,6 +39,27 @@ final class OneOnOneRepository extends ScopedRepository
                 Tuple.of(personId));
     }
 
+    /**
+     * People in scope with their last 1:1 held on or before {@code today}: {@code [{personId, personName, lastOn}]};
+     * people with no past 1:1 are not listed.
+     */
+    Future<JsonArray> lastHeld(Scope scope, LocalDate today)
+    {
+        return scopedList(scope, "p.id", """
+                SELECT p.id AS "personId", p.name AS "personName", max(o.held_on) AS "lastOn"
+                FROM people p JOIN one_on_ones o ON o.person_id = p.id
+                WHERE o.held_on <= $1 AND {scope}
+                GROUP BY p.id, p.name ORDER BY p.name
+                """,
+                Tuple.of(today));
+    }
+
+    /** Organisation-wide holidays: {@code [{date, name, location}]}. */
+    Future<JsonArray> holidays()
+    {
+        return queryList("SELECT holiday_on AS date, name, location FROM holidays", Tuple.tuple());
+    }
+
     /** One 1:1 the scope may see, or null. */
     Future<JsonObject> byId(Scope scope, UUID id)
     {

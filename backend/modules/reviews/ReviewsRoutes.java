@@ -6,6 +6,7 @@ import com.pulse.platform.http.ExpectedVersion;
 import com.pulse.platform.http.Ids;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.policy.PolicyService;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -89,8 +90,12 @@ public final class ReviewsRoutes
 
     private final KudosService kudos;
 
+    private final ModuleContext ctx;
+
     ReviewsRoutes(ModuleContext ctx)
     {
+        this.ctx = ctx;
+
         this.policy = ctx.policy();
 
         this.oneOnOnes = new OneOnOneService(ctx);
@@ -125,6 +130,12 @@ public final class ReviewsRoutes
 
         // GET /api/v1/reviews/kudos?personId=&value=&page=&pageSize=&sort=-given
         router.get("/kudos").handler(policy.requires("oneonone")).handler(this::kudosFeed);
+
+        // GET /api/v1/reviews/reminders: the caller's 1:1 Action Center items (overdue 1:1s, task 20.2)
+        router.get("/reminders").handler(policy.requires("oneonone")).handler(rc -> new OneOnOneActionProvider()
+                .actionsFor(PolicyService.user(rc), ctx)
+                .onSuccess(items -> rc.json(new JsonObject().put("items", new JsonArray(items))))
+                .onFailure(rc::fail));
 
         mount360(router);
     }

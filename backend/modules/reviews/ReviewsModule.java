@@ -1,5 +1,6 @@
 package com.pulse.modules.reviews;
 
+import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.BadgeProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
@@ -26,6 +27,12 @@ public class ReviewsModule implements PulseModule
         return List.of(OneOnOneService.CREATED, OneOnOneService.NOTES_UPDATED, OneOnOneService.ACTION_SAVED,
                 KudosService.GIVEN, Review360Service.CYCLE_CREATED, Review360Service.REQUEST_REMOVED,
                 Review360Service.REQUEST_DECLINED, Review360Service.REVIEW_SUBMITTED);
+    }
+
+    @Override
+    public List<ActionProvider> actionProviders()
+    {
+        return List.of(new OneOnOneActionProvider());
     }
 
     @Override

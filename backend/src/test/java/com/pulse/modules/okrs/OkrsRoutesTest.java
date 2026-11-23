@@ -108,6 +108,8 @@ class OkrsRoutesTest
         assertEquals(2, summary.getInteger("objectives"));
         assertEquals(5, summary.getInteger("keyResults"));
         assertTrue(summary.getValue("pillar") instanceof Number, summary.encode());
+        assertTrue(body.getJsonArray("quarters").stream().map(q -> (JsonObject) q)
+                .anyMatch(q -> "2026-Q3".equals(q.getString("quarter")) && q.getInteger("count") == 2), "the quarter dropdown counts");
 
         JsonObject first = body.getJsonArray("items").getJsonObject(0);
 

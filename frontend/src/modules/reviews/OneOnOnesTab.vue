@@ -6,6 +6,7 @@
   </div>
 
   <PlAlert v-if="error" badge="Error" tone="danger">{{ error }}</PlAlert>
+  <PlCard v-else-if="ready && !personId" title="1:1s" empty empty-text="There is nobody whose 1:1s you can see." />
   <PlLoading v-else-if="!meetings" />
   <template v-else>
     <PlCard title="1:1s" :subtitle="personName ? `With ${personName} · shared notes and action items` : ''" :empty="!meetings.length" empty-text="No 1:1s yet.">
@@ -108,6 +109,7 @@ const error = ref('');
 const newOpen = ref(false);
 const kudosOpen = ref(false);
 const actionFor = ref(null);
+const ready = ref(false);
 
 loadPeople()
   .then((rows) => {
@@ -116,6 +118,9 @@ loadPeople()
   })
   .catch(() => {
     personId.value = session.me?.user?.personId ?? '';
+  })
+  .finally(() => {
+    ready.value = true;
   });
 
 const choices = computed(() => (people.value ?? []).map((p) => ({ value: p.id, label: p.name })));

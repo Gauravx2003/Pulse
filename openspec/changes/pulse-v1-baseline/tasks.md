@@ -155,7 +155,7 @@ Priority order inside the track (do in this order; the last two are the first to
 ## 18. Customer visits
 
 - [x] 18.1 Implement visits (lifecycle, validation incl. overlap with leave and visits, report, feedback by the account owner, verify and reject, points via formulas in `calc/people/` exposed through `CalcService`, verified against the oracle `visitPts` (line ~1288) and `vStats` (line ~1306), capacity and On duty effect, notifications) and the action providers; verify tests for every scenario in `time/customer-visits` including the 5-point example.
-- [ ] 18.2 Build the Customer visits screens (Team, Person, account-owner view, plan and log modal, report, feedback, detail); verify Playwright as `rahul@`, `priya@` and `sana@` and the UI audit.
+- [x] 18.2 Build the Customer visits screens (Team, Person, account-owner view, plan and log modal, report, feedback, detail); verify Playwright as `rahul@`, `priya@` and `sana@` and the UI audit.
 
 ## 19. Culture values
 

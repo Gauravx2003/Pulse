@@ -382,4 +382,32 @@ class VisitsRoutesTest
         // Priya owns no accounts and verifies nothing, so her badge is her overdue reports.
         assertEquals(overdue, badge(priya, "visits"));
     }
+
+    @Test
+    void theTeamViewListsEveryoneAndAveragesWithoutNewJoiners() throws Exception
+    {
+        // Spec "Person with no visits": the team table lists people with no visits too.
+        HttpResponse<Buffer> res = api.get("/api/v1/visits/team?period=all", RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        JsonObject team = res.bodyAsJsonObject();
+
+        boolean withoutVisits = false;
+
+        for (Object o : team.getJsonArray("people"))
+        {
+            JsonObject p = (JsonObject) o;
+
+            withoutVisits |= p.getJsonObject("stats").getInteger("visits", 0) == 0;
+        }
+
+        assertTrue(withoutVisits, team.encodePrettily());
+
+        assertTrue(team.getJsonObject("average").containsKey("points"));
+
+        assertEquals(403, api.get("/api/v1/visits/team", RoleMatrix.session(api, RoleMatrix.EMPLOYEE)).statusCode());
+
+        assertEquals(400, api.get("/api/v1/visits/team?period=nonsense", RoleMatrix.session(api, RoleMatrix.MANAGER)).statusCode());
+    }
 }

@@ -19,6 +19,8 @@ import java.time.LocalDate;
  * <pre>
  * GET    /items?personId=&owned=true&from=&to=   list (default window: the current year)
  * GET    /stats?personId=&period=q:Q3|all       a person's visit stats (calc/people)
+ * GET    /team?period=q:Q3|all                  every visible person with stats and the team average (new joiners left out)
+ * GET    /owner-options                         account owner choices for the plan form
  * GET    /items/:id                              detail with status, actions, points and values
  * POST   /items                                  plan (manager) or log (engineer)
  * PUT    /items/:id                              edit before the report
@@ -105,6 +107,13 @@ public final class VisitsRoutes
         router.post("/items").handler(policy.requiresAny(anyone)).handler(DETAILS.handler()).handler(this::create);
 
         router.get("/stats").handler(policy.requiresAny(anyone)).handler(this::stats);
+
+        router.get("/team").handler(policy.requiresAny("team.view", "all.view")).handler(rc -> visits.team(PolicyService.user(rc),
+                rc.queryParams().get("period") == null ? "q:Q" + ((visits.today().getMonthValue() - 1) / 3 + 1) : rc.queryParams().get("period"))
+                .onSuccess(rc::json).onFailure(rc::fail));
+
+        router.get("/owner-options").handler(policy.requiresAny(anyone))
+                .handler(rc -> visits.ownerOptions().onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
 
         router.get("/items/:id").handler(policy.requiresAny(anyone)).handler(this::get);
 
@@ -200,7 +209,7 @@ public final class VisitsRoutes
 
     private void delete(RoutingContext rc)
     {
-        visits.delete(PolicyService.user(rc), Ids.path(rc, "id"), ExpectedVersion.of(rc, null))
+        visits.delete(PolicyService.user(rc), Ids.path(rc, "id"), ExpectedVersion.of(rc, optionalBody(rc)))
                 .onSuccess(v -> rc.response().setStatusCode(204).end())
                 .onFailure(rc::fail);
     }
@@ -256,6 +265,19 @@ public final class VisitsRoutes
         catch (DateTimeException e)
         {
             throw ApiException.badRequest("invalid_parameter", "Use YYYY-MM-DD for " + name + ".").field(name);
+        }
+    }
+
+    /** A DELETE's JSON body when it has one ({@code {version}}, for clients that can't send If-Match), else null. */
+    private static JsonObject optionalBody(RoutingContext rc)
+    {
+        try
+        {
+            return rc.body() == null || rc.body().length() == 0 ? null : rc.body().asJsonObject();
+        }
+        catch (RuntimeException e)
+        {
+            return null;
         }
     }
 }

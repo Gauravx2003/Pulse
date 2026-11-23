@@ -807,4 +807,64 @@ final class Review360Service
             set.add(value);
         }
     }
+
+    // ------------------------------------------------------------------ publish
+
+    /** Notice kind of "your 360° results are ready". */
+    static final String RESULTS_READY = "review360.results_ready";
+
+    /**
+     * Publishes a 360° cycle (Admin: users.all with review360.manage): subjects can open their own results
+     * (My feedback), each subject is told, and the publish is audited. 409 when the cycle is already
+     * published or is a training checkpoint. Feeding the results into culture values comes with the
+     * culture calculation (task 4.4).
+     */
+    Future<JsonObject> publish(JsonObject user, UUID cycleId)
+    {
+        return ctx.sql().inTransaction(tx ->
+        {
+            Review360Repository repo = new Review360Repository(tx);
+
+            return repo.cycle(cycleId).compose(cycle ->
+            {
+                if (cycle == null)
+                {
+                    return Future.failedFuture(PolicyService.notFound());
+                }
+
+                return repo.publish(cycleId).compose(done ->
+                {
+                    if (done == null)
+                    {
+                        return Future.failedFuture(ApiException.conflict("not_publishable", "Only a running or closed 360° cycle can be published."));
+                    }
+
+                    return repo.subjectUsers(cycleId).compose(subjects ->
+                    {
+                        Future<Integer> chain = Future.succeededFuture(0);
+
+                        for (Object o : subjects)
+                        {
+                            String userId = ((JsonObject) o).getString("userId");
+
+                            chain = chain.compose(n -> ctx.notifications().notify(tx, new JsonObject()
+                                            .put("userId", userId)
+                                            .put("kind", RESULTS_READY)
+                                            .put("text", "Your 360° feedback for " + cycle.getString("name") + " is ready")
+                                            .put("link", "/reviews?tab=360&view=mine&cycle=" + cycleId))
+                                    .map(sent -> n + (sent == null ? 0 : 1)));
+                        }
+
+                        return chain;
+                    }).compose(told -> AuditService.record(tx, AuditService.entry(user, AuditEvents.REVIEW360_PUBLISHED, "review_cycle",
+                            cycleId.toString(), new JsonObject().put("subjectsTold", told))).map(told));
+                });
+            });
+        }).map(told ->
+        {
+            CalcService.publish(ctx.vertx(), ReviewFormulas.REVIEWS);
+
+            return new JsonObject().put("published", true).put("subjectsTold", told);
+        });
+    }
 }

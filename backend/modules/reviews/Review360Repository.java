@@ -41,6 +41,38 @@ final class Review360Repository extends ScopedRepository
         return queryList(CYCLE + " WHERE c.kind = '360' ORDER BY c.quarter DESC, c.created_at DESC", Tuple.tuple());
     }
 
+    /** Everyone who can review: active, live accounts {@code [{id, name, title, department}]}, by name. */
+    Future<JsonArray> reviewerOptions()
+    {
+        return queryList("""
+                SELECT u.id, u.name, coalesce(p.title, u.title) AS title, coalesce(p.department, u.department) AS department
+                FROM users u LEFT JOIN people p ON p.user_id = u.id
+                WHERE u.status = 'Active' AND u.deleted_at IS NULL
+                ORDER BY lower(u.name)
+                """,
+                Tuple.tuple());
+    }
+
+    /** Publishes a running or closed 360° cycle; resolves to its id, or null when it can't be published. */
+    Future<JsonObject> publish(UUID id)
+    {
+        return queryOne("""
+                UPDATE review_cycles SET status = 'published', published_at = now(), version = version + 1
+                WHERE id = $1 AND kind = '360' AND status IN ('running', 'closed') RETURNING id
+                """,
+                Tuple.of(id));
+    }
+
+    /** User ids of the cycle's subjects who can be told (people with an account). */
+    Future<JsonArray> subjectUsers(UUID cycleId)
+    {
+        return queryList("""
+                SELECT DISTINCT p.user_id AS "userId" FROM review_requests r JOIN people p ON p.id = r.subject_id
+                WHERE r.cycle_id = $1 AND p.user_id IS NOT NULL
+                """,
+                Tuple.of(cycleId));
+    }
+
     Future<JsonObject> cycle(UUID id)
     {
         return queryOne(CYCLE + " WHERE c.id = $1", Tuple.of(id));

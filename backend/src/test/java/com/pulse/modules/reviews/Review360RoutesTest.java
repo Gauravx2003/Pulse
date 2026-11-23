@@ -454,4 +454,40 @@ class Review360RoutesTest
 
         assertEquals(open, badge(kiran, "reviews"));
     }
+
+    @Test
+    void adminPublishesAClosedCycleAndSubjectsSeeTheirResults() throws Exception
+    {
+        // The seeded Q3 cycle is closed in setUp; publishing opens My feedback to its subjects (task 20.3).
+        String q3 = api.queryOne("SELECT id FROM review_cycles WHERE kind = '360' AND name LIKE 'Q3 2026%'").getString("id");
+
+        TestApi.Session priya = RoleMatrix.session(api, RoleMatrix.EMPLOYEE);
+
+        assertEquals(403, api.get("/api/v1/reviews/360/cycles/" + q3 + "/results", priya).statusCode());
+
+        assertEquals(403, api.post("/api/v1/reviews/360/cycles/" + q3 + "/publish", RoleMatrix.session(api, RoleMatrix.MANAGER), new JsonObject())
+                .statusCode());
+
+        long told = notices(RoleMatrix.EMPLOYEE, "review360.results_ready");
+
+        HttpResponse<Buffer> published = api.post("/api/v1/reviews/360/cycles/" + q3 + "/publish", RoleMatrix.session(api, RoleMatrix.ADMIN),
+                new JsonObject());
+
+        assertEquals(200, published.statusCode(), published.bodyAsString());
+
+        assertTrue(published.bodyAsJsonObject().getInteger("subjectsTold") > 0);
+
+        assertEquals(told + 1, notices(RoleMatrix.EMPLOYEE, "review360.results_ready"));
+
+        assertTrue(api.count("SELECT count(*) FROM audit_log WHERE action = 'review360.results.published'") >= 1);
+
+        HttpResponse<Buffer> mine = api.get("/api/v1/reviews/360/cycles/" + q3 + "/results", priya);
+
+        assertEquals(200, mine.statusCode(), mine.bodyAsString());
+
+        assertTrue(mine.bodyAsJsonObject().getBoolean("published"));
+
+        assertEquals(409, api.post("/api/v1/reviews/360/cycles/" + q3 + "/publish", RoleMatrix.session(api, RoleMatrix.ADMIN), new JsonObject())
+                .statusCode());
+    }
 }

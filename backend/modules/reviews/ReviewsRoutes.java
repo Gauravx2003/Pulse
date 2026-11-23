@@ -173,6 +173,15 @@ public final class ReviewsRoutes
                 .handler(rc -> reviews360.resultsFor(PolicyService.user(rc), Ids.path(rc, "id"), rc.pathParam("personId"))
                         .onSuccess(rc::json).onFailure(rc::fail));
 
+        // Reviewer choices for the assign form (names and departments only; review360.manage).
+        router.get("/360/reviewer-options").handler(policy.requires("review360.manage"))
+                .handler(rc -> new Review360Repository(ctx.sql()).reviewerOptions()
+                        .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
+
+        // Admin publishes: subjects see their results and are told (task 20.3).
+        router.post("/360/cycles/:id/publish").handler(policy.requires("users.all", "review360.manage"))
+                .handler(rc -> reviews360.publish(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
+
         // Remind everyone who has not submitted, or one reviewer (review360.manage).
         router.post("/360/cycles/:id/remind").handler(policy.requires("review360.manage"))
                 .handler(rc -> reviews360.remind(PolicyService.user(rc), Ids.path(rc, "id"), null).onSuccess(rc::json).onFailure(rc::fail));

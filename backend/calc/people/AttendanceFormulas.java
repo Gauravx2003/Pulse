@@ -25,9 +25,6 @@ import java.util.UUID;
  *       {@code m:2026-08}, sprint or quarter), cut at today and counted only in uploaded months.</li>
  *   <li>{@code people.attendanceDiscipline {person}}: {@code {score, absent}} for the current quarter,
  *       the input port of Discipline rule h ({@code core.discipline}); null with no uploaded working day.</li>
- *   <li>{@code people.cultureInputs {person, period}}: the people-measured culture parameters, for now
- *       {@code office_presence} (Collaboration, raw = office policy %), left out when rule
- *       {@code att.inCulture} is off.</li>
  *   <li>{@code people.leaveDays {person}}: the person's full leave and absent days ({@code L}, {@code S},
  *       {@code A}), which leave capacity and every working-day denominator
  *       ({@link WorkingDays} person {@code leave}).</li>
@@ -59,7 +56,6 @@ public final class AttendanceFormulas implements FormulaModule
         return List.of(
                 Formula.of("people.attendance", Set.of("person", "period"), TOPICS, AttendanceFormulas::stats),
                 Formula.of("people.attendanceDiscipline", Set.of("person"), TOPICS, AttendanceFormulas::discipline),
-                Formula.of("people.cultureInputs", Set.of("person", "period"), TOPICS, AttendanceFormulas::cultureInputs),
                 Formula.of("people.leaveDays", Set.of("person"), TOPICS, AttendanceFormulas::leaveDays));
     }
 
@@ -84,23 +80,6 @@ public final class AttendanceFormulas implements FormulaModule
             }
 
             return new JsonObject().put("score", s.getValue("score")).put("absent", s.getValue("absent"));
-        });
-    }
-
-    private static Future<Object> cultureInputs(CalcContext ctx, JsonObject params)
-    {
-        return ctx.get("people.attendance", params).map(result ->
-        {
-            JsonObject inputs = new JsonObject();
-
-            boolean inCulture = ctx.rules().getJsonObject("att", new JsonObject()).getBoolean("inCulture", true);
-
-            if (inCulture && result instanceof JsonObject s && s.getValue("officePct") != null)
-            {
-                inputs.put("office_presence", new JsonObject().put("raw", s.getValue("officePct")));
-            }
-
-            return inputs;
         });
     }
 

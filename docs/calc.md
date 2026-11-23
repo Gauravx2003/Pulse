@@ -113,7 +113,7 @@ no data).
 |---|---|---|---|
 | `work.okrPillar` | person, period (quarter) | number 1–5, or null with no OKRs | `core.pillars` (OKR pillar) |
 | `work.cultureInputs` | person, period (quarter) | `{"<param key>": {raw, of?, high?}}` for the work-measured culture parameters | `core.cultureData` |
-| `people.cultureInputs` | person, period (quarter) | the same, for the people-measured parameters (registered; `office_presence` so far) | `core.cultureData` |
+| `people.cultureInputs` | person, period (quarter) | the same, for the people-measured parameters: `office_presence`, `customer_visit_rating`, `training_rating`, `kudos_received`, `incidents_handled` (done incident extra-mile items + reported Escalation visits) — registered by Track 3, oracle-checked | `core.cultureData` |
 | `work.extraMileItems` | person, period (quarter) | `[{state, points, values}]` | `core.culture` (bonus) |
 | `work.disciplineInputs` | person | `{days, stale, replan, status, block, logSame, bulk, dod, review, standup}`, as `Discipline.metrics` | `core.discipline` |
 | `people.attendanceDiscipline` | person | `{score, absent}` from `Attendance.stats` for the quarter | `core.discipline` (rule h) |
@@ -122,7 +122,7 @@ no data).
 | `people.menteeCount` | person | integer — different people the person has mentored on a started training plan (running or finished); null without the training tables — registered by training | `work.promotionReadiness` ("mentored 2 engineers") |
 | `people.onboarding` | person | `{assignment, plan, progress, mentor}` while a joiner (< 3 months) is on a started, unfinished onboarding plan, else null — registered by training (task 21.2) | `work.onboarding` (no utilization alert, left out of rebalance) |
 | `people.leaveDays` | person | full leave and absent days (`L`, `S`, `A`) as dates — registered by attendance (task 17.1) | capacity: pass as `WorkingDays` person `leave` |
-| `people.disciplineOverride` | person | `{score, reason}`, or null | `core.discipline` |
+| `people.disciplineOverride` | person | `{score, reason}`, or null — the latest uncleared row of `discipline_overrides` (V370), registered by Track 3 | `core.discipline` |
 | `people.trainingPlans` | person | `[{weeks, rating}]` with `rating` from `TrainingRating.rating` — registered by training; null without the training tables | `core.training` → Growth pillar |
 | `people.reviewCycles` | person | `[{name, responses: [{group, status, scores}]}]`, oldest first by due date (360° and training checkpoint cycles) — registered by reviews; null without the reviews tables | `core.appraisal` (360° and manager parts) |
 

@@ -94,7 +94,7 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 ## 9. Team utilization
 
 - [x] 9.1 Implement team utilization endpoints (KPIs, daily heatmap, people table, closed-period views, release card) and the rebalance suggestion (skills match, no onboarding recipients, no external write); verify tests for `work/team-utilization` including the 100% and 100.1% band edge and the PLAT-2198 example.
-- [ ] 9.2 Build the Team utilization screen with heatmap, people table, period controls and alert strip; verify a Playwright test as `rahul@` and that `priya@` gets the no-access card.
+- [x] 9.2 Build the Team utilization screen with heatmap, people table, period controls and alert strip; verify a Playwright test as `rahul@` and that `priya@` gets the no-access card.
 
 ## 10. Pull requests
 

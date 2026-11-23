@@ -32,7 +32,7 @@ public class BugRepository extends ScopedRepository
                    b.origin_ref AS "originRef", b.attribution_method AS "attributionMethod", b.found_by AS "foundBy",
                    b.assignee_id AS "assigneeId", b.fixed_by_id AS "fixedById", b.proactive,
                    b.reported_on AS "reportedOn", b.resolved_on AS "resolvedOn", b.open_dispute_id AS "openDisputeId",
-                   b.source
+                   (SELECT a.name FROM people a WHERE a.id = b.assignee_id) AS "assigneeName", b.source
             FROM bugs_current b
             """;
 

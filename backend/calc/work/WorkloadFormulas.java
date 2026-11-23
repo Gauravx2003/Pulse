@@ -68,6 +68,16 @@ public final class WorkloadFormulas implements FormulaModule
 
     public static final String BUG_STATS = "work.bugStats";
 
+    /**
+     * The Bugs &amp; support period table (task 12.2): {@code {people, period}}.
+     */
+    public static final String BUG_HISTORY = "work.bugHistory";
+
+    /**
+     * Rows of the period table: the chosen sprint or month and the ones before it.
+     */
+    public static final int BUG_HISTORY_PERIODS = 6;
+
     public static final String HOURS_PER_POINT = "work.hoursPerPoint";
 
     /**
@@ -123,7 +133,8 @@ public final class WorkloadFormulas implements FormulaModule
                         Set.of(PeriodCalendar.SPRINT), safe(WorkloadFormulas::sprintMetrics)),
                 new Formula(UTILIZATION, Set.of("person", "period"), work,
                         Set.of(PeriodCalendar.SPRINT), safe(WorkloadFormulas::utilization)),
-                Formula.of(BUG_STATS, Set.of("person", "period"), union(calendar, Set.of(BUGS)), safe(WorkloadFormulas::bugStats)));
+                Formula.of(BUG_STATS, Set.of("person", "period"), union(calendar, Set.of(BUGS)), safe(WorkloadFormulas::bugStats)),
+                Formula.of(BUG_HISTORY, Set.of("people", "period"), union(calendar, Set.of(BUGS)), safe(WorkloadFormulas::bugHistory)));
     }
 
     /**
@@ -366,6 +377,93 @@ public final class WorkloadFormulas implements FormulaModule
                 return (Object) BugStats.of(person.toString(), list(bugs.result()), list(tickets.result()), quarterStart,
                         LocalDate.parse(period.getString("from")), LocalDate.parse(period.getString("to")))
                         .put("period", period.getString("key"));
+            });
+        });
+    }
+
+    /**
+     * {@code work.bugHistory {people, period}}: {@link BugStats#periodRow} for the chosen sprint or month
+     * and the {@value #BUG_HISTORY_PERIODS} - 1 before it, newest first; {@code people} is comma-separated
+     * ids.
+     */
+    private static Future<Object> bugHistory(CalcContext ctx, JsonObject params)
+    {
+        String value = params.getString("people");
+
+        if (value == null)
+        {
+            throw new IllegalArgumentException("people: A list of ids is required.");
+        }
+
+        Set<String> people = new HashSet<>();
+
+        List<UUID> ids = new ArrayList<>();
+
+        for (String part : value.split(","))
+        {
+            if (!part.isBlank())
+            {
+                UUID id = uuid(new JsonObject().put("person", part.strip()), "person");
+
+                people.add(id.toString());
+
+                ids.add(id);
+            }
+        }
+
+        UUID[] array = ids.toArray(UUID[]::new);
+
+        return ctx.calendar().compose(calendar ->
+        {
+            JsonObject chosen = calendar.period(params.getString("period"));
+
+            JsonArray list = PeriodCalendar.SPRINT.equals(chosen.getString("kind")) ? calendar.sprints() : calendar.months(24);
+
+            List<JsonObject> periods = new ArrayList<>();
+
+            boolean found = false;
+
+            for (Object item : list)
+            {
+                JsonObject p = (JsonObject) item;
+
+                found |= p.getString("key").equals(chosen.getString("key"));
+
+                if (found && periods.size() < BUG_HISTORY_PERIODS)
+                {
+                    periods.add(p);
+                }
+            }
+
+            if (periods.isEmpty())
+            {
+                periods.add(chosen);
+            }
+
+            Future<JsonArray> bugs = WorkSql.rows(ctx, """
+                    SELECT origin_person_id AS "originPersonId", severity, environment, reported_on AS "reportedOn",
+                           fixed_by_id AS "fixedById", resolved_on AS "resolvedOn", proactive
+                    FROM bugs_current WHERE origin_person_id = ANY($1) OR fixed_by_id = ANY($1)""", Tuple.of(array));
+
+            Future<JsonArray> tickets = WorkSql.rows(ctx, """
+                    SELECT person_id AS "personId", opened_on AS "openedOn", hours
+                    FROM support_tickets_current WHERE person_id = ANY($1)""", Tuple.of(array));
+
+            return Future.all(bugs, tickets).map(all ->
+            {
+                JsonArray out = new JsonArray();
+
+                for (JsonObject p : periods)
+                {
+                    out.add(BugStats.periodRow(people, list(bugs.result()), list(tickets.result()), LocalDate.parse(p.getString("from")),
+                                    LocalDate.parse(p.getString("to")))
+                            .put("period", p.getString("key"))
+                            .put("short", p.getString("short"))
+                            .put("from", p.getString("from"))
+                            .put("end", p.getString("end")));
+                }
+
+                return (Object) out;
             });
         });
     }

@@ -87,6 +87,25 @@ class BugsRoutesTest
         assertEquals(null, manager.getValue("toPickUp"), "only the person sees what they could pick up");
     }
 
+    @Test
+    void thePersonAndTeamTabsHaveTheirHeaderAndThePeriodTable() throws Exception
+    {
+        JsonObject person = get(API + "/people/" + priya + "?period=s:S42", RoleMatrix.EMPLOYEE);
+
+        assertEquals("Priya Shah", person.getJsonObject("person").getString("name"));
+
+        JsonArray history = person.getJsonArray("history");
+
+        assertEquals(6, history.size(), "this sprint and the five before it");
+        assertEquals("s:S42", history.getJsonObject(0).getString("period"));
+        assertTrue(history.getJsonObject(0).getInteger("created") >= 1, "BUG-4088 was reported on 18 Sep in her code");
+
+        JsonObject team = get(API + "/team?period=m:2026-09", RoleMatrix.MANAGER);
+
+        assertEquals("Platform", team.getString("team"));
+        assertEquals("m:2026-09", team.getJsonArray("history").getJsonObject(0).getString("period"));
+    }
+
     // ------------------------------------------------------------------ disputes
 
     @Test

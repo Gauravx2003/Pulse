@@ -3,6 +3,7 @@ package com.pulse.modules.bugs;
 import com.pulse.calc.core.CalcService;
 import com.pulse.calc.work.EffortFormulas;
 import com.pulse.calc.work.WorkloadFormulas;
+import com.pulse.modules.work.PersonRepository;
 import com.pulse.platform.audit.AuditEvents;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.db.SqlExecutor;
@@ -108,20 +109,29 @@ public final class BugService
 
             Future<JsonArray> queue = self ? repo.ticketQueue() : Future.succeededFuture(null);
 
-            return Future.all(List.of(period, inCode, fixed, tickets, pick, queue)).compose(all ->
-                    calc.get(WorkloadFormulas.BUG_STATS, new JsonObject().put("person", personId)
-                                    .put("period", period.result().getString("key")))
-                            .map(stats -> new JsonObject()
-                                    .put("person", personId)
+            Future<JsonObject> identity = new PersonRepository(ctx.sql()).identity(scope, id);
+
+            return Future.all(List.of(period, inCode, fixed, tickets, pick, queue, identity)).compose(all ->
+            {
+                String key = period.result().getString("key");
+
+                Future<Object> stats = calc.get(WorkloadFormulas.BUG_STATS, new JsonObject().put("person", personId).put("period", key));
+
+                Future<Object> history = calc.get(WorkloadFormulas.BUG_HISTORY, new JsonObject().put("people", personId).put("period", key));
+
+                return Future.all(stats, history).map(done -> new JsonObject()
+                                    .put("person", identity.result())
                                     .put("period", period.result())
-                                    .put("stats", stats)
+                                    .put("history", history.result())
+                                    .put("stats", stats.result())
                                     .put("open", openOnly(inCode.result()))
                                     .put("inCode", inCode.result())
                                     .put("fixedForOthers", fixed.result())
                                     .put("tickets", tickets.result())
                                     .put("toPickUp", pick.result())
                                     .put("queue", queue.result())
-                                    .put("subtitle", LEARNING_SIGNAL)));
+                                    .put("subtitle", LEARNING_SIGNAL));
+            });
         });
     }
 
@@ -160,9 +170,21 @@ public final class BugService
                     open.add(repo.inCodeOf(scope, UUID.fromString(member.getString("id"))));
                 }
 
+                String ids = String.join(",", members.stream().map(m -> m.getString("id")).toList());
+
+                Future<Object> history = calc.get(WorkloadFormulas.BUG_HISTORY, new JsonObject().put("people", ids)
+                        .put("period", period.result().getString("key")));
+
+                Future<JsonObject> teamName = ctx.sql().queryOne("SELECT string_agg(DISTINCT department, ', ') AS team FROM people WHERE id = ANY($1)",
+                        Tuple.of(members.stream().map(m -> UUID.fromString(m.getString("id"))).toArray(UUID[]::new)));
+
                 List<Future<?>> everything = new ArrayList<>(stats);
 
                 everything.addAll(open);
+
+                everything.add(history);
+
+                everything.add(teamName);
 
                 return Future.all(everything).map(done ->
                 {
@@ -206,6 +228,8 @@ public final class BugService
 
                     return new JsonObject()
                             .put("period", period.result())
+                            .put("team", teamName.result() == null ? null : teamName.result().getString("team"))
+                            .put("history", history.result())
                             .put("kpis", new JsonObject()
                                     .put("openBugs", openBugs)
                                     .put("unassigned", unassigned)

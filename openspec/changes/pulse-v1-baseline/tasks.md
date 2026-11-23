@@ -111,7 +111,7 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 ## 12. Bugs and support
 
 - [x] 12.1 Implement bug attribution (seeded caused-by and blame results), dispute, keep or remove, take it, pick up, mark resolved, support tickets and queue, proactive points awaiting confirmation; verify tests for each scenario in `work/bugs-support` and audit of dispute decisions.
-- [ ] 12.2 Build the Bugs & support screens including modals; verify Playwright for dispute and take-it flows and the UI audit.
+- [x] 12.2 Build the Bugs & support screens including modals; verify Playwright for dispute and take-it flows and the UI audit.
 
 ## 13. Action center and Progress with weekly pulse
 

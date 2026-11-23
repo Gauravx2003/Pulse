@@ -123,6 +123,7 @@ no data).
 | `people.onboarding` | person | `{assignment, plan, progress, mentor}` while a joiner (< 3 months) is on a started, unfinished onboarding plan, else null — registered by training (task 21.2) | `work.onboarding` (no utilization alert, left out of rebalance) |
 | `people.leaveDays` | person | full leave and absent days (`L`, `S`, `A`) as dates — registered by attendance (task 17.1) | capacity: pass as `WorkingDays` person `leave` |
 | `people.disciplineOverride` | person | `{score, reason}`, or null — the latest uncleared row of `discipline_overrides` (V370), registered by Track 3 | `core.discipline` |
+| `people.cultureDetail` | person, period (quarter), value | `CultureScore.detail` of one value — `{value, score, parts, raterGroups, parameters, bonusItems}`, the parts reproducing `core.culture`; null without a Combined 360° rating (Track 3, task 19.1) | culture endpoints |
 | `people.trainingPlans` | person | `[{weeks, rating}]` with `rating` from `TrainingRating.rating` — registered by training; null without the training tables | `core.training` → Growth pillar |
 | `people.reviewCycles` | person | `[{name, responses: [{group, status, scores}]}]`, oldest first by due date (360° and training checkpoint cycles) — registered by reviews; null without the reviews tables | `core.appraisal` (360° and manager parts) |
 

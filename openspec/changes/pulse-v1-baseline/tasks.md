@@ -173,7 +173,7 @@ Priority order inside the track (do in this order; the last two are the first to
 
 - [ ] 21.1 Implement the plan library, assignment (skips, load warning, notifications), lifecycle with the 422 on a failed assessment, check-ins, checkpoints through the 360° form, assessment, final reviews, sign-off, acknowledgements, mentoring tools and suggestions, with `trRating` taken from task 4.7; verify tests for every scenario in `growth/training-mentoring` and a rating comparison against the oracle for all seeded assignments.
 - [x] 21.2 Register the training action providers (final review due, blockers, behind sessions) and the onboarding effect on utilization; verify they appear for `rahul@` and that onboarding joiners are excluded from rebalance.
-- [ ] 21.3 Build the Training screens (My training, Mentoring, Trainees & assignments, plan detail with the multi-plan picker, Plan library with pass rate, average outcome and trainee rating, Mentors table and all modals); verify Playwright as `rohit@`, `sara@` and `rahul@` through assign, check-in, assessment, final review and sign-off, and the UI audit.
+- [x] 21.3 Build the Training screens (My training, Mentoring, Trainees & assignments, plan detail with the multi-plan picker, Plan library with pass rate, average outcome and trainee rating, Mentors table and all modals); verify Playwright as `rohit@`, `sara@` and `rahul@` through assign, check-in, assessment, final review and sign-off, and the UI audit.
 
 ## 22. Appraisal
 

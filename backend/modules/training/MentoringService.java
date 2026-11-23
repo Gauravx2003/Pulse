@@ -358,4 +358,10 @@ final class MentoringService
                     return out;
                 });
     }
+
+    /** Mentor choices for the assign form: the people the manager sees, plus the manager when they have a profile. */
+    Future<JsonArray> mentorOptions(JsonObject user)
+    {
+        return ctx.policy().scope(user, PolicyService.DOMAIN_PERSON).compose(scope -> new MentoringRepository(ctx.sql()).mentorOptions(scope));
+    }
 }

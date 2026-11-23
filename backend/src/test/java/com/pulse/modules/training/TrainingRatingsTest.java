@@ -205,4 +205,26 @@ class TrainingRatingsTest
 
         assertEquals(0, ((Number) TestApi.await(calc.get("people.menteeCount", new JsonObject().put("person", hr)))).intValue());
     }
+
+    @Test
+    void theLibraryAverageOutcomeComesFromFinalRatings() throws Exception
+    {
+        JsonArray items = api.get("/api/v1/training/plans", RoleMatrix.session(api, RoleMatrix.MANAGER)).bodyAsJsonObject().getJsonArray("items");
+
+        boolean any = false;
+
+        for (Object o : items)
+        {
+            JsonObject p = (JsonObject) o;
+
+            if (p.getValue("averageOutcome") != null)
+            {
+                any = true;
+
+                assertTrue(p.getDouble("averageOutcome") >= 1 && p.getDouble("averageOutcome") <= 5, p.encode());
+            }
+        }
+
+        assertTrue(any, "the seed has finished plans with a final rating: " + items.encode());
+    }
 }

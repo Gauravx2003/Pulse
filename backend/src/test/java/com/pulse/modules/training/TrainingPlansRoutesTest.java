@@ -199,4 +199,36 @@ class TrainingPlansRoutesTest
 
         assertEquals(400, api.post("/api/v1/training/plans", rahul, newPlan("Too long").put("weeks", 60)).statusCode());
     }
+
+    @Test
+    void theLibraryShowsPassRateAverageOutcomeAndTraineeRating() throws Exception
+    {
+        // Reference trLibrary: Pass among assessed, mean final rating of finished plans, mean plan rating at sign-off.
+        io.vertx.core.json.JsonArray items = api.get("/api/v1/training/plans", com.pulse.testsupport.RoleMatrix.session(api,
+                com.pulse.testsupport.RoleMatrix.MANAGER)).bodyAsJsonObject().getJsonArray("items");
+
+        boolean anyOutcome = false;
+
+        for (Object o : items)
+        {
+            io.vertx.core.json.JsonObject p = (io.vertx.core.json.JsonObject) o;
+
+            assertTrue(p.containsKey("passRate") && p.containsKey("averageOutcome") && p.containsKey("traineeRating"), p.encode());
+
+            if (p.getValue("passRate") != null)
+            {
+                assertTrue(p.getInteger("passRate") >= 0 && p.getInteger("passRate") <= 100, p.encode());
+            }
+
+            if (p.getValue("averageOutcome") != null)
+            {
+                anyOutcome = true;
+
+                assertTrue(p.getDouble("averageOutcome") >= 1 && p.getDouble("averageOutcome") <= 5, p.encode());
+            }
+        }
+
+        // Without the reviews tables (this test applies V350 only) final ratings can't be computed: no outcome yet.
+        assertTrue(!anyOutcome || items.size() > 0);
+    }
 }

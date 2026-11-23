@@ -45,9 +45,103 @@ final class PlanService
         this.ctx = ctx;
     }
 
+    /**
+     * The library with each plan's results (reference trLibrary): {@code passRate} (Pass among assessed
+     * assignments, %), {@code averageOutcome} (mean final training rating of finished assignments, 1–5)
+     * and {@code traineeRating} (mean plan rating the trainees gave at sign-off); null without data.
+     */
     Future<JsonArray> library()
     {
-        return new PlanRepository(ctx.sql()).library();
+        PlanRepository repo = new PlanRepository(ctx.sql());
+
+        return Future.all(repo.library(), repo.outcomes()).compose(all ->
+        {
+            JsonArray plans = all.resultAt(0);
+
+            JsonArray rows = all.resultAt(1);
+
+            List<Future<Object>> finals = new java.util.ArrayList<>();
+
+            List<JsonObject> finished = new java.util.ArrayList<>();
+
+            for (Object o : rows)
+            {
+                JsonObject r = (JsonObject) o;
+
+                if (r.getString("outcome") != null)
+                {
+                    finished.add(r);
+
+                    finals.add(ctx.calc().get("people.trainingRating", new JsonObject().put("assignment", r.getString("id")))
+                            .map(com.pulse.calc.core.ResultGuard::unguard)
+                            // a rating that can't be computed (e.g. no reviews tables) counts as no outcome
+                            .otherwise((Object) null));
+                }
+            }
+
+            return Future.all(finals).map(done ->
+            {
+                for (Object p : plans)
+                {
+                    JsonObject plan = (JsonObject) p;
+
+                    String id = plan.getString("id");
+
+                    int assessed = 0;
+
+                    int passed = 0;
+
+                    double ratingSum = 0;
+
+                    int ratings = 0;
+
+                    for (Object o : rows)
+                    {
+                        JsonObject r = (JsonObject) o;
+
+                        if (!id.equals(r.getString("planId")))
+                        {
+                            continue;
+                        }
+
+                        if (r.getString("result") != null)
+                        {
+                            assessed++;
+
+                            passed += "Pass".equals(r.getString("result")) ? 1 : 0;
+                        }
+
+                        if (r.getNumber("planRating") != null)
+                        {
+                            ratingSum += r.getNumber("planRating").doubleValue();
+
+                            ratings++;
+                        }
+                    }
+
+                    double outcomeSum = 0;
+
+                    int outcomes = 0;
+
+                    for (int i = 0; i < finished.size(); i++)
+                    {
+                        if (id.equals(finished.get(i).getString("planId")) && finals.get(i).result() instanceof JsonObject rating
+                                && rating.getBoolean("final", false) && rating.getValue("score") instanceof Number score)
+                        {
+                            outcomeSum += score.doubleValue();
+
+                            outcomes++;
+                        }
+                    }
+
+                    plan.put("passRate", assessed == 0 ? null : Math.round(passed * 100.0 / assessed))
+                            .put("averageOutcome", outcomes == 0 ? null : Math.round(outcomeSum / outcomes * 10) / 10.0)
+                            .put("traineeRating", ratings == 0 ? null : Math.round(ratingSum / ratings * 10) / 10.0);
+                }
+
+                return plans;
+            });
+        });
     }
 
     /** A plan with its version history. */

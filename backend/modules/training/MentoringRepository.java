@@ -216,6 +216,22 @@ final class MentoringRepository extends ScopedRepository
                 Tuple.tuple());
     }
 
+    /**
+     * People in scope who can sign in, as mentor choices: {@code [{id (user id), personId, name, title, mentoring}]},
+     * {@code mentoring} being their open assignments as a mentor.
+     */
+    Future<JsonArray> mentorOptions(Scope scope)
+    {
+        return scopedList(scope, "p.id", """
+                SELECT u.id, p.id AS "personId", p.name, p.title,
+                       (SELECT count(*) FROM training_assignments a WHERE a.mentor_id = u.id AND a.outcome IS NULL)::int AS mentoring
+                FROM people p JOIN users u ON u.id = p.user_id
+                WHERE u.status = 'Active' AND u.deleted_at IS NULL AND {scope}
+                ORDER BY p.name
+                """,
+                Tuple.tuple());
+    }
+
     /** People in scope who joined after {@code since} and have no training assignment at all. */
     Future<JsonArray> joinersWithoutPlan(Scope scope, LocalDate since)
     {

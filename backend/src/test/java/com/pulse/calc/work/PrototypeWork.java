@@ -400,7 +400,7 @@ final class PrototypeWork
 
     /**
      * A stand-in for Track 3's optional ports, answering from the prototype's leave, visits, visit
-     * points, onboarding, last 1:1s, kudos, training plans and team wins.
+     * points, onboarding, last 1:1s, kudos, training plans, team wins and Track 3's part of Progress.
      */
     FormulaModule ports()
     {
@@ -440,7 +440,15 @@ final class PrototypeWork
                         Formula.of("people.wins", Set.of("person"), Set.of(),
                                 (ctx, params) -> Future.succeededFuture(proto("teamWins([person(id)]).filter(function(w){"
                                         + "return w.what.indexOf('Fixed a bug')!==0}).map(function(w){return {what:w.what,text:w.text,"
-                                        + "at:w.at}})", params))));
+                                        + "at:w.at}})", params))),
+                        Formula.of("people.progress", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("(function(p){var T3=['Delighted customer','Training completed',"
+                                        + "'Mentor'];return {achievements:achievements(p).filter(function(a){return T3.indexOf(a[0])>=0})"
+                                        + ".map(function(a){return {title:a[0],detail:a[1],value:a[2]}}),nextSteps:nextActions(p).filter("
+                                        + "function(x){return ['reviews','training','visits'].indexOf(x[1])>=0}).map(function(x){return "
+                                        + "{text:x[0],target:{module:x[1]},selfOnly:x[1]==='reviews'}}),training:trPerson(p.id).as.map("
+                                        + "function(a){return {plan:a.plan.name,stage:trStage(a),rating:trRating(a).score}})}})(person(id))",
+                                        params))));
             }
         };
     }

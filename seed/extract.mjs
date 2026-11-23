@@ -83,6 +83,10 @@ export const DATASETS = {
     entries(byPerson).map(([person, count]) => ({ area, person, count }))),
   areas: (p) => p.json('AREAS').map((name) => ({ name })),
   discipline_inputs: (p) => entries(p.json('DISC')).map(([person, d]) => ({ person, ...d })),
+  // Discipline rule a (task 10.2): the prototype's daily-update days per person (discDays), so the
+  // compliance and base band match discMetrics on the seed
+  discipline_days: (p) => entries(p.json('DISC')).flatMap(([person]) =>
+    p.json(`discDays(person('${person}'))`).map(([date, updated]) => ({ person, date, updated }))),
 
   // time
   attendance: (p) => entries(p.json('ATT')).flatMap(([person, days]) =>

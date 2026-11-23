@@ -41,11 +41,17 @@ public final class PrStandard
 
     public static final String STANDARD = "Standard";
 
+    /**
+     * An issue, suggestion or todo shorter than {@code prCmtMin} after its label (spec work/pull-requests
+     * "Short issue comment"; the prototype calls it "Needs a reason").
+     */
+    public static final String TOO_SHORT = "Too short";
+
     private static final Pattern LABELLED = Pattern.compile(
             "^(praise|suggestion|issue|question|nitpick|todo|thought|chore)(\\s*\\((blocking|non-blocking|if-minor)\\))?:\\s*(.+)$",
             Pattern.CASE_INSENSITIVE);
 
-    private static final Pattern NEEDS_REASON = Pattern.compile("^(issue|suggestion|todo)$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern NEEDS_LENGTH = Pattern.compile("^(issue|suggestion|todo)$", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern BLOCKING = Pattern.compile("^(issue|todo)|\\(blocking\\)", Pattern.CASE_INSENSITIVE);
 
@@ -75,7 +81,9 @@ public final class PrStandard
 
     /**
      * {@code cmtClass}: [tone, class] of a review comment: Standard, No label, Too short · no label, or
-     * Needs a reason (an issue, suggestion or todo shorter than {@code prCmtMin} after its label).
+     * Too short (an issue, suggestion or todo shorter than {@code prCmtMin} after its label). Deviation:
+     * the prototype names the last class "Needs a reason"; the spec's scenario and the product decision
+     * name it "Too short".
      */
     public static JsonArray commentClass(String text, JsonObject rules)
     {
@@ -90,9 +98,9 @@ public final class PrStandard
                     : new JsonArray().add("accent").add("No label");
         }
 
-        if (NEEDS_REASON.matcher(m.group(1)).matches() && m.group(4).length() < min)
+        if (NEEDS_LENGTH.matcher(m.group(1)).matches() && m.group(4).length() < min)
         {
-            return new JsonArray().add("accent").add("Needs a reason");
+            return new JsonArray().add("accent").add(TOO_SHORT);
         }
 
         return new JsonArray().add("ok").add(STANDARD);

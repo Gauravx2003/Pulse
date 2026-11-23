@@ -17,7 +17,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * PR standard formulas of {@code calc/work} (task 10.1): the loaders around {@link PrStandard}. PRs are
+ * PR standard formulas of {@code calc/work} (tasks 10.1 and 10.2): the loaders around {@link PrStandard}
+ * and {@link PrViews}. PRs are
  * read with their reviews and each reviewer's comments; a comment belongs to the review it names, or to
  * its author's review on that PR. The standard (title rule, size limit, approvals, comment length and
  * which checks are on) comes from the rules in force.
@@ -36,11 +37,23 @@ public final class PrFormulas implements FormulaModule
 
     public static final String DETAIL = "work.prDetail";
 
+    /**
+     * The Person tab (task 10.2): {@link PrViews#person}.
+     */
+    public static final String PERSON_VIEW = "work.prPersonView";
+
+    /**
+     * The PR standard as Rules has it (task 10.2): every user may read it.
+     */
+    public static final String STANDARD = "work.prStandard";
+
     private static final String PR_ROW = """
-            SELECT p.id, p.number, p.author_id AS "authorId", p.title, p.suggested_title AS "suggestedTitle",
+            SELECT p.id, p.number, p.tool, p.repo, p.url, p.author_id AS "authorId", a.name AS "authorName", p.title,
+                   p.suggested_title AS "suggestedTitle",
                    p.work_item_key AS "workItemKey", p.status,
                    to_char(p.opened_at AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD') AS "openedAt",
-                   p.lines_changed AS "linesChanged", p.has_summary AS "hasSummary", p.has_testing AS "hasTesting",
+                   to_char(p.merged_at AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD') AS "mergedAt",
+                   p.lines_changed AS "linesChanged", p.files_changed AS "filesChanged", p.has_summary AS "hasSummary", p.has_testing AS "hasTesting",
                    p.has_risk AS "hasRisk", p.build_passed AS "buildPassed", p.first_review_hours AS "firstReviewHours",
                    coalesce((SELECT json_agg(json_build_object(
                                  'reviewerId', r.reviewer_id, 'vote', r.vote,
@@ -53,7 +66,7 @@ public final class PrFormulas implements FormulaModule
                                                       '[]'::json))
                                  ORDER BY r.reviewed_at NULLS LAST, r.id)
                              FROM pr_reviews r WHERE r.pull_request_id = p.id), '[]'::json) AS reviews
-            FROM pull_requests p
+            FROM pull_requests p LEFT JOIN people a ON a.id = p.author_id
             """;
 
     @Override
@@ -70,7 +83,9 @@ public final class PrFormulas implements FormulaModule
         return List.of(
                 new Formula(PERSON, Set.of("person", "period"), topics, Set.of(PeriodCalendar.SPRINT), safe(PrFormulas::person)),
                 Formula.of(TEAM, Set.of("team", "period"), topics, safe(PrFormulas::team)),
-                Formula.of(DETAIL, Set.of("pr"), topics, safe(PrFormulas::detail)));
+                Formula.of(DETAIL, Set.of("pr"), topics, safe(PrFormulas::detail)),
+                Formula.of(PERSON_VIEW, Set.of("person", "period"), topics, safe(PrFormulas::personView)),
+                Formula.of(STANDARD, Set.of(), Set.of(), safe(PrFormulas::standard)));
     }
 
     /**
@@ -81,15 +96,66 @@ public final class PrFormulas implements FormulaModule
     {
         UUID person = uuid(params, "person");
 
-        return range(ctx, params).compose(range -> WorkSql.rows(ctx, PR_ROW + """
+        return range(ctx, params).compose(range -> personRows(ctx, person, range)
+                .map(rows -> (Object) PrStandard.person(person.toString(), list(rows), range[0], range[1], ctx.rules())
+                        .put("period", params.getString("period"))));
+    }
+
+    /**
+     * {@code work.prPersonView {person, period}}: {@link PrViews#person} over the PRs the person wrote or
+     * reviewed in the period.
+     */
+    private static Future<Object> personView(CalcContext ctx, JsonObject params)
+    {
+        UUID person = uuid(params, "person");
+
+        return range(ctx, params).compose(range -> personRows(ctx, person, range)
+                .map(rows -> (Object) PrViews.person(person.toString(), list(rows), ctx.rules())
+                        .put("period", params.getString("period"))));
+    }
+
+    /**
+     * {@code work.prStandard {}}: the checks with whether each is on, and the title pattern, size limit,
+     * approvals, comment length, first-review SLA and target of the rules in force.
+     */
+    private static Future<Object> standard(CalcContext ctx, JsonObject params)
+    {
+        JsonObject r = ctx.rules();
+
+        JsonArray checks = new JsonArray()
+                .add(check("title", "Title follows the standard", true))
+                .add(check("item", "Linked work item", r.getBoolean("prItem", true)))
+                .add(check("desc", "Description template", r.getBoolean("prDesc", true)))
+                .add(check("size", "Size within " + r.getInteger("prMaxLines", 400) + " lines", true))
+                .add(check("appr", r.getInteger("prMinAppr", 2) + " approvals", true))
+                .add(check("build", "Build passed", true))
+                .add(check("threads", "Blocking threads resolved", r.getBoolean("prThreads", true)));
+
+        return Future.succeededFuture(new JsonObject()
+                .put("checks", checks)
+                .put("titlePattern", PrStandard.titleRule(r).pattern())
+                .put("maxLines", r.getInteger("prMaxLines", 400))
+                .put("minApprovals", r.getInteger("prMinAppr", 2))
+                .put("commentMin", r.getInteger("prCmtMin", 20))
+                .put("firstReviewSlaHours", r.getInteger("prSla", 24))
+                .put("target", r.getInteger("prTarget", 85))
+                .put("rubberStampLines", PrStandard.RUBBER_STAMP_LINES));
+    }
+
+    private static JsonObject check(String key, String label, boolean on)
+    {
+        return new JsonObject().put("k", key).put("l", label).put("on", on);
+    }
+
+    private static Future<JsonArray> personRows(CalcContext ctx, UUID person, LocalDate[] range)
+    {
+        return WorkSql.rows(ctx, PR_ROW + """
                          WHERE ($1::date IS NULL OR (p.opened_at AT TIME ZONE 'Asia/Kolkata')::date >= $1)
                            AND ($2::date IS NULL OR (p.opened_at AT TIME ZONE 'Asia/Kolkata')::date <= $2)
                            AND (p.author_id = $3 OR EXISTS (SELECT 1 FROM pr_reviews r
                                                             WHERE r.pull_request_id = p.id AND r.reviewer_id = $3))
                         ORDER BY p.opened_at, p.id""",
-                        Tuple.tuple().addLocalDate(range[0]).addLocalDate(range[1]).addUUID(person))
-                .map(rows -> (Object) PrStandard.person(person.toString(), list(rows), range[0], range[1], ctx.rules())
-                        .put("period", params.getString("period"))));
+                Tuple.tuple().addLocalDate(range[0]).addLocalDate(range[1]).addUUID(person));
     }
 
     /**
@@ -159,7 +225,9 @@ public final class PrFormulas implements FormulaModule
                 {
                     JsonObject comment = (JsonObject) c;
 
-                    classed.add(comment.copy().put("class", PrStandard.commentClass(comment.getString("body"), rules).getString(1)));
+                    classed.add(comment.copy()
+                            .put("class", PrStandard.commentClass(comment.getString("body"), rules).getString(1))
+                            .put("rewrite", PrViews.commentRewrite(comment.getString("body"), rules)));
                 }
 
                 reviews.add(review.put("comments", classed));
@@ -194,7 +262,24 @@ public final class PrFormulas implements FormulaModule
                     .put("overFirstReviewSla", Workload.orZero(Workload.number(pr, "firstReviewHours"))
                             > rules.getDouble("prSla", 24.0))
                     .put("rubberStamp", stamp)
-                    .put("reviews", reviews);
+                    .put("reviews", reviews)
+                    .put("pr", new JsonObject()
+                            .put("number", pr.getString("number"))
+                            .put("tool", pr.getString("tool"))
+                            .put("repo", pr.getString("repo"))
+                            .put("status", pr.getString("status"))
+                            .put("title", pr.getString("title"))
+                            .put("authorId", pr.getString("authorId"))
+                            .put("authorName", pr.getString("authorName"))
+                            .put("openedAt", pr.getString("openedAt"))
+                            .put("mergedAt", pr.getString("mergedAt"))
+                            .put("linesChanged", pr.getValue("linesChanged"))
+                            .put("filesChanged", pr.getValue("filesChanged"))
+                            .put("firstReviewHours", pr.getValue("firstReviewHours"))
+                            .put("workItemKey", pr.getString("workItemKey"))
+                            .put("url", pr.getString("url")))
+                    .put("suggestedTitle", PrViews.titleRewrite(pr.getString("title"), pr.getString("workItemKey"),
+                            pr.getString("suggestedTitle"), rules));
         });
     }
 

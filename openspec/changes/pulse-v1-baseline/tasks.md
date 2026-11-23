@@ -99,7 +99,7 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 ## 10. Pull requests
 
 - [x] 10.1 Port the PR standard into `calc/work/`, exposed through `CalcService` (7 checks, Pending handling, comment classes, rubber-stamp, first-review time, per-person and team stats); verify by comparing against the oracle `prStats` (line ~1543) for every seeded person and period.
-- [ ] 10.2 Implement PR endpoints (team, person, list, detail, standard read) with the standard taken from Rules, and the rewrite suggestions for titles and comments; verify tests for each scenario in `work/pull-requests` and that a person's PR standard below 85% shows Discipline rule g as Improve.
+- [x] 10.2 Implement PR endpoints (team, person, list, detail, standard read) with the standard taken from Rules, and the rewrite suggestions for titles and comments; verify tests for each scenario in `work/pull-requests` and that a person's PR standard below 85% shows Discipline rule g as Improve.
 - [ ] 10.3 Build the Pull requests screens (Team and Person tabs, PR detail modal, PR standard modal); verify Playwright and the UI audit.
 
 ## 11. Effort and extra-mile

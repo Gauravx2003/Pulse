@@ -134,8 +134,15 @@ class PrStandardTest
 
         for (Object text : texts)
         {
-            assertEquals(oracle.eval("cmtClass(" + new JsonArray().add(text).encode().replaceAll("^\\[|]$", "") + ")"),
-                    PrStandard.commentClass((String) text, rules), (String) text);
+            JsonArray expected = (JsonArray) oracle.eval("cmtClass(" + new JsonArray().add(text).encode().replaceAll("^\\[|]$", "") + ")");
+
+            // decided deviation (spec "Short issue comment"): the prototype's "Needs a reason" is "Too short"
+            if ("Needs a reason".equals(expected.getString(1)))
+            {
+                expected = new JsonArray().add(expected.getString(0)).add(PrStandard.TOO_SHORT);
+            }
+
+            assertEquals(expected, PrStandard.commentClass((String) text, rules), (String) text);
         }
 
         assertTrue(texts.size() > 300, "every seeded comment: " + texts.size());
@@ -222,7 +229,7 @@ class PrStandardTest
                     + "sp=cm.length?Math.round(cm.filter(function(t){return cmtClass(t)[1]==='Standard'}).length/cm.length*100):null;"
                     + "var keys={},ord=[];all.forEach(function(x){prChecks(x).forEach(function(c){if(c.ok===null)return;"
                     + "if(!keys[c.k]){keys[c.k]={k:c.k,l:c.l,p:0,n:0};ord.push(c.k)}keys[c.k].n++;if(c.ok)keys[c.k].p++})});"
-                    + "var g={};cm.forEach(function(t){var c=cmtClass(t)[1];g[c]=(g[c]||0)+1});"
+                    + "var g={};cm.forEach(function(t){var c=cmtClass(t)[1];if(c==='Needs a reason')c='Too short';g[c]=(g[c]||0)+1});"
                     + "var bad=all.filter(function(x){return x.status==='Completed'&&prChecks(x).some(function(c){return c.ok===false})})"
                     + ".sort(function(a,b){return prScore(a)-prScore(b)}).slice(0,8);"
                     + "return {prs:all.length,merged:all.filter(function(x){return x.status==='Completed'}).length,comp:comp,"

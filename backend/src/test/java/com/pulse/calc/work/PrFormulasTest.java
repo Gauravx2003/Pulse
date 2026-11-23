@@ -13,7 +13,6 @@ import com.pulse.platform.db.TestDb;
 import com.pulse.testsupport.Oracle;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.sqlclient.Tuple;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -77,7 +76,7 @@ class PrFormulasTest
             PEOPLE.put(p.getString("external_id"), p.getString("id"));
         }
 
-        loadPrototypePrs();
+        new PrototypeWork(oracle, owner).loadPrs();
 
         for (Object item : await(owner.queryList("SELECT id, number FROM pull_requests")))
         {
@@ -155,7 +154,7 @@ class PrFormulasTest
                     + "sp=cm.length?Math.round(cm.filter(function(t){return cmtClass(t)[1]==='Standard'}).length/cm.length*100):null;"
                     + "var keys={};all.forEach(function(x){prChecks(x).forEach(function(c){if(c.ok===null)return;"
                     + "if(!keys[c.k])keys[c.k]={k:c.k,l:c.l,p:0,n:0};keys[c.k].n++;if(c.ok)keys[c.k].p++})});"
-                    + "var g={};cm.forEach(function(t){var c=cmtClass(t)[1];g[c]=(g[c]||0)+1});"
+                    + "var g={};cm.forEach(function(t){var c=cmtClass(t)[1];if(c==='Needs a reason')c='Too short';g[c]=(g[c]||0)+1});"
                     + "var bad=all.filter(function(x){return x.status==='Completed'&&prChecks(x).some(function(c){return c.ok===false})})"
                     + ".map(prScore).sort(function(a,b){return a-b}).slice(0,8);"
                     + "return {prs:all.length,merged:all.filter(function(x){return x.status==='Completed'}).length,comp:comp,"
@@ -224,86 +223,6 @@ class PrFormulasTest
         }
 
         assertEquals(177, NUMBERS.size());
-    }
-
-    // ------------------------------------------------------------------ prototype data into the tables
-
-    private static void loadPrototypePrs() throws Exception
-    {
-        JsonArray prs = new JsonArray();
-
-        JsonArray reviews = new JsonArray();
-
-        JsonArray comments = new JsonArray();
-
-        for (Object item : (JsonArray) oracle.eval("PRS"))
-        {
-            JsonObject x = (JsonObject) item;
-
-            JsonObject desc = x.getJsonObject("desc");
-
-            String item2 = x.getString("item");
-
-            prs.add(new JsonObject()
-                    .put("number", x.getString("id")).put("tool", x.getString("src")).put("repo", x.getString("repo"))
-                    .put("title", x.getString("title")).put("suggested", x.getString("sugg")).put("author", PEOPLE.get(x.getString("pid")))
-                    .put("item", item2 == null || item2.isEmpty() ? null : item2).put("status", x.getString("status"))
-                    .put("opened", x.getString("created") + "T10:00:00+05:30")
-                    .put("merged", x.getString("merged") == null ? null : x.getString("merged") + "T18:00:00+05:30")
-                    .put("lines", x.getInteger("lines")).put("files", x.getInteger("files"))
-                    .put("summary", desc.getBoolean("summary")).put("tested", desc.getBoolean("tested")).put("risk", desc.getBoolean("risk"))
-                    .put("build", x.getBoolean("build")).put("first_review", x.getValue("firstRev")));
-
-            JsonArray reviewers = x.getJsonArray("reviewers");
-
-            for (int j = 0; j < reviewers.size(); j++)
-            {
-                JsonObject r = reviewers.getJsonObject(j);
-
-                String review = x.getString("id") + "|" + j;
-
-                reviews.add(new JsonObject().put("pr", x.getString("id")).put("external", review)
-                        .put("reviewer", PEOPLE.get(r.getString("pid"))).put("vote", r.getString("vote"))
-                        .put("at", x.getString("created") + "T11:00:00+05:30").put("seq", j));
-
-                JsonArray cs = r.getJsonArray("comments");
-
-                for (int k = 0; k < cs.size(); k++)
-                {
-                    JsonObject c = cs.getJsonObject(k);
-
-                    comments.add(new JsonObject().put("pr", x.getString("id")).put("review", review)
-                            .put("author", PEOPLE.get(r.getString("pid"))).put("body", c.getString("text"))
-                            .put("resolved", c.getBoolean("resolved")).put("at", c.getString("at") + "T12:00:00+05:30")
-                            .put("seq", j * 100 + k).put("external", review + "|" + k));
-                }
-            }
-        }
-
-        await(owner.execute("""
-                INSERT INTO pull_requests (number, tool, repo, title, suggested_title, author_id, work_item_key, status,
-                                           opened_at, merged_at, lines_changed, files_changed, has_summary, has_testing,
-                                           has_risk, build_passed, first_review_hours, source, external_id)
-                SELECT x.number, x.tool, x.repo, x.title, x.suggested, x.author, x.item, x.status, x.opened, x.merged,
-                       x.lines, x.files, x.summary, x.tested, x.risk, x.build, x.first_review, 'test', x.number
-                FROM json_to_recordset($1::json) AS x(number text, tool text, repo text, title text, suggested text,
-                     author uuid, item text, status text, opened timestamptz, merged timestamptz, lines int, files int,
-                     summary boolean, tested boolean, risk boolean, build boolean, first_review numeric)""", Tuple.of(prs)));
-
-        await(owner.execute("""
-                INSERT INTO pr_reviews (pull_request_id, reviewer_id, vote, reviewed_at, source, external_id)
-                SELECT (SELECT id FROM pull_requests WHERE external_id = x.pr AND source = 'test'), x.reviewer, x.vote,
-                       x.at + make_interval(mins => x.seq), 'test', x.external
-                FROM json_to_recordset($1::json) AS x(pr text, external text, reviewer uuid, vote text, at timestamptz, seq int)""",
-                Tuple.of(reviews)));
-
-        await(owner.execute("""
-                INSERT INTO pr_comments (pull_request_id, review_id, author_id, body, is_resolved, commented_at, source, external_id)
-                SELECT (SELECT id FROM pull_requests WHERE external_id = x.pr AND source = 'test'),
-                       (SELECT id FROM pr_reviews WHERE external_id = x.review AND source = 'test'), x.author, x.body,
-                       x.resolved, x.at + make_interval(secs => x.seq), 'test', x.external
-                FROM json_to_recordset($1::json) AS x(pr text, review text, author uuid, body text, resolved boolean,
-                     at timestamptz, seq int, external text)""", Tuple.of(comments)));
     }
 
     // ------------------------------------------------------------------ helpers

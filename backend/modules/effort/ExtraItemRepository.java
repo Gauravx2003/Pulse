@@ -13,8 +13,8 @@ import java.util.UUID;
 
 /**
  * Reads of extra-mile items (task 7.3): unplanned and extra work detected for a person, awaiting a
- * manager or decided. Every read takes a {@link Scope} ({@code person} domain). Confirm and reject
- * arrive with task 11.2.
+ * manager or decided. Every read takes a {@link Scope} ({@code person} domain); confirm and reject
+ * (task 11.2) lock the visible row and update it with its version.
  */
 public class ExtraItemRepository extends ScopedRepository
 {
@@ -50,5 +50,24 @@ public class ExtraItemRepository extends ScopedRepository
     public Future<JsonObject> byId(Scope scope, UUID id)
     {
         return scopedOne(scope, "x.person_id", ITEM + " WHERE x.id = $1 AND {scope}", Tuple.of(id));
+    }
+
+    /**
+     * One visible item, locked until the transaction ends, or {@code null}.
+     */
+    public Future<JsonObject> lockVisible(Scope scope, UUID id)
+    {
+        return scopedOne(scope, "x.person_id", ITEM + " WHERE x.id = $1 AND {scope} FOR UPDATE OF x", Tuple.of(id));
+    }
+
+    /**
+     * Records a decision ({@code confirmed} or {@code rejected}) on the version the client saw; 409
+     * {@code version_conflict} when the item changed since. Resolves to the item as {@link #byId} reads it.
+     */
+    public Future<JsonObject> decide(UUID id, String state, UUID decidedBy, int expectedVersion)
+    {
+        return updateVersioned("extra_items", "state = $1, decided_by = $2, decided_at = now()",
+                Tuple.of(state, decidedBy), id, expectedVersion)
+                .compose(row -> queryOne(ITEM + " WHERE x.id = $1", Tuple.of(id)));
     }
 }

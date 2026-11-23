@@ -114,6 +114,51 @@ class EffortTest
     // ------------------------------------------------------------------ spec scenarios
 
     @Test
+    void theCulturePortScoresConfirmedPointsUpToEachMonthsCapInConfirmationOrder()
+    {
+        JsonObject rules = new JsonObject().put("monthCap", 6).put("visitCap", 8)
+                .put("pts", new JsonObject().put("incident", 2).put("help", 1));
+
+        List<JsonObject> items = List.of(
+                scoredItem("a", "incident", "2026-09-03", "2026-09-04T10:00:00Z", "confirmed"),
+                scoredItem("b", "incident", "2026-09-20", "2026-09-21T10:00:00Z", "confirmed"),
+                scoredItem("c", "help", "2026-09-25", "2026-09-26T10:00:00Z", "confirmed"),
+                scoredItem("d", "incident", "2026-09-01", "2026-09-28T10:00:00Z", "confirmed"),   // older work, confirmed last
+                scoredItem("e", "incident", "2026-09-05", null, "pending"),
+                scoredItem("f", "incident", "2026-08-30", "2026-09-28T11:00:00Z", "confirmed"));  // August: its own cap
+
+        JsonArray scored = Effort.scored(items, rules, null);
+
+        assertEquals(2.0, scored.getJsonObject(0).getDouble("points"), 1e-9);
+        assertEquals(2.0, scored.getJsonObject(1).getDouble("points"), 1e-9);
+        assertEquals(1.0, scored.getJsonObject(2).getDouble("points"), 1e-9);
+        assertEquals(1.0, scored.getJsonObject(3).getDouble("points"), 1e-9, "only 1 of its 2 points fits under 6");
+        assertEquals(1.0, scored.getJsonObject(3).getDouble("capped"), 1e-9);
+        assertEquals(2.0, scored.getJsonObject(4).getDouble("points"), 1e-9, "pending keeps its points; the bonus skips it");
+        assertEquals(2.0, scored.getJsonObject(5).getDouble("points"), 1e-9);
+        assertEquals("confirmed", scored.getJsonObject(3).getString("state"));
+    }
+
+    @Test
+    void visitPointsHaveTheirOwnMonthlyCap()
+    {
+        JsonObject rules = new JsonObject().put("monthCap", 6).put("visitCap", 8).put("pts", new JsonObject().put("incident", 2));
+
+        JsonObject visits = new JsonObject().put("VIS-1", 5.0).put("VIS-2", 5.0);
+
+        List<JsonObject> items = List.of(
+                scoredItem("a", "incident", "2026-09-03", "2026-09-04T10:00:00Z", "confirmed").put("ref", "INC-1"),
+                scoredItem("b", "visit", "2026-09-04", "2026-09-05T10:00:00Z", "confirmed").put("ref", "VIS-1"),
+                scoredItem("c", "visit", "2026-09-10", "2026-09-11T10:00:00Z", "confirmed").put("ref", "VIS-2"));
+
+        JsonArray scored = Effort.scored(items, rules, visits);
+
+        assertEquals(2.0, scored.getJsonObject(0).getDouble("points"), 1e-9);
+        assertEquals(5.0, scored.getJsonObject(1).getDouble("points"), 1e-9);
+        assertEquals(3.0, scored.getJsonObject(2).getDouble("points"), 1e-9, "visits stop at 8, apart from work points");
+    }
+
+    @Test
     void confirmedPointsAboveTheMonthlyCapDoNotScore()
     {
         JsonObject rules = new JsonObject().put("monthCap", 6).put("visitCap", 8).put("pts", new JsonObject().put("incident", 2));
@@ -231,6 +276,12 @@ class EffortTest
     /**
      * A prototype EXTRA item in the shape of the extra_items rows.
      */
+    private static JsonObject scoredItem(String id, String kind, String occurredOn, String decidedAt, String state)
+    {
+        return new JsonObject().put("id", id).put("kind", kind).put("ref", id).put("isDone", true).put("state", state)
+                .put("occurredOn", occurredOn).put("decidedAt", decidedAt).put("valuesCredited", new JsonArray().add("Collaboration"));
+    }
+
     private static JsonObject item(JsonObject x)
     {
         return new JsonObject()

@@ -96,6 +96,89 @@ public final class Effort
     }
 
     /**
+     * The points each item scores for the culture bonus (spec work/effort-extra-mile "Caps"): confirmed
+     * items count in the order they were confirmed ({@code decidedAt}, then date) until the person's
+     * month of the work reaches {@code monthCap}, visits separately up to {@code visitCap}; the excess
+     * does not score, so a later confirmation never takes points from an earlier one. Other items keep their points (the
+     * bonus reads confirmed items only). Deviation: the prototype's {@code valueBonus} ignores the
+     * monthly caps, which only its {@code monthStats} totals show; the spec's "the excess does not score"
+     * wins.
+     *
+     * @param items {@code {id, occurredOn, decidedAt, kind, ref, isDone, state, valuesCredited}} of one person
+     * @return per item, in the order given: {@code {state, points, values, capped}}, where {@code capped}
+     *         is the points the cap took away
+     */
+    public static JsonArray scored(List<JsonObject> items, JsonObject rules, JsonObject visitPoints)
+    {
+        double monthCap = rules.getDouble("monthCap", 6.0);
+
+        double visitCap = rules.getDouble("visitCap", 8.0);
+
+        List<Integer> order = new ArrayList<>();
+
+        for (int i = 0; i < items.size(); i++)
+        {
+            order.add(i);
+        }
+
+        order.sort(Comparator.comparing((Integer i) -> items.get(i).getValue("decidedAt") == null ? "~"
+                        : String.valueOf(items.get(i).getValue("decidedAt")))
+                .thenComparing(i -> String.valueOf(items.get(i).getValue("occurredOn")))
+                .thenComparing(i -> String.valueOf(items.get(i).getValue("id"))));
+
+        Map<String, Double> used = new LinkedHashMap<>();
+
+        double[] points = new double[items.size()];
+
+        double[] taken = new double[items.size()];
+
+        for (int i : order)
+        {
+            JsonObject item = items.get(i);
+
+            double raw = points(item, rules, visitPoints);
+
+            points[i] = raw;
+
+            if (!"confirmed".equals(item.getString("state")) || raw <= 0)
+            {
+                continue;
+            }
+
+            boolean visit = VISIT.equals(item.getString("kind"));
+
+            String month = String.valueOf(item.getValue("occurredOn"));
+
+            String bucket = (month.length() >= 7 ? month.substring(0, 7) : month) + (visit ? ":visit" : ":work");
+
+            double before = used.getOrDefault(bucket, 0.0);
+
+            double counted = Math.max(0, Math.min(raw, (visit ? visitCap : monthCap) - before));
+
+            used.put(bucket, before + counted);
+
+            points[i] = counted;
+
+            taken[i] = raw - counted;
+        }
+
+        JsonArray out = new JsonArray();
+
+        for (int i = 0; i < items.size(); i++)
+        {
+            JsonObject item = items.get(i);
+
+            out.add(new JsonObject()
+                    .put("state", item.getString("state"))
+                    .put("points", points[i])
+                    .put("values", item.getJsonArray("valuesCredited", new JsonArray()))
+                    .put("capped", taken[i]));
+        }
+
+        return out;
+    }
+
+    /**
      * The effort totals of {@code monthStats} for a period's items and hours logged: unplanned,
      * untracked, review and visit hours, planned hours (the rest), confirmed and pending points within
      * the monthly caps ({@code monthCap}, and {@code visitCap} for visits apart), whether a cap was hit,

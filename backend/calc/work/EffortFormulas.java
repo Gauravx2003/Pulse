@@ -49,7 +49,8 @@ public final class EffortFormulas implements FormulaModule
     private static final String ITEM_ROW = """
             SELECT x.id, x.detection_key AS "detectionKey", x.kind, x.ref, x.title, x.requested_by AS "requestedBy",
                    x.detection_note AS "detectionNote", x.evidence_source AS "evidenceSource", x.occurred_on AS "occurredOn",
-                   x.hours, x.is_done AS "isDone", x.values_credited AS "valuesCredited", x.state
+                   x.hours, x.is_done AS "isDone", x.values_credited AS "valuesCredited", x.state,
+                   x.decided_at AS "decidedAt"
             FROM extra_items x
             """;
 
@@ -192,7 +193,8 @@ public final class EffortFormulas implements FormulaModule
 
     /**
      * {@code work.extraMileItems {person, period}}: the input port of {@code core.culture}: every item of
-     * the quarter as {@code {state, points, values}}; the culture bonus and its caps are core's.
+     * the quarter as {@code {state, points, values, capped}}, confirmed points already within the monthly
+     * caps ({@link Effort#scored}); the bonus per point and its 0.3 cap per value are core's.
      */
     private static Future<Object> cultureItems(CalcContext ctx, JsonObject params)
     {
@@ -209,17 +211,7 @@ public final class EffortFormulas implements FormulaModule
             {
                 JsonObject visitPoints = visits.result() instanceof JsonObject v ? v : null;
 
-                JsonArray out = new JsonArray();
-
-                for (JsonObject item : list(items.result()))
-                {
-                    out.add(new JsonObject()
-                            .put("state", item.getString("state"))
-                            .put("points", Effort.points(item, ctx.rules(), visitPoints))
-                            .put("values", item.getJsonArray("valuesCredited", new JsonArray())));
-                }
-
-                return (Object) out;
+                return (Object) Effort.scored(list(items.result()), ctx.rules(), visitPoints);
             });
         });
     }

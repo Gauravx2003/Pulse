@@ -466,6 +466,30 @@ test.describe('Integrations', () => {
     await expect(card(page, 'Credential activity')).toContainText('Credentials changed');
   });
 
+  test('Scheduled jobs lists every job and the Admin runs one now (task 5.5)', async ({ page }) => {
+    await signIn(page, DEMO.admin);
+    await page.goto('/integrations');
+
+    const jobs = card(page, 'Scheduled jobs');
+
+    for (const name of [
+      'progress.friday-pulse',
+      'progress.monday-digest',
+      'attendance.month-end-reminder',
+      'work.stale-signal-refresh',
+      'integrations.token-expiry-check',
+      'platform.retention-purge',
+    ]) {
+      await expect(jobs).toContainText(name);
+    }
+
+    await jobs.getByRole('button', { name: 'Run platform.retention-purge now' }).click();
+    await expect(toast(page, 'platform.retention-purge · Succeeded')).toBeVisible();
+    await expect(jobs.locator('tr', { hasText: 'platform.retention-purge' })).toContainText('Succeeded');
+
+    await expectNoHorizontalScroll(page);
+  });
+
   test('Manager and Employee get the no-access card on Integrations', async ({ page }) => {
     for (const who of [DEMO.manager, DEMO.employee]) {
       await signIn(page, who);

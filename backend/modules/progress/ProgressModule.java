@@ -31,12 +31,12 @@ public class ProgressModule implements PulseModule
     /**
      * The Friday weekly-pulse prompt.
      */
-    public static final String PROMPT_JOB = "progress.pulse-prompt";
+    public static final String PROMPT_JOB = "progress.friday-pulse";
 
     /**
      * Fridays at 16:00 (minute hour day-of-month month day-of-week).
      */
-    public static final String PROMPT_SCHEDULE = "0 16 * * FRI";
+    public static final String PROMPT_SCHEDULE = "0 16 * * 5";
 
     private static final String[] VIEW = {"self.view", "team.view", "all.view"};
 
@@ -94,10 +94,19 @@ public class ProgressModule implements PulseModule
         return List.of(new PulseActionProvider());
     }
 
+    /**
+     * The Friday prompt (task 13.3) and the Monday digest, run by the task 5.5 scheduler.
+     * TODO(13.x): Monday — send each manager the weekly digest by email and Slack (the preview is
+     * {@code GET /action_center/digest}); it still resolves to {@code {pending}}.
+     */
     @Override
     public List<JobSpec> jobs()
     {
-        return List.of(new JobSpec(PROMPT_JOB, PROMPT_SCHEDULE, ctx -> new ProgressService(ctx).prompt().mapEmpty()));
+        return List.of(
+                JobSpec.of(PROMPT_JOB, PROMPT_SCHEDULE, "Asks everyone without an answer for the weekly pulse",
+                        ctx -> new ProgressService(ctx).prompt().map(n -> new JsonObject().put("prompted", n))),
+                JobSpec.of("progress.monday-digest", "0 9 * * 1", "Sends the weekly digest",
+                        ctx -> Future.succeededFuture(new JsonObject().put("pending", "weekly digest delivery"))));
     }
 
     @Override

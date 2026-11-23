@@ -32,6 +32,7 @@ import java.time.LocalDate;
  * lowPulse                                           manager                   /actions
  * attendanceUploaded                                 manager                   /attendance
  * staleNudge                                         assignee                  /work-items?issue=
+ * tokenExpiring                                      Admin                     /integrations
  * </pre>
  */
 public final class NotificationTriggers
@@ -75,6 +76,8 @@ public final class NotificationTriggers
     public static final String ATTENDANCE_UPLOADED = "attendance.uploaded";
 
     public static final String STALE_NUDGE = "work.stale_nudge";
+
+    public static final String TOKEN_EXPIRING = "integrations.token_expiring";
 
     /** Rater group of a 360° request (spec culture/review-360). */
     public enum RaterGroup
@@ -286,6 +289,12 @@ public final class NotificationTriggers
         };
 
         return what + " · " + cycleName + " · due " + CalendarFormat.date(due);
+    }
+
+    /** "Jira: Token expires in 3 days" to an Admin, by the expiring-token check (task 5.5); never the token. */
+    public static JsonObject tokenExpiring(String adminUserId, String toolName, String status)
+    {
+        return notice(adminUserId, TOKEN_EXPIRING, toolName + ": " + status, "/integrations");
     }
 
     private static JsonObject notice(String userId, String kind, String text, String link)

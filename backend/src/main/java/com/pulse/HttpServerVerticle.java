@@ -21,6 +21,8 @@ import com.pulse.platform.http.RateLimiter;
 import com.pulse.platform.http.RequestId;
 import com.pulse.platform.http.SecurityHeaders;
 import com.pulse.platform.http.SecuritySettings;
+import com.pulse.platform.jobs.JobRoutes;
+import com.pulse.platform.jobs.JobRunner;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.ModuleRegistry;
 import com.pulse.platform.module.PulseModule;
@@ -175,6 +177,9 @@ public class HttpServerVerticle extends AbstractVerticle
         ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy, calc, registry);
 
         NotificationRoutes.mount(router, API_PREFIX, moduleContext, navigation);
+
+        // scheduled jobs (task 5.5): the Admin trigger and run records; the ticks run in SchedulerVerticle
+        JobRoutes.mount(router, API_PREFIX, policy, new JobRunner(moduleContext));
 
         for (PulseModule module : registry.modules())
         {

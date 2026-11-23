@@ -1,9 +1,11 @@
 package com.pulse.modules.integrations;
 
+import com.pulse.platform.jobs.JobRunRepository;
 import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.ArrayList;
@@ -12,13 +14,16 @@ import java.util.List;
 /**
  * Action center items for Admins from the Integrations tiles (task 13.1, spec insight/action-center
  * "Appraisal, attendance and integration triggers"): a failing sync is High and a token near or past
- * expiry is Low, each with Fix. The state and status text are the tiles' own, so the item says what the
+ * expiry is Low, each with Fix. A scheduled job whose newest run failed after its retries is High too
+ * (task 5.5). The state and status text are the tiles' own, so the item says what the
  * Integrations screen says. Item shape as {@code com.pulse.modules.action_center.ActionItems}.
  */
 final class IntegrationHealthProvider implements ActionProvider
 {
 
     static final String KEY = "integrations.health";
+
+    static final String JOB_KEY = "integrations.job-failed";
 
     @Override
     public String key()
@@ -34,7 +39,9 @@ final class IntegrationHealthProvider implements ActionProvider
             return Future.succeededFuture(List.of());
         }
 
-        return new IntegrationsService(ctx, IntegrationsService.connectors(ctx)).tiles().map(body ->
+        Future<JsonArray> failedJobs = new JobRunRepository(ctx.sql()).failing();
+
+        return new IntegrationsService(ctx, IntegrationsService.connectors(ctx)).tiles().compose(body -> failedJobs.map(jobs ->
         {
             List<JsonObject> items = new ArrayList<>();
 
@@ -60,7 +67,24 @@ final class IntegrationHealthProvider implements ActionProvider
                         .put("target", new JsonObject().put("module", "integrations").put("id", tile.getString("id"))));
             }
 
+            // a scheduled job that failed after its retries (task 5.5, spec jobs-scheduler "Failed job")
+            for (Object item : jobs)
+            {
+                JsonObject run = (JsonObject) item;
+
+                items.add(new JsonObject()
+                        .put("key", JOB_KEY)
+                        .put("priority", "High")
+                        .put("source", "Scheduler")
+                        .putNull("personId")
+                        .put("personName", run.getString("job"))
+                        .put("text", "Job failed after " + run.getInteger("attempts")
+                                + (run.getInteger("attempts", 0) == 1 ? " attempt: " : " attempts: ") + run.getString("error", "no message"))
+                        .put("button", "Fix")
+                        .put("target", new JsonObject().put("module", "integrations").put("id", "jobs")));
+            }
+
             return items;
-        });
+        }));
     }
 }

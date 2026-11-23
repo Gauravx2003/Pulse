@@ -77,7 +77,7 @@ class PulsePromptJobTest
     {
         JobSpec job = new ProgressModule().jobs().stream().filter(j -> ProgressModule.PROMPT_JOB.equals(j.name())).findFirst().orElseThrow();
 
-        assertEquals("0 16 * * FRI", job.schedule());
+        assertEquals("0 16 * * 5", job.schedule());
 
         long expected = count("""
                 SELECT count(*) FROM users u JOIN roles r ON r.id = u.role_id JOIN people p ON p.user_id = u.id
@@ -85,7 +85,7 @@ class PulsePromptJobTest
 
         assertTrue(expected > 0);
 
-        await(job.task().apply(ctx));
+        assertEquals(expected, (long) await(job.task().apply(ctx)).getInteger("prompted"));
 
         assertEquals(expected, count("SELECT count(*) FROM notifications WHERE kind = 'pulse.prompt'"));
         assertEquals(expected, count("""

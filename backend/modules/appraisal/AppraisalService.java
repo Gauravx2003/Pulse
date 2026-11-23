@@ -90,6 +90,12 @@ final class AppraisalService
                 .map(t));
     }
 
+    /** Proposal statuses of the viewer's people ({@code {Draft: 3, Submitted: 2}}), for the Action Center; not audited. */
+    Future<JsonObject> statuses(JsonObject user)
+    {
+        return load(user).map(t -> t.getJsonObject("kpis").getJsonObject("statuses"));
+    }
+
     /** Everything the table, submit and the decisions read; not audited. */
     private Future<JsonObject> load(JsonObject user)
     {

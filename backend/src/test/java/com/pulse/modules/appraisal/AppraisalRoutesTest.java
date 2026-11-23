@@ -29,7 +29,7 @@ class AppraisalRoutesTest
     @BeforeAll
     static void start() throws Exception
     {
-        api = TestApi.start(PORT, new JsonObject().put("today", "2026-09-28"), "imports", "reviews", "training", "appraisal");
+        api = TestApi.start(PORT, new JsonObject().put("today", "2026-09-28"), "imports", "reviews", "training", "appraisal", "action_center");
     }
 
     @AfterAll
@@ -321,5 +321,24 @@ class AppraisalRoutesTest
                 .put("version", cycle.getInteger("version"))));
 
         assertEquals("2026-10-01", moved.getString("effectiveOn"));
+    }
+
+    @Test
+    void theActionCenterShowsDraftsToManagersAndWaitingProposalsToHr() throws Exception
+    {
+        // Proposals start in Draft for the manager; once submitted they wait for HR (task 22.2).
+        String items = api.get("/api/v1/action_center/items", as(RoleMatrix.MANAGER)).bodyAsString();
+
+        JsonObject statuses = table(RoleMatrix.MANAGER).getJsonObject("kpis").getJsonObject("statuses");
+
+        assertEquals(statuses.getInteger("Draft", 0) > 0, items.contains("appraisal.drafts"), items);
+
+        String hr = api.get("/api/v1/action_center/items", as(RoleMatrix.ADMIN)).bodyAsString();
+
+        JsonObject hrStatuses = table(RoleMatrix.ADMIN).getJsonObject("kpis").getJsonObject("statuses");
+
+        assertEquals(hrStatuses.getInteger("Submitted", 0) > 0, hr.contains("appraisal.waiting"), hr);
+
+        assertFalse(hr.contains("appraisal.drafts"), hr);
     }
 }

@@ -36,7 +36,8 @@ class IntegrationsRoutesTest
     @BeforeAll
     static void start() throws Exception
     {
-        api = TestApi.start(PORT, new JsonObject().put("today", "2026-09-28"), "integrations", "work", "pull_requests", "bugs");
+        
+        api = TestApi.start(PORT, new JsonObject().put("today", "2026-09-28"), "integrations", "work", "pull_requests", "bugs","attendance");
 
         admin = RoleMatrix.session(api, RoleMatrix.ADMIN);
     }

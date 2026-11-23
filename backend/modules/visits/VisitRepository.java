@@ -245,6 +245,21 @@ final class VisitRepository extends ScopedRepository
                 Tuple.of(personIds, from, to));
     }
 
+    /**
+     * Leave and absent days ({@code L}, {@code S}, {@code A} attendance records) of these people in [from, to]:
+     * {@code [{personId, day}]}, oldest first; empty while attendance is not installed.
+     */
+    Future<JsonArray> leaveDays(UUID[] personIds, LocalDate from, LocalDate to)
+    {
+        return queryOne("SELECT to_regclass('attendance_records') IS NOT NULL AS installed", Tuple.tuple()).compose(row -> !row.getBoolean("installed")
+                ? Future.succeededFuture(new JsonArray())
+                : queryList("""
+                        SELECT person_id AS "personId", day FROM attendance_records
+                        WHERE person_id = ANY($1) AND day BETWEEN $2 AND $3 AND status IN ('L', 'S', 'A') ORDER BY day
+                        """,
+                        Tuple.of(personIds, from, to)));
+    }
+
     /** Planned visits added by an import ({@code source = 'csv'}); resolves to {@code {id, version}}. */
     Future<JsonObject> insertImported(JsonObject visit, UUID createdBy)
     {

@@ -6,6 +6,7 @@ import com.pulse.platform.http.ExpectedVersion;
 import com.pulse.platform.http.Ids;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.policy.PolicyService;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -89,8 +90,12 @@ public final class ReviewsRoutes
 
     private final KudosService kudos;
 
+    private final ModuleContext ctx;
+
     ReviewsRoutes(ModuleContext ctx)
     {
+        this.ctx = ctx;
+
         this.policy = ctx.policy();
 
         this.oneOnOnes = new OneOnOneService(ctx);
@@ -126,6 +131,12 @@ public final class ReviewsRoutes
         // GET /api/v1/reviews/kudos?personId=&value=&page=&pageSize=&sort=-given
         router.get("/kudos").handler(policy.requires("oneonone")).handler(this::kudosFeed);
 
+        // GET /api/v1/reviews/reminders: the caller's 1:1 Action Center items (overdue 1:1s, task 20.2)
+        router.get("/reminders").handler(policy.requires("oneonone")).handler(rc -> new OneOnOneActionProvider()
+                .actionsFor(PolicyService.user(rc), ctx)
+                .onSuccess(items -> rc.json(new JsonObject().put("items", new JsonArray(items))))
+                .onFailure(rc::fail));
+
         mount360(router);
     }
 
@@ -157,6 +168,17 @@ public final class ReviewsRoutes
 
         router.get("/360/cycles/:id/results").handler(policy.requires("review360.give"))
                 .handler(rc -> reviews360.myResults(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.get("/360/cycles/:id/results/:personId").handler(policy.requires("review360.manage"))
+                .handler(rc -> reviews360.resultsFor(PolicyService.user(rc), Ids.path(rc, "id"), rc.pathParam("personId"))
+                        .onSuccess(rc::json).onFailure(rc::fail));
+
+        // Remind everyone who has not submitted, or one reviewer (review360.manage).
+        router.post("/360/cycles/:id/remind").handler(policy.requires("review360.manage"))
+                .handler(rc -> reviews360.remind(PolicyService.user(rc), Ids.path(rc, "id"), null).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.post("/360/requests/:id/remind").handler(policy.requires("review360.manage"))
+                .handler(rc -> reviews360.remindRequest(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
 
         router.get("/360/to-give").handler(policy.requires("review360.give"))
                 .handler(rc -> reviews360.toGive(PolicyService.user(rc))

@@ -35,8 +35,8 @@ import java.util.Set;
  *   <li>Warning: a culture value that is not one of the 11 values (left empty).</li>
  *   <li>Modes: {@code upsert} (a new current value on a matching key result is a bulk check-in) and
  *       {@code new} (existing objectives are skipped).</li>
- *   <li>Team rows leave {@code owner_email} empty and belong to the importer's team
- *       ({@link ActorTeamRepository}).</li>
+ *   <li>Team rows leave {@code owner_email} empty and belong to the importer's team, their reports'
+ *       one team, or for HR / Admin the organisation's one team ({@link ActorTeamRepository}).</li>
  * </ul>
  *
  * <p>Undo goes back through the port ({@link #restoresItself()}): one objective change spans the
@@ -134,7 +134,9 @@ public class OkrsImportType implements ImportType
 
         Map<String, JsonObject> owners = new HashMap<>();
 
-        return new ActorTeamRepository(sql).teamOf(actor.getString("id"))
+        boolean allView = actor.getJsonArray("permissions", new JsonArray()).contains("all.view");
+
+        return new ActorTeamRepository(sql).teamOf(actor.getString("id"), allView)
                 .compose(team -> resolveOwners(rows, okrActor, port, owners).map(team))
                 .compose(team ->
                 {
@@ -189,7 +191,7 @@ public class OkrsImportType implements ImportType
     }
 
     /** Per-row rules; a valid row gets {@code okr} (its objective key) and joins its group. */
-    private static void checkRow(JsonObject row, JsonObject okrActor, String team, Map<String, JsonObject> owners,
+    private static void checkRow(JsonObject row, JsonObject okrActor, JsonObject team, Map<String, JsonObject> owners,
                                  Map<String, List<JsonObject>> groups)
     {
         if (!row.getJsonArray("errors").isEmpty())
@@ -223,14 +225,14 @@ public class OkrsImportType implements ImportType
                 return;
             }
 
-            if (team == null || team.isBlank())
+            if (team.getString("team") == null)
             {
-                error(row, line, "level", "Your profile has no team, so Team OKRs can’t be imported.");
+                error(row, line, "level", noTeamMessage(team));
 
                 return;
             }
 
-            key.put("team", team);
+            key.put("team", team.getString("team"));
         }
         else
         {
@@ -533,6 +535,22 @@ public class OkrsImportType implements ImportType
         }
 
         return Future.failedFuture(error);
+    }
+
+    /** Why a Team row has no team: none found, or several so the row is ambiguous (Romil's two cases). */
+    static String noTeamMessage(JsonObject team)
+    {
+        if (ActorTeamRepository.SEVERAL_TEAMS.equals(team.getString("reason")))
+        {
+            List<String> names = new ArrayList<>();
+
+            team.getJsonArray("teams", new JsonArray()).forEach(t -> names.add(String.valueOf(t)));
+
+            return "Your people are in several teams (" + String.join(", ", names)
+                    + "), so the team of a Team OKR row is unclear. Import it as Individual OKRs, or ask someone in that team.";
+        }
+
+        return "Neither you nor your direct reports belong to a team, so Team OKRs can’t be imported.";
     }
 
     private static String canonicalValue(String value)

@@ -12,7 +12,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * 360° cycles and requests (V340). This repository is the only code that reads
+ * 360° cycles and requests (V340, V345: training checkpoint cycles share the form and requests; the
+ * cycle list and "the running cycle" are 360° only, the reviewer's to-give list has both). This repository is the only code that reads
  * {@code review_reviewer_keys} (pseudonym → user): every other read names reviewers by pseudonym or
  * not at all (spec "Pseudonymous reviewer storage").
  */
@@ -21,7 +22,7 @@ final class Review360Repository extends ScopedRepository
     private static final String CYCLE = """
             SELECT c.id, c.name, c.quarter, c.due_on AS "dueOn", c.department, c.internal_min AS "internalMin",
                    c.internal_max AS "internalMax", c.cross_min AS "crossMin", c.cross_max AS "crossMax",
-                   c.anonymity_threshold AS "anonymityThreshold", c.weights, c.status, c.published_at AS "publishedAt",
+                   c.anonymity_threshold AS "anonymityThreshold", c.weights, c.status, c.published_at AS "publishedAt", c.kind,
                    c.version,
                    (SELECT count(*) FROM review_requests r WHERE r.cycle_id = c.id AND r.status <> 'declined')::int AS assigned,
                    (SELECT count(*) FROM review_requests r WHERE r.cycle_id = c.id AND r.status = 'submitted')::int AS submitted
@@ -37,7 +38,7 @@ final class Review360Repository extends ScopedRepository
 
     Future<JsonArray> cycles()
     {
-        return queryList(CYCLE + " ORDER BY c.quarter DESC, c.created_at DESC", Tuple.tuple());
+        return queryList(CYCLE + " WHERE c.kind = '360' ORDER BY c.quarter DESC, c.created_at DESC", Tuple.tuple());
     }
 
     Future<JsonObject> cycle(UUID id)
@@ -47,7 +48,7 @@ final class Review360Repository extends ScopedRepository
 
     Future<JsonObject> runningCycle()
     {
-        return queryOne(CYCLE + " WHERE c.status = 'running'", Tuple.tuple());
+        return queryOne(CYCLE + " WHERE c.status = 'running' AND c.kind = '360'", Tuple.tuple());
     }
 
     Future<JsonObject> insertCycle(JsonObject body, String quarter, UUID createdBy)
@@ -171,6 +172,7 @@ final class Review360Repository extends ScopedRepository
         return queryList("""
                 SELECT r.id, r.rater_group AS "group", r.status, r.submitted_at AS "submittedAt", r.version,
                        c.id AS "cycleId", c.name AS "cycleName", c.due_on AS "dueOn", c.status AS "cycleStatus",
+                       c.kind, c.checkpoint_day AS "checkpointDay",
                        p.id AS "subjectId", p.name AS "subjectName"
                 FROM review_requests r JOIN review_cycles c ON c.id = r.cycle_id JOIN people p ON p.id = r.subject_id
                 WHERE r.reviewer_key = ANY($1) AND r.status <> 'declined'
@@ -186,6 +188,7 @@ final class Review360Repository extends ScopedRepository
                 SELECT r.id, r.rater_group AS "group", r.status, r.scores, r.examples, r.keep_doing AS "keepDoing",
                        r.start_doing AS "startDoing", r.submitted_at AS "submittedAt", r.version,
                        c.id AS "cycleId", c.name AS "cycleName", c.due_on AS "dueOn", c.status AS "cycleStatus",
+                       c.kind, c.checkpoint_day AS "checkpointDay",
                        p.id AS "subjectId", p.name AS "subjectName"
                 FROM review_requests r JOIN review_cycles c ON c.id = r.cycle_id JOIN people p ON p.id = r.subject_id
                 WHERE r.id = $1 AND r.reviewer_key = ANY($2)

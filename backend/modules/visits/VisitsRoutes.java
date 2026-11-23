@@ -18,12 +18,14 @@ import java.time.LocalDate;
  *
  * <pre>
  * GET    /items?personId=&owned=true&from=&to=   list (default window: the current year)
- * GET    /items/:id                              detail with status and the actions this user may take
+ * GET    /stats?personId=&period=q:Q3|all       a person's visit stats (calc/people)
+ * GET    /items/:id                              detail with status, actions, points and values
  * POST   /items                                  plan (manager) or log (engineer)
  * PUT    /items/:id                              edit before the report
  * DELETE /items/:id                              delete before the report (If-Match: version)
  * POST   /items/:id/report                       the engineer's visit report
  * POST   /items/:id/feedback                     the account owner's customer feedback
+ * POST   /items/:id/remind                       the manager reminds the engineer of an overdue report
  * POST   /items/:id/verify | /items/:id/reject   effort.confirm, after report and feedback
  * </pre>
  */
@@ -102,6 +104,8 @@ public final class VisitsRoutes
 
         router.post("/items").handler(policy.requiresAny(anyone)).handler(DETAILS.handler()).handler(this::create);
 
+        router.get("/stats").handler(policy.requiresAny(anyone)).handler(this::stats);
+
         router.get("/items/:id").handler(policy.requiresAny(anyone)).handler(this::get);
 
         router.put("/items/:id").handler(policy.requiresAny(anyone)).handler(EDIT.handler()).handler(this::update);
@@ -111,6 +115,9 @@ public final class VisitsRoutes
         router.post("/items/:id/report").handler(policy.requires("self.view")).handler(REPORT.handler()).handler(this::report);
 
         router.post("/items/:id/feedback").handler(policy.requiresAny(anyone)).handler(FEEDBACK.handler()).handler(this::feedback);
+
+        router.post("/items/:id/remind").handler(policy.requiresAny("team.view", "all.view"))
+                .handler(rc -> visits.remind(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
 
         router.post("/items/:id/verify").handler(policy.requires("effort.confirm")).handler(DECISION.handler())
                 .handler(rc -> decide(rc, "confirmed"));
@@ -127,9 +134,9 @@ public final class VisitsRoutes
 
         try
         {
-            from = date(rc, "from", LocalDate.of(VisitService.today().getYear(), 1, 1));
+            from = date(rc, "from", LocalDate.of(visits.today().getYear(), 1, 1));
 
-            to = date(rc, "to", LocalDate.of(VisitService.today().getYear(), 12, 31));
+            to = date(rc, "to", LocalDate.of(visits.today().getYear(), 12, 31));
         }
         catch (ApiException e)
         {
@@ -145,6 +152,24 @@ public final class VisitsRoutes
         visits.list(PolicyService.user(rc), personId, owned, from, to)
                 .onSuccess(items -> rc.json(new JsonObject().put("items", items)))
                 .onFailure(rc::fail);
+    }
+
+    /** GET /stats?personId=&period=q:Q3 (default) or all: the person's visit stats from calc/people. */
+    private void stats(RoutingContext rc)
+    {
+        String personId = rc.queryParams().get("personId");
+
+        if (personId == null || personId.isBlank())
+        {
+            rc.fail(ApiException.badRequest("invalid_parameter", "Choose the person.").field("personId"));
+
+            return;
+        }
+
+        String period = rc.queryParams().get("period") == null ? "q:Q" + ((visits.today().getMonthValue() - 1) / 3 + 1)
+                : rc.queryParams().get("period");
+
+        visits.stats(PolicyService.user(rc), personId, period).onSuccess(rc::json).onFailure(rc::fail);
     }
 
     private void get(RoutingContext rc)

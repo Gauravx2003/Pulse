@@ -338,7 +338,9 @@ public class ImportService
 
             JsonObject result = check.getJsonObject("result");
 
-            return type.commit(check.getJsonArray("rows_data"), check.getString("mode"), user, tx, policy).compose(outcome ->
+            JsonObject actor = user.copy().put(ImportType.IMPORT_FILE, check.getString("file_name"));
+
+            return type.commit(check.getJsonArray("rows_data"), check.getString("mode"), actor, tx, policy).compose(outcome ->
             {
                 JsonArray changes = outcome.getJsonArray("changes", new JsonArray());
 

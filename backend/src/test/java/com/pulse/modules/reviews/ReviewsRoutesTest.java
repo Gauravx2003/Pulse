@@ -1,5 +1,6 @@
 package com.pulse.modules.reviews;
 
+import com.pulse.platform.ingest.IngestService;
 import com.pulse.testsupport.RoleMatrix;
 import com.pulse.testsupport.TestApi;
 import io.vertx.core.buffer.Buffer;
@@ -12,7 +13,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -293,5 +297,98 @@ class ReviewsRoutesTest
                 .put("personId", "00000000-0000-0000-0000-000000000000").put("value", "Collaboration").put("message", "Hi"));
 
         assertEquals(404, nobody.statusCode());
+    }
+
+    // ------------------------------------------------------------------ overdue 1:1s (task 20.2)
+
+    @Test
+    void elevenWorkingDaysIsOverdueAndTenIsNot()
+    {
+        // Spec "Overdue": the last 1:1 was 11 working days ago (no holidays in these weeks).
+        LocalDate last = LocalDate.of(2026, 11, 2);
+
+        assertEquals(10, OneOnOneActionProvider.daysSince(last, LocalDate.of(2026, 11, 16), Set.of()));
+
+        assertEquals(11, OneOnOneActionProvider.daysSince(last, LocalDate.of(2026, 11, 17), Set.of()));
+    }
+
+    @Test
+    void theManagerGetsAMediumItemForAnOverdueOneOnOne() throws Exception
+    {
+        String neha = api.queryOne("SELECT p.id FROM people p JOIN users u ON u.id = p.user_id WHERE u.email = 'neha@pulse.demo'").getString("id");
+
+        String rahul = api.queryOne("SELECT id FROM users WHERE email = 'rahul@pulse.demo'").getString("id");
+
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+
+        api.exec("DELETE FROM one_on_ones WHERE person_id = '" + neha + "' AND NOT EXISTS (SELECT 1 FROM one_on_one_actions a "
+                + "WHERE a.one_on_one_id = one_on_ones.id)");
+
+        api.exec("INSERT INTO one_on_ones (person_id, manager_id, held_on) VALUES ('" + neha + "', '" + rahul + "', '" + today.minusDays(40) + "')");
+
+        JsonObject item = overdueFor(neha);
+
+        assertTrue(item != null, "an overdue item for Neha");
+
+        assertEquals("Medium", item.getString("priority"));
+
+        assertTrue(item.getString("text").startsWith("Last 1:1 "), item.encode());
+
+        // A recent 1:1 clears it.
+        api.exec("INSERT INTO one_on_ones (person_id, manager_id, held_on) VALUES ('" + neha + "', '" + rahul + "', '" + today.minusDays(1) + "')");
+
+        assertEquals(null, overdueFor(neha));
+
+        // An employee manages nobody, so has no 1:1 items.
+        HttpResponse<Buffer> employee = api.get("/api/v1/reviews/reminders", RoleMatrix.session(api, RoleMatrix.EMPLOYEE));
+
+        assertTrue(employee.statusCode() == 403 || employee.bodyAsJsonObject().getJsonArray("items").isEmpty(), employee.bodyAsString());
+    }
+
+    private static JsonObject overdueFor(String personId) throws Exception
+    {
+        HttpResponse<Buffer> res = api.get("/api/v1/reviews/reminders", RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        for (Object o : res.bodyAsJsonObject().getJsonArray("items"))
+        {
+            JsonObject x = (JsonObject) o;
+
+            if (personId.equals(x.getString("personId")))
+            {
+                return x;
+            }
+        }
+
+        return null;
+    }
+
+    @Test
+    void slackKudosArriveThroughTheIngestSeamAndShowInTheFeed() throws Exception
+    {
+        // Spec "Kudos": Slack /kudos messages are ingested (design.md decision 6) — kudos carries the ingest columns.
+        String priya = api.queryOne("SELECT p.id FROM people p JOIN users u ON u.id = p.user_id WHERE u.email = 'priya@pulse.demo'").getString("id");
+
+        JsonObject batch = new JsonObject().put("source", "slack").put("entities", new JsonArray().add(new JsonObject()
+                .put("entity", "kudos")
+                .put("records", new JsonArray().add(new JsonObject()
+                        .put("external_id", "slack-msg-42")
+                        .put("person_id", priya)
+                        .put("culture_value", "Collaboration")
+                        .put("message", "Paired with me on the flaky test until it was green.")))));
+
+        TestApi.await(new IngestService(api.sql()).ingest(batch));
+
+        // Running the same batch again creates no duplicate.
+        TestApi.await(new IngestService(api.sql()).ingest(batch));
+
+        assertEquals(1, api.count("SELECT count(*) FROM kudos WHERE source = 'slack' AND external_id = 'slack-msg-42'"));
+
+        HttpResponse<Buffer> feed = api.get("/api/v1/reviews/kudos?personId=" + priya, RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        assertEquals(200, feed.statusCode(), feed.bodyAsString());
+
+        assertTrue(feed.bodyAsString().contains("flaky test until it was green"), feed.bodyAsString());
     }
 }

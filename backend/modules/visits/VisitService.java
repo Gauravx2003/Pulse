@@ -1,9 +1,13 @@
 package com.pulse.modules.visits;
 
+import com.pulse.calc.core.CalcService;
+import com.pulse.calc.people.VisitFormulas;
 import com.pulse.platform.audit.AuditEvents;
 import com.pulse.platform.audit.AuditService;
+import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
+import com.pulse.platform.notify.NotificationTriggers;
 import com.pulse.platform.policy.PolicyService;
 import com.pulse.platform.policy.Scope;
 import io.vertx.core.Future;
@@ -31,9 +35,13 @@ import java.util.UUID;
  *   <li>Verify or reject: effort.confirm, never on one's own visit, after report and feedback.</li>
  * </ul>
  *
- * <p>Not here yet (they depend on other tasks): points and the 8-a-month cap (calc/people through
- * CalcService, 4.10/4.11), overlap with leave (attendance, 17.1), capacity and On duty days (Track 2
- * utilization, 17), notifications and the reminder (5.3).
+ * <p>Points, values and stats come from calc/people through CalcService ({@code people.visitPoints},
+ * {@code people.visitStats}, {@code people.visitMonth}); every write publishes {@link VisitFormulas#VISITS}.
+ *
+ * <p>Notifications (platform 5.3): planned by someone else → the engineer; report filed → the account
+ * owner; Remind → the engineer of an overdue report.
+ *
+ * <p>Not here yet (they depend on other tasks): capacity and On duty days (Track 2 utilization).
  */
 final class VisitService
 {
@@ -69,9 +77,46 @@ final class VisitService
         this.policy = ctx.policy();
     }
 
-    static LocalDate today()
+    /** Today for the visits module: the CalcService clock (pinned by PULSE_TODAY outside production). */
+    LocalDate today()
     {
-        return LocalDate.now(PolicyService.ZONE);
+        return today(ctx);
+    }
+
+    static LocalDate today(ModuleContext ctx)
+    {
+        return ctx.calc() == null ? LocalDate.now(PolicyService.ZONE) : ctx.calc().clock().today();
+    }
+
+    /** After a visit changes: cached points and stats that read visits are dropped. */
+    private void changed()
+    {
+        CalcService.publish(ctx.vertx(), VisitFormulas.VISITS);
+    }
+
+    /** The visit's points breakdown and credited values from calc/people (people.visitPoints). */
+    private Future<JsonObject> withPoints(JsonObject visit)
+    {
+        return ctx.calc().get("people.visitPoints", new JsonObject().put("visit", visit.getString("id")))
+                .map(result ->
+                {
+                    if (result instanceof JsonObject points && points.containsKey("points"))
+                    {
+                        visit.put("points", points.getJsonObject("points")).put("values", points.getJsonArray("values"));
+                    }
+
+                    return visit;
+                });
+    }
+
+    /** A person's visit stats for a period (people.visitStats): {@code q:Q3} or {@code all}. */
+    Future<JsonObject> stats(JsonObject user, String personId, String period)
+    {
+        return policy.requireVisible(user, personId, PolicyService.DOMAIN_VISITS)
+                .compose(scope -> ctx.calc().getObject("people.visitStats", new JsonObject().put("person", personId).put("period", period)))
+                .recover(error -> error instanceof IllegalArgumentException
+                        ? Future.failedFuture(ApiException.badRequest("invalid_parameter", error.getMessage()).field("period"))
+                        : Future.failedFuture(error));
     }
 
     // ------------------------------------------------------------------ reads
@@ -99,7 +144,7 @@ final class VisitService
 
     Future<JsonObject> get(JsonObject user, UUID id)
     {
-        return visible(user, id).map(visit -> decorate(visit, user, today()));
+        return visible(user, id).map(visit -> decorate(visit, user, today())).compose(this::withPoints);
     }
 
     // ------------------------------------------------------------------ plan, log, edit, delete
@@ -120,9 +165,11 @@ final class VisitService
                             .compose(row -> AuditService.record(tx, AuditService.entry(user, CREATED, "visit", row.getString("id"),
                                             new JsonObject().put("personId", personId).put("planned", !personId.equals(user.getString("personId")))))
                                     .compose(v -> repo.byId(scope, UUID.fromString(row.getString("id")))))
+                            .compose(visit -> notifyPlanned(tx, user, visit))
                             .map(visit -> markManager(visit, user, scope));
                 }))
-                .map(visit -> decorate(visit, user, today()));
+                .map(visit -> decorate(visit, user, today()))
+                .onSuccess(visit -> changed());
     }
 
     Future<JsonObject> update(JsonObject user, UUID id, JsonObject body, int expectedVersion)
@@ -141,7 +188,7 @@ final class VisitService
                         .compose(row -> AuditService.record(tx, AuditService.entry(user, UPDATED, "visit", id.toString(),
                                 new JsonObject().put("personId", visit.getString("personId")))));
             }));
-        }).compose(v -> get(user, id));
+        }).onSuccess(v -> changed()).compose(v -> get(user, id));
     }
 
     Future<Void> delete(JsonObject user, UUID id, int expectedVersion)
@@ -157,7 +204,7 @@ final class VisitService
 
                     return AuditService.record(tx, AuditService.entry(user, DELETED, "visit", id.toString(),
                             new JsonObject().put("personId", visit.getString("personId"))));
-                })));
+                }))).onSuccess(v -> changed());
     }
 
     // ------------------------------------------------------------------ report, feedback, verification
@@ -185,8 +232,11 @@ final class VisitService
 
             return ctx.sql().inTransaction(tx -> new VisitRepository(tx).report(id, body, today, expectedVersion)
                     .compose(row -> AuditService.record(tx, AuditService.entry(user, REPORTED, "visit", id.toString(),
-                            new JsonObject().put("personId", visit.getString("personId"))))));
-        }).compose(v -> get(user, id));
+                            new JsonObject().put("personId", visit.getString("personId")))))
+                    .compose(v -> ctx.notifications().notify(tx, NotificationTriggers.visitFeedbackRequested(visit.getString("ownerId"),
+                            visit.getString("personId"), visit.getString("personName"), visit.getString("customer"),
+                            LocalDate.parse(visit.getString("from")), LocalDate.parse(visit.getString("to")), id.toString()))));
+        }).onSuccess(v -> changed()).compose(v -> get(user, id));
     }
 
     Future<JsonObject> feedback(JsonObject user, UUID id, JsonObject body, int expectedVersion)
@@ -219,7 +269,7 @@ final class VisitService
                     .feedback(id, body, UUID.fromString(user.getString("id")), expectedVersion)
                     .compose(row -> AuditService.record(tx, AuditService.entry(user, FEEDBACK, "visit", id.toString(),
                             new JsonObject().put("personId", visit.getString("personId")).put("csat", body.getNumber("csat"))))));
-        }).compose(v -> get(user, id));
+        }).onSuccess(v -> changed()).compose(v -> get(user, id));
     }
 
     /** Verify ({@code confirmed}) or reject ({@code rejected}) the visit's points. */
@@ -258,7 +308,49 @@ final class VisitService
                             .compose(row -> AuditService.record(tx, AuditService.entry(user, event, "visit", id.toString(),
                                     new JsonObject().put("personId", visit.getString("personId")).put("decision", decision)))));
                 })
+                .onSuccess(v -> changed())
                 .compose(v -> get(user, id));
+    }
+
+    /**
+     * A manager reminds the engineer of an overdue report (spec "Report": the manager MAY send a reminder).
+     * Resolves to {@code {notified}}: false when the engineer may not receive it (deactivated).
+     */
+    Future<JsonObject> remind(JsonObject user, UUID id)
+    {
+        return visible(user, id).compose(visit ->
+        {
+            if (!isManager(visit))
+            {
+                return Future.failedFuture(ApiException.forbidden("no_access", "Only the engineer's manager sends reminders."));
+            }
+
+            if (!"report_due".equals(status(visit, today())))
+            {
+                return Future.failedFuture(ApiException.conflict("nothing_to_remind", "This visit has no overdue report."));
+            }
+
+            return ctx.notifications().notify(ctx.sql(), NotificationTriggers.visitReportDue(visit.getString("personUserId"),
+                            visit.getString("customer"), LocalDate.parse(visit.getString("from")), LocalDate.parse(visit.getString("to")),
+                            id.toString()))
+                    .map(sent -> new JsonObject().put("notified", sent != null));
+        });
+    }
+
+    /** Tells the engineer about a visit someone else planned for them, in the planning transaction. */
+    private Future<JsonObject> notifyPlanned(SqlExecutor tx, JsonObject user, JsonObject visit)
+    {
+        String engineer = visit.getString("personUserId");
+
+        if (engineer == null || engineer.equals(user.getString("id")))
+        {
+            return Future.succeededFuture(visit);
+        }
+
+        return ctx.notifications().notify(tx, NotificationTriggers.visitPlanned(engineer, visit.getString("customer"), visit.getString("city"),
+                        LocalDate.parse(visit.getString("from")), LocalDate.parse(visit.getString("to")), visit.getString("requestedBy"),
+                        visit.getString("id")))
+                .map(visit);
     }
 
     // ------------------------------------------------------------------ rules
@@ -316,17 +408,27 @@ final class VisitService
     }
 
     /**
-     * Refuses a visit that shares a day with another visit of the same person (spec "Plan or log").
-     * TODO(17.1): also refuse overlap with approved leave once attendance records exist.
+     * Refuses a visit that shares a day with another visit of the same person, or with their leave or
+     * absence in the attendance records (spec "Plan or log").
      */
     private static Future<Void> refuseOverlap(VisitRepository repo, JsonObject body, UUID exceptId)
     {
-        return repo.overlapping(UUID.fromString(body.getString("personId")), LocalDate.parse(body.getString("from")),
-                        LocalDate.parse(body.getString("to")), exceptId)
+        UUID person = UUID.fromString(body.getString("personId"));
+
+        LocalDate from = LocalDate.parse(body.getString("from"));
+
+        LocalDate to = LocalDate.parse(body.getString("to"));
+
+        return repo.overlapping(person, from, to, exceptId)
                 .compose(other -> other == null
                         ? Future.<Void>succeededFuture()
                         : Future.failedFuture(ApiException.unprocessable("visit_overlap", "Overlaps the visit to "
-                                + other.getString("customer") + " (" + dates(other) + ").")));
+                                + other.getString("customer") + " (" + dates(other) + ").")))
+                .compose(v -> repo.leaveDays(new UUID[] {person}, from, to))
+                .compose(leave -> leave.isEmpty()
+                        ? Future.<Void>succeededFuture()
+                        : Future.failedFuture(ApiException.unprocessable("visit_on_leave", "The engineer is on leave on "
+                                + SHORT.format(LocalDate.parse(leave.getJsonObject(0).getString("day"))) + ".")));
     }
 
     private static boolean isEngineer(JsonObject user, JsonObject visit)

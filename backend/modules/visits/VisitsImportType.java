@@ -4,6 +4,8 @@ import com.pulse.modules.imports.csv.CsvColumns;
 import com.pulse.modules.imports.type.ImportType;
 import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.http.ApiException;
+import com.pulse.platform.notify.NotificationService;
+import com.pulse.platform.notify.NotificationTriggers;
 import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -25,14 +27,17 @@ import java.util.UUID;
  * visits from the CRM, for managers and Admin.
  *
  * <ul>
- *   <li>Errors: person not in your team, purpose not in the list, over 14 days, overlap with existing
+ *   <li>Errors: person not in your team, purpose not in the list, over 14 days, overlap with leave (attendance records), overlap with existing
  *       visits or with another row of the file (both rows name each other), unknown account owner.</li>
  *   <li>Warning: a start in the past (the visit shows as Report due).</li>
  *   <li>A row identical to an existing visit (same person, dates and customer) is skipped, so an export
  *       checks back unchanged.</li>
  * </ul>
  *
- * <p>Not here yet: overlap with leave (attendance, 17.1) and the notification to the engineer (5.3).
+ * <p>Commit notifies each engineer of their planned visit (platform 5.3).
+ *
+ * "Today" here is the server clock: import types get no CalcService clock, so PULSE_TODAY does not
+ * pin the past-start warning.
  */
 public class VisitsImportType implements ImportType
 {
@@ -250,7 +255,7 @@ public class VisitsImportType implements ImportType
             return;
         }
 
-        if (from.isBefore(VisitService.today()))
+        if (from.isBefore(LocalDate.now(PolicyService.ZONE)))
         {
             row.getJsonArray("warnings").add(message(line, "from",
                     "Visit already started — " + firstName(engineer.getString("name")) + " gets a “report due” reminder."));
@@ -258,6 +263,7 @@ public class VisitsImportType implements ImportType
 
         row.put("visit", new JsonObject()
                 .put("personId", engineer.getString("personId"))
+                .put("userId", engineer.getString("id"))
                 .put("personName", engineer.getString("name"))
                 .put("customer", values.getString("customer"))
                 .put("city", values.getString("city"))
@@ -307,8 +313,14 @@ public class VisitsImportType implements ImportType
             return Future.succeededFuture();
         }
 
-        return repo.overlappingAny(people.toArray(new UUID[0]), min, max).map(stored ->
+        UUID[] ids = people.toArray(new UUID[0]);
+
+        return Future.all(repo.overlappingAny(ids, min, max), repo.leaveDays(ids, min, max)).map(found ->
         {
+            JsonArray stored = found.resultAt(0);
+
+            JsonArray leave = found.resultAt(1);
+
             for (JsonObject row : candidates)
             {
                 JsonObject visit = row.getJsonObject("visit");
@@ -341,6 +353,24 @@ public class VisitsImportType implements ImportType
                 {
                     error(row, row.getInteger("line"), "from", visit.getString("personName") + " already has a visit to "
                             + clash.getString("customer") + " on those dates.");
+                }
+                else
+                {
+                    for (Object item : leave)
+                    {
+                        JsonObject day = (JsonObject) item;
+
+                        LocalDate d = LocalDate.parse(day.getString("day"));
+
+                        if (day.getString("personId").equals(visit.getString("personId"))
+                                && !d.isBefore(LocalDate.parse(visit.getString("from"))) && !d.isAfter(LocalDate.parse(visit.getString("to"))))
+                        {
+                            error(row, row.getInteger("line"), "from", visit.getString("personName") + " is on leave on "
+                                    + d.getDayOfMonth() + " " + d.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH) + ".");
+
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -407,6 +437,7 @@ public class VisitsImportType implements ImportType
                             ? repo.insertImported(visit, createdBy)
                             : Future.failedFuture(ApiException.conflict("visit_overlap", visit.getString("personName")
                                     + " got a visit to " + clash.getString("customer") + " on those dates after the check. Check the file again.")))
+                    .compose(added -> notifyEngineer(tx, policy, actor, visit, added.getString("id")).map(added))
                     .map(added ->
                     {
                         changes.add(new JsonObject()
@@ -420,7 +451,6 @@ public class VisitsImportType implements ImportType
                     });
         }
 
-        // TODO(5.3): notify each engineer of their planned visit once the notifications service exists.
         return chain.map(v -> new JsonObject()
                 .put("imported", rows.size())
                 .put("changes", changes)
@@ -430,7 +460,7 @@ public class VisitsImportType implements ImportType
     @Override
     public Future<JsonArray> exportRows(JsonObject actor, JsonObject query, SqlExecutor sql, PolicyService policy)
     {
-        int year = VisitService.today().getYear();
+        int year = LocalDate.now(PolicyService.ZONE).getYear();
 
         LocalDate from;
 
@@ -455,6 +485,19 @@ public class VisitsImportType implements ImportType
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /** The engineer hears about their planned visit in the commit transaction (unless they imported it). */
+    private static Future<JsonObject> notifyEngineer(SqlExecutor tx, PolicyService policy, JsonObject actor, JsonObject visit, String visitId)
+    {
+        if (visit.getString("userId") == null || visit.getString("userId").equals(actor.getString("id")))
+        {
+            return Future.succeededFuture();
+        }
+
+        return new NotificationService(tx, policy).notify(tx, NotificationTriggers.visitPlanned(visit.getString("userId"),
+                visit.getString("customer"), visit.getString("city"), LocalDate.parse(visit.getString("from")),
+                LocalDate.parse(visit.getString("to")), visit.getString("requestedBy"), visitId));
+    }
 
     /** The listed purpose matching the cell ignoring case, or its first word ("Demo" → "Demo / POC"). */
     static String purpose(String value)

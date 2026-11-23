@@ -1,9 +1,11 @@
 package com.pulse.modules.appraisal;
 
+import com.pulse.modules.imports.csv.CsvWriter;
 import com.pulse.platform.http.BodySchema;
 import com.pulse.platform.http.ExpectedVersion;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.policy.PolicyService;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -24,6 +26,8 @@ import java.util.UUID;
  * POST /proposals/:personId/send-back   back to Draft with {reason} (appraisal.approve)
  * POST /proposals/approve-all           approve every Submitted proposal (appraisal.approve)
  * POST /release                         release the letters of every Approved proposal (appraisal.approve)
+ * GET  /people/:personId/evidence       the evidence panel (audited)
+ * GET  /export                          approved and released proposals as payroll CSV (audited; the only CTC export)
  * GET  /cycle                           the current cycle {year, effectiveOn, version}
  * PUT  /cycle                           {effectiveOn, version} (appraisal.approve)
  * </pre>
@@ -46,6 +50,9 @@ public final class AppraisalRoutes
             .required("effectiveOn", "version");
 
     private static final String[] ROLES = {"appraisal.manage", "appraisal.approve"};
+
+    static final JsonArray EXPORT_COLUMNS = JsonArray.of("name", "level", "current_ctc_lakh", "increment_pct", "new_ctc_lakh", "promotion",
+            "status", "effective_on");
 
     private final PolicyService policy;
 
@@ -86,6 +93,17 @@ public final class AppraisalRoutes
 
         router.post("/release").handler(policy.requires("appraisal.approve"))
                 .handler(rc -> appraisal.release(PolicyService.user(rc)).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.get("/people/:personId/evidence").handler(policy.requiresAny(ROLES))
+                .handler(rc -> withPerson(rc, person -> appraisal.evidence(PolicyService.user(rc), person, policy.request(rc))
+                        .onSuccess(rc::json).onFailure(rc::fail)));
+
+        router.get("/export").handler(policy.requiresAny(ROLES)).handler(rc -> appraisal.export(PolicyService.user(rc))
+                .onSuccess(rows -> rc.response()
+                        .putHeader("Content-Type", "text/csv; charset=utf-8")
+                        .putHeader("Content-Disposition", "attachment; filename=\"appraisal_proposals.csv\"")
+                        .end(CsvWriter.write(EXPORT_COLUMNS, rows)))
+                .onFailure(rc::fail));
 
         router.get("/cycle").handler(policy.requiresAny(ROLES))
                 .handler(rc -> appraisal.cycle().onSuccess(rc::json).onFailure(rc::fail));

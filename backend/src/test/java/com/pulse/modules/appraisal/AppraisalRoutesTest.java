@@ -29,7 +29,7 @@ class AppraisalRoutesTest
     @BeforeAll
     static void start() throws Exception
     {
-        api = TestApi.start(PORT, new JsonObject().put("today", "2026-09-28"), "reviews", "training", "appraisal");
+        api = TestApi.start(PORT, new JsonObject().put("today", "2026-09-28"), "imports", "reviews", "training", "appraisal");
     }
 
     @AfterAll
@@ -237,6 +237,74 @@ class AppraisalRoutesTest
 
         assertTrue(api.count("SELECT count(*) FROM audit_log WHERE action IN ('appraisal.increment.approve', 'appraisal.letter.released', "
                 + "'appraisal.increment.send_back', 'appraisal.submitted')") >= 4);
+
+        // Spec "Export": released proposals as payroll CSV, formula-safe, audited, for appraisal roles only.
+        api.exec("UPDATE people SET name = '=HYPERLINK(\"http://x\")' WHERE id = '" + person + "'");
+
+        long exports = api.count("SELECT count(*) FROM audit_log WHERE action = 'salary.export'");
+
+        HttpResponse<Buffer> csv = api.get("/api/v1/appraisal/export", hr);
+
+        assertEquals(200, csv.statusCode(), csv.bodyAsString());
+
+        assertTrue(csv.getHeader("Content-Type").startsWith("text/csv"));
+
+        assertTrue(csv.bodyAsString().replace("\uFEFF", "").startsWith("name,level,current_ctc_lakh,increment_pct,new_ctc_lakh"),
+                csv.bodyAsString());
+
+        assertTrue(csv.bodyAsString().contains("'=HYPERLINK"), csv.bodyAsString());
+
+        assertEquals(exports + 1, api.count("SELECT count(*) FROM audit_log WHERE action = 'salary.export'"));
+
+        assertEquals(403, api.get("/api/v1/appraisal/export", as(RoleMatrix.EMPLOYEE)).statusCode());
+    }
+
+    @Test
+    void theEvidencePanelShowsTheYearWithoutReviewerIdentity() throws Exception
+    {
+        String priya = personOf(RoleMatrix.EMPLOYEE);
+
+        JsonObject panel = ok(api.get("/api/v1/appraisal/people/" + priya + "/evidence", as(RoleMatrix.MANAGER)));
+
+        assertEquals(priya, panel.getJsonObject("row").getString("personId"));
+
+        assertTrue(panel.getJsonArray("quarterlyIndex").size() >= 1, panel.encodePrettily());
+
+        assertTrue(panel.getJsonObject("evidence").containsKey("training"));
+
+        JsonObject comments = panel.getJsonObject("comments360");
+
+        if (comments != null)
+        {
+            String text = comments.encode();
+
+            assertFalse(comments.getJsonObject("groups").containsKey("self"), text);
+
+            assertFalse(text.contains("reviewer") || text.contains("@pulse.demo"), text);
+        }
+
+        assertEquals(403, api.get("/api/v1/appraisal/people/" + priya + "/evidence", as(RoleMatrix.EMPLOYEE)).statusCode());
+
+        assertEquals(404, api.get("/api/v1/appraisal/people/not-a-person/evidence", as(RoleMatrix.MANAGER)).statusCode());
+    }
+
+    @Test
+    void ctcStaysOutOfOtherExports() throws Exception
+    {
+        // Spec "Salary source": CTC only in the appraisal export.
+        HttpResponse<Buffer> users = api.get("/api/v1/imports/users/export", as(RoleMatrix.ADMIN));
+
+        assertEquals(200, users.statusCode(), users.bodyAsString());
+
+        // The ctc column stays in the template layout so a file checks back, but it is never filled.
+        String[] lines = users.bodyAsString().replace("\uFEFF", "").split("\r?\n");
+
+        assertTrue(lines[0].endsWith(",ctc"), lines[0]);
+
+        for (int i = 1; i < lines.length; i++)
+        {
+            assertTrue(lines[i].isEmpty() || lines[i].endsWith(","), lines[i]);
+        }
     }
 
     @Test

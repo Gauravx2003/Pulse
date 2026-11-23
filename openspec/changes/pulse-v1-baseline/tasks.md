@@ -177,7 +177,7 @@ Priority order inside the track (do in this order; the last two are the first to
 
 ## 22. Appraisal
 
-- [ ] 22.1 Implement appraisal (score and bands via `aprRecommend` from task 4.8, 20% cap, budget 12% editable, per-cycle effective date, exceptions with reasons, submit blocked over budget, approve and send back, release letters, self-approval refusal, frozen at submit, evidence panel without reviewer identity, CTC only to appraisal roles, export with audit); verify tests for every scenario in `appraisal/appraisal`.
+- [x] 22.1 Implement appraisal (score and bands via `aprRecommend` from task 4.8, 20% cap, budget 12% editable, per-cycle effective date, exceptions with reasons, submit blocked over budget, approve and send back, release letters, self-approval refusal, frozen at submit, evidence panel without reviewer identity, CTC only to appraisal roles, export with audit); verify tests for every scenario in `appraisal/appraisal`.
 - [ ] 22.2 Build the Appraisal & increments screens (KPIs, distribution, standards modal, people table with inline percent, evidence modal, Release letters, Approve all) and register the draft and waiting-for-approval action providers; verify Playwright as `rahul@` and `hr@` and that `priya@` gets no access.
 
 # ALL TRACKS — Integration and acceptance (after tracks merge)

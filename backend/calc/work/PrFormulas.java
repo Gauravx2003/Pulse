@@ -57,6 +57,7 @@ public final class PrFormulas implements FormulaModule
                    p.has_risk AS "hasRisk", p.build_passed AS "buildPassed", p.first_review_hours AS "firstReviewHours",
                    coalesce((SELECT json_agg(json_build_object(
                                  'reviewerId', r.reviewer_id, 'vote', r.vote,
+                                 'reviewerName', (SELECT v.name FROM people v WHERE v.id = r.reviewer_id),
                                  'comments', coalesce((SELECT json_agg(json_build_object('body', c.body, 'isResolved', c.is_resolved)
                                                                 ORDER BY c.commented_at, c.id)
                                                        FROM pr_comments c

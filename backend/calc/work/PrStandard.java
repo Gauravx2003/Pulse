@@ -401,7 +401,7 @@ public final class PrStandard
         return review.getString("vote", "").startsWith("Approved");
     }
 
-    private static int approvals(JsonObject pr)
+    static int approvals(JsonObject pr)
     {
         int n = 0;
 

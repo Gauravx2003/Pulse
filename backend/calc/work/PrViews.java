@@ -259,6 +259,7 @@ public final class PrViews
                 .put("status", pr.getString("status"))
                 .put("openedAt", pr.getString("openedAt"))
                 .put("linesChanged", pr.getValue("linesChanged"))
+                .put("approvals", PrStandard.approvals(pr))
                 .put("url", pr.getString("url"));
     }
 }

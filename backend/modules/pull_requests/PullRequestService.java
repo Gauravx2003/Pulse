@@ -4,6 +4,7 @@ import com.pulse.calc.core.CalcService;
 import com.pulse.calc.core.PeriodCalendar;
 import com.pulse.calc.core.ResultGuard;
 import com.pulse.calc.work.PrFormulas;
+import com.pulse.modules.work.PersonRepository;
 import com.pulse.modules.work.Reports;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
@@ -28,6 +29,11 @@ import java.util.UUID;
  */
 public final class PullRequestService
 {
+
+    /**
+     * Rows of the period tables.
+     */
+    static final int HISTORY = 6;
 
     private final ModuleContext ctx;
 
@@ -60,13 +66,18 @@ public final class PullRequestService
 
             Future<Object> standard = calc.get(PrFormulas.STANDARD, new JsonObject());
 
-            return Future.all(stats, view, standard).map(all ->
+            Future<JsonObject> identity = new PersonRepository(ctx.sql()).identity(scope, UUID.fromString(personId));
+
+            Future<JsonArray> history = history(period).compose(keys -> personHistory(personId, keys));
+
+            return Future.all(List.of(stats, view, standard, identity, history)).map(all ->
             {
                 boolean everything = PeriodCalendar.ALL.equals(period.getString("kind"));
 
                 JsonObject body = new JsonObject()
-                        .put("person", personId)
+                        .put("person", identity.result())
                         .put("period", period)
+                        .put("history", history.result())
                         .put("periodPicker", !everything)
                         .put("stats", stats.result())
                         .put("view", view.result())
@@ -120,11 +131,16 @@ public final class PullRequestService
 
                 Future<Object> standard = calc.get(PrFormulas.STANDARD, new JsonObject());
 
+                Future<JsonArray> history = chosen == null ? Future.succeededFuture(new JsonArray())
+                        : history(period).compose(keys -> teamHistory(chosen, keys));
+
                 List<Future<?>> all = new ArrayList<>(rowsOf);
 
                 all.add(stats);
 
                 all.add(standard);
+
+                all.add(history);
 
                 return Future.all(all).compose(done ->
                 {
@@ -156,8 +172,9 @@ public final class PullRequestService
 
                     JsonArray below = teamStats == null ? new JsonArray() : teamStats.getJsonArray("belowStandard", new JsonArray());
 
-                    return prs(below).map(listed -> new JsonObject()
+                    return details(below).map(listed -> new JsonObject()
                             .put("period", period)
+                            .put("history", history.result())
                             .put("team", chosen)
                             .put("teams", new JsonArray(new ArrayList<>(names)))
                             .put("stats", teamStats)
@@ -219,31 +236,127 @@ public final class PullRequestService
                         : Future.failedFuture(error));
     }
 
-    private Future<JsonArray> prs(JsonArray ids)
+    /**
+     * The PRs merged below the standard, each with its detail (checks, lines, approvals, dates).
+     */
+    private Future<JsonArray> details(JsonArray ids)
     {
-        if (ids.isEmpty())
+        List<Future<Object>> all = new ArrayList<>();
+
+        for (Object id : ids)
         {
-            return Future.succeededFuture(new JsonArray());
+            all.add(calc.get(PrFormulas.DETAIL, new JsonObject().put("pr", String.valueOf(id))));
         }
 
-        UUID[] list = ids.stream().map(id -> UUID.fromString(String.valueOf(id))).toArray(UUID[]::new);
+        return Future.all(all).map(done ->
+        {
+            JsonArray out = new JsonArray();
 
-        return ctx.sql().queryList("""
-                SELECT p.id, p.number, p.tool, p.repo, p.title, a.name AS "authorName"
-                FROM pull_requests p LEFT JOIN people a ON a.id = p.author_id
-                WHERE p.id = ANY($1)""", Tuple.of(list))
-                .map(rows ->
+            all.forEach(f -> out.add(f.result()));
+
+            return out;
+        });
+    }
+
+    /**
+     * The chosen sprint or month and the {@value #HISTORY} - 1 before it, newest first; for All, the
+     * last {@value #HISTORY} months.
+     */
+    private Future<List<JsonObject>> history(JsonObject period)
+    {
+        return calc.get("core.periods", new JsonObject()).map(result ->
+        {
+            JsonObject periods = (JsonObject) result;
+
+            boolean sprint = PeriodCalendar.SPRINT.equals(period.getString("kind"));
+
+            JsonArray list = sprint ? periods.getJsonArray("sprints") : periods.getJsonArray("months");
+
+            List<JsonObject> out = new ArrayList<>();
+
+            boolean found = !sprint && !"month".equals(period.getString("kind"));
+
+            for (Object o : list)
+            {
+                JsonObject p = (JsonObject) o;
+
+                found |= p.getString("key").equals(period.getString("key"));
+
+                if (found && out.size() < HISTORY)
                 {
-                    Map<String, JsonObject> byId = new LinkedHashMap<>();
+                    out.add(p);
+                }
+            }
 
-                    rows.forEach(r -> byId.put(((JsonObject) r).getString("id"), (JsonObject) r));
+            return out;
+        });
+    }
 
-                    JsonArray out = new JsonArray();
+    private Future<JsonArray> personHistory(String personId, List<JsonObject> periods)
+    {
+        List<Future<Object>> all = new ArrayList<>();
 
-                    ids.forEach(id -> out.add(byId.get(String.valueOf(id))));
+        for (JsonObject p : periods)
+        {
+            all.add(calc.get(PrFormulas.PERSON, new JsonObject().put("person", personId).put("period", p.getString("key"))));
+        }
 
-                    return out;
-                });
+        return Future.all(all).map(done ->
+        {
+            JsonArray out = new JsonArray();
+
+            for (int i = 0; i < periods.size(); i++)
+            {
+                JsonObject s = (JsonObject) all.get(i).result();
+
+                out.add(new JsonObject()
+                        .put("period", periods.get(i).getString("key"))
+                        .put("short", periods.get(i).getString("short"))
+                        .put("prs", s.getJsonArray("mine", new JsonArray()).size())
+                        .put("merged", s.getValue("merged"))
+                        .put("comp", s.getValue("comp"))
+                        .put("titles", s.getValue("title"))
+                        .put("size", s.getValue("size"))
+                        .put("reviews", s.getJsonArray("rv", new JsonArray()).size())
+                        .put("stdPct", s.getValue("stdPct"))
+                        .put("stamps", s.getValue("stamps")));
+            }
+
+            return out;
+        });
+    }
+
+    private Future<JsonArray> teamHistory(String team, List<JsonObject> periods)
+    {
+        List<Future<Object>> all = new ArrayList<>();
+
+        for (JsonObject p : periods)
+        {
+            all.add(calc.get(PrFormulas.TEAM, new JsonObject().put("team", team).put("period", p.getString("key"))));
+        }
+
+        return Future.all(all).map(done ->
+        {
+            JsonArray out = new JsonArray();
+
+            for (int i = 0; i < periods.size(); i++)
+            {
+                JsonObject s = (JsonObject) all.get(i).result();
+
+                out.add(new JsonObject()
+                        .put("period", periods.get(i).getString("key"))
+                        .put("short", periods.get(i).getString("short"))
+                        .put("prs", s.getValue("prs"))
+                        .put("merged", s.getValue("merged"))
+                        .put("comp", s.getValue("comp"))
+                        .put("titlePct", s.getValue("titlePct"))
+                        .put("comments", s.getValue("comments"))
+                        .put("stdPct", s.getValue("stdPct"))
+                        .put("stamps", s.getValue("stamps")));
+            }
+
+            return out;
+        });
     }
 
     private static JsonArray byMonth(JsonArray prs)

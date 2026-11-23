@@ -94,6 +94,9 @@ class PullRequestsRoutesTest
         assertTrue(view.getJsonArray("prs").stream().allMatch(pr -> !((JsonObject) pr).getJsonArray("checks").isEmpty()));
         assertFalse(view.getJsonArray("checkShare").isEmpty());
         assertNotNull(body.getJsonObject("stats").getValue("comp"));
+        assertEquals("Priya Shah", body.getJsonObject("person").getString("name"));
+        assertEquals(6, body.getJsonArray("history").size());
+        assertTrue(view.getJsonArray("prs").getJsonObject(0).containsKey("approvals"));
     }
 
     @Test
@@ -160,7 +163,10 @@ class PullRequestsRoutesTest
         assertEquals("Platform", body.getString("team"));
         assertFalse(body.getJsonArray("people").isEmpty());
         assertNotNull(body.getJsonObject("stats").getValue("comp"));
-        assertTrue(body.getJsonArray("belowStandard").stream().allMatch(pr -> ((JsonObject) pr).getString("title") != null));
+        assertTrue(body.getJsonArray("belowStandard").stream().allMatch(pr -> ((JsonObject) pr).getJsonObject("pr").getString("title") != null
+                && !((JsonObject) pr).getJsonArray("checks").isEmpty()));
+        assertEquals(6, body.getJsonArray("history").size(), "this month and the five before it");
+        assertEquals("m:2026-09", body.getJsonArray("history").getJsonObject(0).getString("period"));
 
         HttpResponse<Buffer> unknown = api.get(API + "/team?team=Sales", RoleMatrix.session(api, RoleMatrix.MANAGER));
 

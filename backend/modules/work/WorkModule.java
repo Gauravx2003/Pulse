@@ -1,6 +1,7 @@
 package com.pulse.modules.work;
 
 import com.pulse.platform.ingest.SeedMapper;
+import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import io.vertx.ext.web.Router;
@@ -39,5 +40,11 @@ public class WorkModule implements PulseModule
     public void routes(Router router, ModuleContext ctx)
     {
         new WorkRoutes(ctx).mount(router);
+    }
+
+    @Override
+    public List<ActionProvider> actionProviders()
+    {
+        return WorkloadActionProvider.all();
     }
 }

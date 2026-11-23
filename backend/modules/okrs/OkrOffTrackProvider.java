@@ -2,6 +2,7 @@ package com.pulse.modules.okrs;
 
 import com.pulse.calc.work.OkrFormulas;
 import com.pulse.calc.work.OkrProgress;
+import com.pulse.modules.action_center.ActionItems;
 import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.ModuleContext;
 import io.vertx.core.Future;
@@ -79,9 +80,11 @@ public final class OkrOffTrackProvider implements ActionProvider
 
                 long percent = Math.round(detail.getDouble("progress") * 100);
 
-                actions.add(new JsonObject()
-                        .put("key", KEY)
-                        .put("title", "OKR off track: " + titles.get(detail.getString("id")) + " (" + percent + "%)")
+                String title = "OKR off track: " + titles.get(detail.getString("id")) + " (" + percent + "%)";
+
+                actions.add(ActionItems.item(KEY, ActionItems.LOW, "OKRs", personId, user.getString("name"), title, "Open",
+                                ActionItems.target("okrs", null, personId).put("id", detail.getString("id")))
+                        .put("title", title)
                         .put("route", "okrs")
                         .put("objectiveId", detail.getString("id"))
                         .put("progress", detail.getValue("progress")));

@@ -1,8 +1,11 @@
 package com.pulse.modules.effort;
 
+import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import io.vertx.ext.web.Router;
+
+import java.util.List;
 
 /**
  * Track 2 effort and extra-mile module (task group 11). Its table {@code extra_items} is part of the
@@ -23,5 +26,11 @@ public class EffortModule implements PulseModule
     public void routes(Router router, ModuleContext ctx)
     {
         new EffortRoutes(ctx).mount(router);
+    }
+
+    @Override
+    public List<ActionProvider> actionProviders()
+    {
+        return EffortActionProvider.all();
     }
 }

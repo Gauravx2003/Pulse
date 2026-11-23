@@ -1,6 +1,9 @@
 package com.pulse.modules.progress;
 
+import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.PulseModule;
+
+import java.util.List;
 
 /**
  * Track 2 Progress and weekly pulse module (task group 13). Its table {@code weekly_pulse} is part of the
@@ -14,5 +17,11 @@ public class ProgressModule implements PulseModule
     public String id()
     {
         return "progress";
+    }
+
+    @Override
+    public List<ActionProvider> actionProviders()
+    {
+        return List.of(new PulseActionProvider());
     }
 }

@@ -1,6 +1,7 @@
 package com.pulse.modules.pull_requests;
 
 import com.pulse.platform.ingest.SeedMapper;
+import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.PulseModule;
 
 import java.util.List;
@@ -23,5 +24,11 @@ public class PullRequestsModule implements PulseModule
     public List<SeedMapper> seedMappers()
     {
         return PullRequestSeedMappers.all();
+    }
+
+    @Override
+    public List<ActionProvider> actionProviders()
+    {
+        return List.of(new RubberStampActionProvider());
     }
 }

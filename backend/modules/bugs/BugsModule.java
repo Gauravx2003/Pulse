@@ -3,6 +3,7 @@ package com.pulse.modules.bugs;
 import com.pulse.calc.work.BugAttribution;
 import com.pulse.modules.work.WorkSeedMappers;
 import com.pulse.platform.ingest.SeedMapper;
+import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import io.vertx.core.json.JsonArray;
@@ -107,5 +108,11 @@ public class BugsModule implements PulseModule
         }
 
         return out;
+    }
+
+    @Override
+    public List<ActionProvider> actionProviders()
+    {
+        return BugActionProvider.all();
     }
 }

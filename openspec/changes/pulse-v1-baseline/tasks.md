@@ -81,41 +81,41 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 ## 7. Track 2 data layer and seed
 
 - [x] 7.1 Write migration V200 for issues, issue_events (activity timeline), worklogs, commit_days, pull_requests, pr_reviews, pr_comments, bugs, support_tickets, extra_items and weekly_pulse, where the tables that mirror an external tool (issues, issue_events, worklogs, commit_days, pull_requests, pr_reviews, pr_comments, bugs, support_tickets) carry the ingest columns `source` default `'seed'`, `external_id` and `synced_at` with a unique index on (source, external_id); verify the migration applies after V100, a test that each table has an index for its policy scope column, and that a duplicate (source, external_id) insert into `issues` fails.
-- [ ] 7.2 Write Track 2 seed files (V200 range) from `seed/extracted/` for issues, activity, worklogs, PRs, bugs, support tickets and pulse answers, loaded through the `SeedConnector` and `IngestService` of task 5.4 (never by direct inserts into ingest tables); verify row counts match the prototype datasets and a test that Priya's live-sprint issues equal the prototype's.
-- [ ] 7.3 Implement the repositories that require a policy scope; verify a contract test that an Employee cannot read a peer's issues, PRs or pulse through any repository.
+- [x] 7.2 Write Track 2 seed files (V200 range) from `seed/extracted/` for issues, activity, worklogs, PRs, bugs, support tickets and pulse answers, loaded through the `SeedConnector` and `IngestService` of task 5.4 (never by direct inserts into ingest tables); verify row counts match the prototype datasets and a test that Priya's live-sprint issues equal the prototype's.
+- [x] 7.3 Implement the repositories that require a policy scope; verify a contract test that an Employee cannot read a peer's issues, PRs or pulse through any repository.
 
 ## 8. Work items and Overview
 
-- [ ] 8.1 Port the workload formulas into `calc/work/`, exposed through `CalcService` (utilization and bands, remaining-hours fallback chain, stale, not started, overdue, no estimate, date-and-time checks, sprint metrics, cycle time, reopen rate); verify by comparing against the oracle (`perMetrics`, `monthStats`, `qStats`) for every seeded person and sprint using the harness of task 4.2.
-- [ ] 8.2 Implement the Overview endpoint (live sprint, month, closed sprint, release, onboarding joiner) and Work items endpoint (filters, search, sort, daily load, history, issue timeline); verify tests for each scenario in `work/work-items` including idle across a holiday.
-- [ ] 8.3 Implement the issue drawer data and the Nudge action (outbox message, per-issue and per-sender rate limit, record); verify a test that the second nudge inside the window is refused.
-- [ ] 8.4 Build the Overview and Work items screens (Vue) including the issue drawer, period controls and onboarding badge; verify Playwright flows as `priya@` and `rahul@` and the UI audit script on both screens.
+- [x] 8.1 Port the workload formulas into `calc/work/`, exposed through `CalcService` (utilization and bands, remaining-hours fallback chain, stale, not started, overdue, no estimate, date-and-time checks, sprint metrics, cycle time, reopen rate); verify by comparing against the oracle (`perMetrics`, `monthStats`, `qStats`) for every seeded person and sprint using the harness of task 4.2.
+- [x] 8.2 Implement the Overview endpoint (live sprint, month, closed sprint, release, onboarding joiner) and Work items endpoint (filters, search, sort, daily load, history, issue timeline); verify tests for each scenario in `work/work-items` including idle across a holiday.
+- [x] 8.3 Implement the issue drawer data and the Nudge action (outbox message, per-issue and per-sender rate limit, record); verify a test that the second nudge inside the window is refused.
+- [x] 8.4 Build the Overview and Work items screens (Vue) including the issue drawer, period controls and onboarding badge; verify Playwright flows as `priya@` and `rahul@` and the UI audit script on both screens.
 
 ## 9. Team utilization
 
-- [ ] 9.1 Implement team utilization endpoints (KPIs, daily heatmap, people table, closed-period views, release card) and the rebalance suggestion (skills match, no onboarding recipients, no external write); verify tests for `work/team-utilization` including the 100% and 100.1% band edge and the PLAT-2198 example.
-- [ ] 9.2 Build the Team utilization screen with heatmap, people table, period controls and alert strip; verify a Playwright test as `rahul@` and that `priya@` gets the no-access card.
+- [x] 9.1 Implement team utilization endpoints (KPIs, daily heatmap, people table, closed-period views, release card) and the rebalance suggestion (skills match, no onboarding recipients, no external write); verify tests for `work/team-utilization` including the 100% and 100.1% band edge and the PLAT-2198 example.
+- [x] 9.2 Build the Team utilization screen with heatmap, people table, period controls and alert strip; verify a Playwright test as `rahul@` and that `priya@` gets the no-access card.
 
 ## 10. Pull requests
 
-- [ ] 10.1 Port the PR standard into `calc/work/`, exposed through `CalcService` (7 checks, Pending handling, comment classes, rubber-stamp, first-review time, per-person and team stats); verify by comparing against the oracle `prStats` (line ~1543) for every seeded person and period.
-- [ ] 10.2 Implement PR endpoints (team, person, list, detail, standard read) with the standard taken from Rules, and the rewrite suggestions for titles and comments; verify tests for each scenario in `work/pull-requests` and that a person's PR standard below 85% shows Discipline rule g as Improve.
-- [ ] 10.3 Build the Pull requests screens (Team and Person tabs, PR detail modal, PR standard modal); verify Playwright and the UI audit.
+- [x] 10.1 Port the PR standard into `calc/work/`, exposed through `CalcService` (7 checks, Pending handling, comment classes, rubber-stamp, first-review time, per-person and team stats); verify by comparing against the oracle `prStats` (line ~1543) for every seeded person and period.
+- [x] 10.2 Implement PR endpoints (team, person, list, detail, standard read) with the standard taken from Rules, and the rewrite suggestions for titles and comments; verify tests for each scenario in `work/pull-requests` and that a person's PR standard below 85% shows Discipline rule g as Improve.
+- [x] 10.3 Build the Pull requests screens (Team and Person tabs, PR detail modal, PR standard modal); verify Playwright and the UI audit.
 
 ## 11. Effort and extra-mile
 
-- [ ] 11.1 Implement hours and days worked, code-only days, extra-work detection from seeded events (the nine types and points) and the evidence text as formulas in `calc/work/`, exposed through `CalcService`; verify by comparing monthly totals against the oracle `monthStats` (line ~430) and tests for each scenario in `work/effort-extra-mile`.
-- [ ] 11.2 Implement confirm and reject with caps (0.05 per point, 0.3 per value per quarter, 6 per month, visit cap 8), self-confirm refusal, audit, and calc cache invalidation; verify that confirming changes the culture bonus on the next culture read and the cap test.
-- [ ] 11.3 Build the Effort screens (Team and Person tabs, daily log calendar, evidence modal, Confirm all); verify Playwright and the UI audit.
+- [x] 11.1 Implement hours and days worked, code-only days, extra-work detection from seeded events (the nine types and points) and the evidence text as formulas in `calc/work/`, exposed through `CalcService`; verify by comparing monthly totals against the oracle `monthStats` (line ~430) and tests for each scenario in `work/effort-extra-mile`.
+- [x] 11.2 Implement confirm and reject with caps (0.05 per point, 0.3 per value per quarter, 6 per month, visit cap 8), self-confirm refusal, audit, and calc cache invalidation; verify that confirming changes the culture bonus on the next culture read and the cap test.
+- [x] 11.3 Build the Effort screens (Team and Person tabs, daily log calendar, evidence modal, Confirm all); verify Playwright and the UI audit.
 
 ## 12. Bugs and support
 
-- [ ] 12.1 Implement bug attribution (seeded caused-by and blame results), dispute, keep or remove, take it, pick up, mark resolved, support tickets and queue, proactive points awaiting confirmation; verify tests for each scenario in `work/bugs-support` and audit of dispute decisions.
-- [ ] 12.2 Build the Bugs & support screens including modals; verify Playwright for dispute and take-it flows and the UI audit.
+- [x] 12.1 Implement bug attribution (seeded caused-by and blame results), dispute, keep or remove, take it, pick up, mark resolved, support tickets and queue, proactive points awaiting confirmation; verify tests for each scenario in `work/bugs-support` and audit of dispute decisions.
+- [x] 12.2 Build the Bugs & support screens including modals; verify Playwright for dispute and take-it flows and the UI audit.
 
 ## 13. Action center and Progress with weekly pulse
 
-- [ ] 13.1 Implement the Action center engine with an **action provider** interface (modules register providers through their descriptor), the sorting by priority, and Track 2's own providers (workload, stale, code-only, pulse, effort, bugs, rubber-stamp, integrations); verify a test with a stub provider from Track 3 appearing without editing Track 2 code.
+- [x] 13.1 Implement the Action center engine with an **action provider** interface (modules register providers through their descriptor), the sorting by priority, and Track 2's own providers (workload, stale, code-only, pulse, effort, bugs, rubber-stamp, integrations); verify a test with a stub provider from Track 3 appearing without editing Track 2 code.
 - [ ] 13.2 Implement people signals, sprint forecast, next-sprint capacity (calling the attendance, training and visit services through their interfaces), skills coverage, team pulse, team wins and digest preview, with the velocity, forecast, capacity, skills-coverage and signal-threshold formulas in `calc/work/` exposed through `CalcService`; verify tests for each scenario in `insight/action-center`.
 - [ ] 13.3 Implement Progress (next steps via providers, achievements, trends) and the weekly pulse (Friday job from task 5.5, both answers required, low-answer notification and Do today item, visibility); verify tests in `insight/progress-pulse` including the peer-access refusal and no pulse text in logs.
 - [ ] 13.4 Build the Action center and Progress screens including the pulse modal and digest modal; verify Playwright as `rahul@` and `priya@` and the UI audit.
@@ -124,14 +124,14 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 ## 14. OKRs
 
 - [x] 14.1 Write migration V210 for objectives and key_results (quarter, level, owner or team, epic, value, start, target, current, unit, check-ins) and the OKR seed (V210 range) from `seed/extracted/`; verify the migration applies after V100 and V200 and the seeded objective count equals the prototype's.
-- [ ] 14.2 Implement the OKR service and API (CRUD, validation, progress and OKR pillar (the pillar formula lives in `calc/work/`, exposed through `CalcService`, and is compared with the oracle's pillar for every seeded person), check-ins, okr.own and okr.team permissions, signals for Progress, import and export service methods); verify tests for every scenario in `growth/okrs`.
-- [ ] 14.3 Expose the OKR import and export service interface (find owner, upsert objective, bulk check-in, list for export) for Track 3's CSV engine and register the off-track next-step provider; verify a service-level test that an update of a matching objective acts as a check-in and that Track 3's stub can call it.
+- [x] 14.2 Implement the OKR service and API (CRUD, validation, progress and OKR pillar (the pillar formula lives in `calc/work/`, exposed through `CalcService`, and is compared with the oracle's pillar for every seeded person), check-ins, okr.own and okr.team permissions, signals for Progress, import and export service methods); verify tests for every scenario in `growth/okrs`.
+- [x] 14.3 Expose the OKR import and export service interface (find owner, upsert objective, bulk check-in, list for export) for Track 3's CSV engine and register the off-track next-step provider; verify a service-level test that an update of a matching objective acts as a check-in and that Track 3's stub can call it.
 - [ ] 14.4 Build the OKR screens (cards, quarter dropdown, New and Edit modals, Check-in, delete confirmation, Import and Export entry points that link to the Data imports modal); verify Playwright as `priya@` and `rahul@` and the UI audit.
 
 ## 15. Road map
 
 - [x] 15.1 Write migration V220 for milestones, promotion_targets and skills_matrix and the road-map seed (V220 range); verify the migration applies after V210 and a seeded road map exists for Priya.
-- [ ] 15.2 Implement milestones (propose and confirm), promotion readiness criteria (reading the performance index through the calc service) and the skills matrix with visibility rules; verify tests for every scenario in `growth/roadmap`.
+- [x] 15.2 Implement milestones (propose and confirm), promotion readiness criteria (reading the performance index through the calc service) and the skills matrix with visibility rules; verify tests for every scenario in `growth/roadmap`.
 - [ ] 15.3 Build the Road map screen and the Add milestone modal; verify Playwright as `priya@` and `rahul@`, that a peer gets the no-access card, and the UI audit.
 
 # TRACK 3 — CSV engine, Attendance, Visits, Culture, Reviews (incl. 1:1s and kudos), Training, Appraisal

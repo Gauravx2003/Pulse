@@ -283,7 +283,7 @@ final class PrototypeWork
                                 (ctx, params) -> Future.succeededFuture(leaveDays.getOrDefault(params.getString("person"), new JsonArray()))),
                         Formula.of("people.visitDays", Set.of("person"), Set.of(),
                                 (ctx, params) -> Future.succeededFuture(visitDays.getOrDefault(params.getString("person"), new JsonArray()))),
-                        Formula.of("people.visitPoints", Set.of("person"), Set.of(),
+                        Formula.of("people.visitPointsByRef", Set.of("person"), Set.of(),
                                 (ctx, params) -> Future.succeededFuture(visitPoints)),
                         Formula.of("people.onboarding", Set.of("person"), Set.of(),
                                 (ctx, params) -> Future.succeededFuture(onboarding.get(params.getString("person")))));

@@ -22,7 +22,8 @@ import java.util.UUID;
 /**
  * Effort and extra-mile formulas of {@code calc/work} (task 11.1): the loaders around {@link Effort}.
  * Items come from {@code extra_items}; a visit item's points come from Track 3's optional port
- * {@code people.visitPoints {person}} ({@code {"VIS-101": 2.5}}), and read as 0 until it exists.
+ * {@code people.visitPointsByRef {person}} ({@code {"VIS-101": 2.5}}), and read as 0 until it exists.
+ * It is not Track 3's per-visit {@code people.visitPoints {visit}}, which takes a visit id.
  *
  * <p>Detection ({@code work.extraDetected}) reads the Track 2 tables with these event conventions,
  * which ingest (task 5.4) follows: a {@code sprint_change} event's {@code to_value} is the sprint key
@@ -88,7 +89,7 @@ public final class EffortFormulas implements FormulaModule
             Future<JsonArray> items = WorkSql.rows(ctx, ITEM_ROW + " WHERE x.person_id = $1 AND x.occurred_on BETWEEN $2 AND $3 "
                     + "ORDER BY x.occurred_on, x.id", Tuple.of(person, from(period), to(period)));
 
-            Future<Object> visits = ctx.optional("people.visitPoints", new JsonObject().put("person", person.toString()));
+            Future<Object> visits = ctx.optional("people.visitPointsByRef", new JsonObject().put("person", person.toString()));
 
             return Future.all(work, items, visits).map(all ->
             {
@@ -202,7 +203,7 @@ public final class EffortFormulas implements FormulaModule
             Future<JsonArray> items = WorkSql.rows(ctx, ITEM_ROW + " WHERE x.person_id = $1 AND x.occurred_on BETWEEN $2 AND $3 "
                     + "ORDER BY x.occurred_on, x.id", Tuple.of(person, from(period), to(period)));
 
-            Future<Object> visits = ctx.optional("people.visitPoints", new JsonObject().put("person", person.toString()));
+            Future<Object> visits = ctx.optional("people.visitPointsByRef", new JsonObject().put("person", person.toString()));
 
             return Future.all(items, visits).map(all ->
             {

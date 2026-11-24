@@ -82,6 +82,25 @@ public class OkrRepository extends BaseRepository
     }
 
     /**
+     * {@code [{quarter, count}]} of a person's Individual objectives, newest quarter first (the quarter
+     * dropdown, task 14.4).
+     */
+    public Future<JsonArray> quartersForOwner(UUID ownerId)
+    {
+        return queryList("SELECT quarter, count(*) AS count FROM objectives WHERE owner_id = $1 GROUP BY quarter ORDER BY quarter DESC",
+                Tuple.of(ownerId));
+    }
+
+    /**
+     * {@code [{quarter, count}]} of a team's Team objectives, newest quarter first.
+     */
+    public Future<JsonArray> quartersForTeam(String team)
+    {
+        return queryList("SELECT quarter, count(*) AS count FROM objectives WHERE level = 'Team' AND team = $1 GROUP BY quarter "
+                + "ORDER BY quarter DESC", Tuple.of(team));
+    }
+
+    /**
      * Inserts an objective and resolves to its id.
      */
     public Future<UUID> insertObjective(JsonObject o, UUID createdBy)

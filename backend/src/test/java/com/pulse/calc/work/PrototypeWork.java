@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.pulse.platform.db.TestDb.await;
 
@@ -344,8 +345,62 @@ final class PrototypeWork
     }
 
     /**
-     * A stand-in for Track 3's optional ports, answering from the prototype's leave, visits and visit
-     * points.
+     * Puts the stand-in ports in place of Track 3's real formulas of the same names: drops those names
+     * from the discovered modules (the registry refuses duplicates), then adds {@link #ports()}.
+     */
+    void replacePorts(List<FormulaModule> modules)
+    {
+        FormulaModule stubs = ports();
+
+        Set<String> stubbed = stubs.formulas().stream().map(Formula::name).collect(Collectors.toSet());
+
+        modules.replaceAll(m -> filtered(m, stubbed));
+
+        modules.add(stubs);
+    }
+
+    private static FormulaModule filtered(FormulaModule module, Set<String> dropped)
+    {
+        List<Formula> kept = module.formulas().stream().filter(f -> !dropped.contains(f.name())).toList();
+
+        return new FormulaModule()
+        {
+            @Override
+            public String id()
+            {
+                return module.id();
+            }
+
+            @Override
+            public List<Formula> formulas()
+            {
+                return kept;
+            }
+        };
+    }
+
+    /**
+     * Evaluates a prototype expression with {@code id} bound to the prototype id of
+     * {@code params.person}; null for someone the prototype does not have.
+     */
+    private Object proto(String expression, io.vertx.core.json.JsonObject params)
+    {
+        String id = prototypeId(params.getString("person"));
+
+        return id == null ? null : oracle.eval("(function(id){return " + expression + "})('" + id + "')");
+    }
+
+    /**
+     * The prototype id ("ps") of a people.id.
+     */
+    String prototypeId(String personId)
+    {
+        return people.entrySet().stream().filter(e -> e.getValue().equals(personId)).map(Map.Entry::getKey).findFirst().orElse(null);
+    }
+
+    /**
+     * A stand-in for Track 3's optional ports, answering from the prototype's leave, visits, visit
+     * points, onboarding, last 1:1s, kudos, training plans, team wins and Track 3's part of Progress.
      */
     FormulaModule ports()
     {
@@ -368,7 +423,32 @@ final class PrototypeWork
                         Formula.of("people.visitPointsByRef", Set.of("person"), Set.of(),
                                 (ctx, params) -> Future.succeededFuture(visitPoints)),
                         Formula.of("people.onboarding", Set.of("person"), Set.of(),
-                                (ctx, params) -> Future.succeededFuture(onboarding.get(params.getString("person")))));
+                                (ctx, params) -> Future.succeededFuture(onboarding.get(params.getString("person")))),
+                        Formula.of("people.lastOneOnOne", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("LAST11[id]||null", params))),
+                        Formula.of("people.kudosReceived", Set.of("person", "period"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("KUDOS.filter(function(k){return k.to===person(id).name}).length",
+                                        params))),
+                        Formula.of("people.trainingBehind", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("trFor(id).map(function(a){return {plan:a.plan.name,"
+                                        + "overdue:trOverdue(a).length}})", params))),
+                        Formula.of("people.trainingLoad", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("(function(){var u=userOfPerson(id);return {plans:trFor(id)"
+                                        + ".filter(trActiveStage).map(function(a){return {hoursPerWeek:a.plan.modules.reduce(function(t,m){"
+                                        + "return t+(+m.hours||0)},0)/a.plan.weeks,end:trEnd(a)}}),mentees:u?mentees(u.id)"
+                                        + ".filter(trActiveStage).length:0}})()", params))),
+                        Formula.of("people.wins", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("teamWins([person(id)]).filter(function(w){"
+                                        + "return w.what.indexOf('Fixed a bug')!==0}).map(function(w){return {what:w.what,text:w.text,"
+                                        + "at:w.at}})", params))),
+                        Formula.of("people.progress", Set.of("person"), Set.of(),
+                                (ctx, params) -> Future.succeededFuture(proto("(function(p){var T3=['Delighted customer','Training completed',"
+                                        + "'Mentor'];return {achievements:achievements(p).filter(function(a){return T3.indexOf(a[0])>=0})"
+                                        + ".map(function(a){return {title:a[0],detail:a[1],value:a[2]}}),nextSteps:nextActions(p).filter("
+                                        + "function(x){return ['reviews','training','visits'].indexOf(x[1])>=0}).map(function(x){return "
+                                        + "{text:x[0],target:{module:x[1]},selfOnly:x[1]==='reviews'}}),training:trPerson(p.id).as.map("
+                                        + "function(a){return {plan:a.plan.name,stage:trStage(a),rating:trRating(a).score}})}})(person(id))",
+                                        params))));
             }
         };
     }

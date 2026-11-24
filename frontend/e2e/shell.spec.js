@@ -225,7 +225,8 @@ test('with no active sprint (today after the last sprint) the period control sti
   await expect(period).toHaveValue('s:S43');
 
   await menu(page).getByRole('link', { name: 'Progress' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Progress' })).toBeVisible();
+  // Progress is a real screen now (task 13.4): its H1 is the person, its eyebrow names the screen
+  await expect(page.locator('.pl-hdr .pl-eyebrow')).toHaveText('Progress');
 
   await menu(page).getByRole('link', { name: 'Overview' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();

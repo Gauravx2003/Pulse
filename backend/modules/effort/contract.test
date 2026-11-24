@@ -1,0 +1,8 @@
+# Role matrix (task 13.5, spec platform/rbac-visibility "Contract test matrix"), run by Track2ContractTest.
+# METHOD /path [json body] => ADMIN (hr@) MANAGER (rahul@, Priya's manager) EMPLOYEE (priya@) PEER (arjun@)
+# Writes send a body that fails validation where the route lets the role in, so no data changes.
+GET /api/v1/effort/people/{person:priya@pulse.demo}?period=m:2026-09 => 200 200 200 403
+GET /api/v1/effort/team?period=m:2026-09 => 200 200 403 403
+POST /api/v1/effort/items/{extra:SUP-8831}/confirm {"version":"x"} => 400 400 403 403
+POST /api/v1/effort/items/{extra:SUP-8831}/reject {"version":"x"} => 400 400 403 403
+POST /api/v1/effort/items/confirm-all {"ids":[]} => 200 200 403 403

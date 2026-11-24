@@ -1,0 +1,13 @@
+# Role matrix (task 13.5, spec platform/rbac-visibility "Contract test matrix"), run by Track2ContractTest.
+# METHOD /path [json body] => ADMIN (hr@) MANAGER (rahul@, Priya's manager) EMPLOYEE (priya@) PEER (arjun@)
+# Writes send a body that fails validation where the route lets the role in, so no data changes.
+GET /api/v1/bugs/people/{person:priya@pulse.demo} => 200 200 200 403
+GET /api/v1/bugs/team => 200 200 403 403
+# every role may dispute its own attribution; the owner is checked after the body
+POST /api/v1/bugs/items/BUG-4101/dispute {"reason":1} => 400 400 400 400
+POST /api/v1/bugs/disputes/00000000-0000-0000-0000-000000000000/decide {"decision":"maybe"} => 400 400 403 403
+POST /api/v1/bugs/items/BUG-4101/take {"unexpected":true} => 400 400 400 400
+POST /api/v1/bugs/items/BUG-4101/pick-up {"unexpected":true} => 400 400 400 400
+POST /api/v1/bugs/items/BUG-4101/resolve {"unexpected":true} => 400 400 400 400
+POST /api/v1/bugs/tickets/SUP-0001/take {"unexpected":true} => 400 400 400 400
+POST /api/v1/bugs/tickets/SUP-0001/resolve {"unexpected":true} => 400 400 400 400

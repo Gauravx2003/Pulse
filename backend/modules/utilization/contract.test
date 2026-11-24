@@ -1,0 +1,4 @@
+# Role matrix (task 13.5, spec platform/rbac-visibility "Contract test matrix"), run by Track2ContractTest.
+# METHOD /path [json body] => ADMIN (hr@) MANAGER (rahul@, Priya's manager) EMPLOYEE (priya@) PEER (arjun@)
+# Writes send a body that fails validation where the route lets the role in, so no data changes.
+GET /api/v1/utilization/team => 200 200 403 403

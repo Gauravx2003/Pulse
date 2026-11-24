@@ -64,6 +64,11 @@ public final class WorkloadFormulas implements FormulaModule
 
     public static final String SPRINT_METRICS = "work.sprintMetrics";
 
+    /**
+     * The culture inputs of a sprint that are never frozen: {@code {cycles, doneBugs, period}}.
+     */
+    public static final String SPRINT_CULTURE_FACTS = "work.sprintCultureFacts";
+
     public static final String UTILIZATION = "work.utilization";
 
     public static final String BUG_STATS = "work.bugStats";
@@ -131,6 +136,7 @@ public final class WorkloadFormulas implements FormulaModule
                         Set.of(PeriodCalendar.SPRINT), safe(WorkloadFormulas::periodWork)),
                 new Formula(SPRINT_METRICS, Set.of("person", "period"), work,
                         Set.of(PeriodCalendar.SPRINT), safe(WorkloadFormulas::sprintMetrics)),
+                Formula.of(SPRINT_CULTURE_FACTS, Set.of("person", "period"), work, safe(WorkloadFormulas::sprintCultureFacts)),
                 new Formula(UTILIZATION, Set.of("person", "period"), work,
                         Set.of(PeriodCalendar.SPRINT), safe(WorkloadFormulas::utilization)),
                 Formula.of(BUG_STATS, Set.of("person", "period"), union(calendar, Set.of(BUGS)), safe(WorkloadFormulas::bugStats)),
@@ -283,14 +289,47 @@ public final class WorkloadFormulas implements FormulaModule
 
     /**
      * {@code work.sprintMetrics {person, period}}: {@link SprintMetrics#of} over the person's issues of a
-     * sprint, month or release, plus {@code reopenRate}, and {@code cycles} and {@code doneBugs} for
-     * {@code work.cultureInputs}.
+     * sprint, month or release, plus {@code reopenRate}. A closed sprint answers from its frozen snapshot,
+     * so a key added here later is missing from the sprints frozen before it: inputs that must exist for
+     * every sprint belong in {@link #SPRINT_CULTURE_FACTS}, which is never frozen.
      */
     private static Future<Object> sprintMetrics(CalcContext ctx, JsonObject params)
     {
+        return period(ctx, params).compose(period ->
+        {
+            Future<List<JsonObject>> issues = sprintIssues(ctx, params, period);
+
+            Future<Object> work = ctx.get(PERIOD_WORK, params);
+
+            return Future.all(issues, work).map(all -> (Object) SprintMetrics.of(issues.result(), (JsonObject) work.result())
+                    .put("reopenRate", SprintMetrics.reopenRate(issues.result()))
+                    .put("period", period.getString("key")));
+        });
+    }
+
+    /**
+     * {@code work.sprintCultureFacts {person, period}}: {@code {cycles, doneBugs, period}} of the person's
+     * issues of a sprint, the inputs {@code work.cultureInputs} reads for "Median cycle time" and "Bugs
+     * fixed without reopening". Not a periodic formula: it is computed from the issues for closed sprints
+     * too, so it never depends on the shape of a snapshot frozen earlier.
+     */
+    private static Future<Object> sprintCultureFacts(CalcContext ctx, JsonObject params)
+    {
+        return period(ctx, params).compose(period -> sprintIssues(ctx, params, period).map(issues -> (Object) new JsonObject()
+                .put("cycles", SprintMetrics.cycles(issues))
+                .put("doneBugs", SprintMetrics.doneBugs(issues))
+                .put("period", period.getString("key"))));
+    }
+
+    /**
+     * The person's issues of a period with {@code cycle}, {@code live} and {@code wasStale} set, as
+     * {@link SprintMetrics} reads them.
+     */
+    private static Future<List<JsonObject>> sprintIssues(CalcContext ctx, JsonObject params, JsonObject period)
+    {
         UUID person = uuid(params, "person");
 
-        return period(ctx, params).compose(period -> ctx.calendar().compose(calendar ->
+        return ctx.calendar().compose(calendar ->
         {
             JsonObject active = calendar.activeSprint();
 
@@ -298,11 +337,9 @@ public final class WorkloadFormulas implements FormulaModule
 
             Future<JsonArray> rows = issuesIn(ctx, person, period, active);
 
-            Future<Object> work = ctx.get(PERIOD_WORK, params);
-
             Future<Days> days = days(ctx, person);
 
-            return Future.all(rows, work, days).map(all ->
+            return Future.all(rows, days).map(all ->
             {
                 int elapsed = active == null ? 0 : Workload.sprintElapsedPct(LocalDate.parse(active.getString("from")),
                         LocalDate.parse(active.getString("end")), ctx.today(), days.result().company());
@@ -326,13 +363,9 @@ public final class WorkloadFormulas implements FormulaModule
                     issues.add(row.copy().put("cycle", cycle).put("live", live).put("wasStale", stale));
                 }
 
-                return (Object) SprintMetrics.of(issues, (JsonObject) work.result())
-                        .put("reopenRate", SprintMetrics.reopenRate(issues))
-                        .put("cycles", SprintMetrics.cycles(issues))
-                        .put("doneBugs", SprintMetrics.doneBugs(issues))
-                        .put("period", period.getString("key"));
+                return issues;
             });
-        }));
+        });
     }
 
     /**

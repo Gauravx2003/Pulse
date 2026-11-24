@@ -160,7 +160,7 @@ class WorkloadFormulasTest
                         + "(perMetrics(person('" + id + "'),perOf('" + period + "')))");
 
                 JsonObject port = without((JsonObject) get(WorkloadFormulas.SPRINT_METRICS, person(id).put("period", period)),
-                        "reopenRate", "cycles", "doneBugs", "period");
+                        "reopenRate", "period");
 
                 assertSame(id + " " + period, prototype, port);
             }

@@ -204,4 +204,15 @@ public final class BugStats
     {
         return day != null && !day.isBefore(from) && !day.isAfter(to);
     }
+
+    /**
+     * The person's support tickets with status Resolved, any date (the prototype's {@code q.sup} filtered
+     * as {@code valData} does; the culture parameter "Support tickets resolved", {@code work.cultureInputs}).
+     */
+    public static int resolvedTickets(String personId, List<JsonObject> tickets)
+    {
+        return (int) tickets.stream()
+                .filter(t -> personId.equals(t.getString("personId")) && "Resolved".equals(t.getString("status")))
+                .count();
+    }
 }

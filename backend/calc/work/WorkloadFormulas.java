@@ -283,7 +283,8 @@ public final class WorkloadFormulas implements FormulaModule
 
     /**
      * {@code work.sprintMetrics {person, period}}: {@link SprintMetrics#of} over the person's issues of a
-     * sprint, month or release, plus {@code reopenRate}.
+     * sprint, month or release, plus {@code reopenRate}, and {@code cycles} and {@code doneBugs} for
+     * {@code work.cultureInputs}.
      */
     private static Future<Object> sprintMetrics(CalcContext ctx, JsonObject params)
     {
@@ -327,6 +328,8 @@ public final class WorkloadFormulas implements FormulaModule
 
                 return (Object) SprintMetrics.of(issues, (JsonObject) work.result())
                         .put("reopenRate", SprintMetrics.reopenRate(issues))
+                        .put("cycles", SprintMetrics.cycles(issues))
+                        .put("doneBugs", SprintMetrics.doneBugs(issues))
                         .put("period", period.getString("key"));
             });
         }));
@@ -352,7 +355,7 @@ public final class WorkloadFormulas implements FormulaModule
 
     /**
      * {@code work.bugStats {person, period}}: {@link BugStats#of} with this quarter's bugs and the
-     * period's support tickets.
+     * period's support tickets, plus {@code supResolved} ({@link BugStats#resolvedTickets}).
      */
     private static Future<Object> bugStats(CalcContext ctx, JsonObject params)
     {
@@ -366,7 +369,7 @@ public final class WorkloadFormulas implements FormulaModule
                     FROM bugs_current WHERE origin_person_id = $1 OR fixed_by_id = $1""", Tuple.of(person));
 
             Future<JsonArray> tickets = WorkSql.rows(ctx, """
-                    SELECT key, person_id AS "personId", opened_on AS "openedOn", hours, csat
+                    SELECT key, person_id AS "personId", opened_on AS "openedOn", hours, csat, status
                     FROM support_tickets_current WHERE person_id = $1""", Tuple.of(person));
 
             return Future.all(bugs, tickets).map(all ->
@@ -377,6 +380,7 @@ public final class WorkloadFormulas implements FormulaModule
 
                 return (Object) BugStats.of(person.toString(), list(bugs.result()), list(tickets.result()), quarterStart,
                         LocalDate.parse(period.getString("from")), LocalDate.parse(period.getString("to")))
+                        .put("supResolved", BugStats.resolvedTickets(person.toString(), list(tickets.result())))
                         .put("period", period.getString("key"));
             });
         });

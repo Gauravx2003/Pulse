@@ -81,7 +81,7 @@ class WorkloadFormulasTest
 
         List<FormulaModule> modules = new ArrayList<>(FormulaRegistry.discover().modules());
 
-        modules.add(prototype.ports());
+        prototype.replacePorts(modules);
 
         calc = new CalcService(new SqlExecutor(db.pool(Db.DEFAULT_APP_ROLE)),
                 PulseClock.of(Clock.systemUTC(), "2026-09-28", false), FormulaRegistry.of(modules));
@@ -112,7 +112,7 @@ class WorkloadFormulasTest
                     + "return {open:m.open.map(k).sort(),rem:m.rem,work:m.work,cap:m.cap,util:m.util,band:m.band,"
                     + "stale:m.stale.map(k).sort(),sp:m.sp,done:m.done.map(k).sort(),oldest:m.oldest}})(metrics(person('" + id + "')))");
 
-            JsonObject port = without((JsonObject) get(WorkloadFormulas.LIVE_SPRINT, person(id)), "sprint", "elapsedPct",
+            JsonObject port = without((JsonObject) get(WorkloadFormulas.LIVE_SPRINT, person(id)), "sprint", "openIssues", "elapsedPct",
                     "hoursPerPoint", "focus");
 
             assertSame(id, prototype, port);

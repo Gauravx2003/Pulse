@@ -195,7 +195,8 @@ public final class RoadmapService
     }
 
     /**
-     * The manager removes a skill from the matrix.
+     * The manager removes a skill from the matrix. Idempotent, as a DELETE: removing a skill that is
+     * already gone succeeds and records nothing (task 13.5 contract matrix).
      */
     Future<Void> removeSkill(JsonObject user, String personId, UUID skillId, JsonObject request)
     {
@@ -203,7 +204,7 @@ public final class RoadmapService
                 .compose(scope -> policy.refuseSelf(user, RATE_ACTION, personId, null, request))
                 .compose(v -> ctx.sql().inTransaction(tx -> new RoadmapRepository(tx).removeSkill(UUID.fromString(personId), skillId)
                         .compose(n -> n == 0
-                                ? Future.<Void>failedFuture(ApiException.notFound("not_found", "Skill not found."))
+                                ? Future.<Void>succeededFuture()
                                 : audit(tx, user, SKILL_REMOVED, skillId.toString(), personId))))
                 .onSuccess(v -> changed());
     }

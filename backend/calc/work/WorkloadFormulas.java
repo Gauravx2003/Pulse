@@ -217,6 +217,7 @@ public final class WorkloadFormulas implements FormulaModule
 
                 return (Object) Workload.live(list(issues.result()), ctx.today(), workEnd, ctx.rules(), elapsed,
                                 days.result().person(), hoursPerPoint)
+                        .put("openIssues", Workload.openIssues(list(issues.result()), hoursPerPoint))
                         .put("sprint", sprint.getString("key"))
                         .put("elapsedPct", elapsed)
                         .put("hoursPerPoint", hoursPerPoint)

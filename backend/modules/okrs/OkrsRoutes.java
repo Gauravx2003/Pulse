@@ -135,6 +135,8 @@ public final class OkrsRoutes
                                 .put("person", personId)
                                 .put("period", "q:" + quarter))
                         .map(summary -> listResponse(rows, (JsonObject) summary)))
+                .compose(body -> new OkrRepository(ctx.sql()).quartersForOwner(UUID.fromString(personId))
+                        .map(quarters -> body.put("quarters", quarters)))
                 .onSuccess(rc::json)
                 .onFailure(error -> rc.fail(api(error)));
     }
@@ -163,6 +165,7 @@ public final class OkrsRoutes
                                 .put("team", team)
                                 .put("period", "q:" + quarter))
                         .map(summary -> listResponse(rows, (JsonObject) summary)))
+                .compose(body -> new OkrRepository(ctx.sql()).quartersForTeam(team).map(quarters -> body.put("quarters", quarters)))
                 .onSuccess(rc::json)
                 .onFailure(error -> rc.fail(api(error)));
     }

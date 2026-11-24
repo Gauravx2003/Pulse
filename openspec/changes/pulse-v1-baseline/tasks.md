@@ -116,23 +116,23 @@ Depends on Track 1 contract freeze (end of Day 1). Until then use stubs for the 
 ## 13. Action center and Progress with weekly pulse
 
 - [x] 13.1 Implement the Action center engine with an **action provider** interface (modules register providers through their descriptor), the sorting by priority, and Track 2's own providers (workload, stale, code-only, pulse, effort, bugs, rubber-stamp, integrations); verify a test with a stub provider from Track 3 appearing without editing Track 2 code.
-- [ ] 13.2 Implement people signals, sprint forecast, next-sprint capacity (calling the attendance, training and visit services through their interfaces), skills coverage, team pulse, team wins and digest preview, with the velocity, forecast, capacity, skills-coverage and signal-threshold formulas in `calc/work/` exposed through `CalcService`; verify tests for each scenario in `insight/action-center`.
-- [ ] 13.3 Implement Progress (next steps via providers, achievements, trends) and the weekly pulse (Friday job from task 5.5, both answers required, low-answer notification and Do today item, visibility); verify tests in `insight/progress-pulse` including the peer-access refusal and no pulse text in logs.
-- [ ] 13.4 Build the Action center and Progress screens including the pulse modal and digest modal; verify Playwright as `rahul@` and `priya@` and the UI audit.
-- [ ] 13.5 Run contract tests for every Track 2 endpoint with `assertRoleMatrix` for Admin, Manager, Employee and a peer; verify all pass and the matrix is committed as `backend/modules/*/contract.test`.
+- [x] 13.2 Implement people signals, sprint forecast, next-sprint capacity (calling the attendance, training and visit services through their interfaces), skills coverage, team pulse, team wins and digest preview, with the velocity, forecast, capacity, skills-coverage and signal-threshold formulas in `calc/work/` exposed through `CalcService`; verify tests for each scenario in `insight/action-center`.
+- [x] 13.3 Implement Progress (next steps via providers, achievements, trends) and the weekly pulse (Friday job from task 5.5, both answers required, low-answer notification and Do today item, visibility); verify tests in `insight/progress-pulse` including the peer-access refusal and no pulse text in logs.
+- [x] 13.4 Build the Action center and Progress screens including the pulse modal and digest modal; verify Playwright as `rahul@` and `priya@` and the UI audit.
+- [x] 13.5 Run contract tests for every Track 2 endpoint with `assertRoleMatrix` for Admin, Manager, Employee and a peer; verify all pass and the matrix is committed as `backend/modules/*/contract.test`.
 
 ## 14. OKRs
 
 - [x] 14.1 Write migration V210 for objectives and key_results (quarter, level, owner or team, epic, value, start, target, current, unit, check-ins) and the OKR seed (V210 range) from `seed/extracted/`; verify the migration applies after V100 and V200 and the seeded objective count equals the prototype's.
 - [x] 14.2 Implement the OKR service and API (CRUD, validation, progress and OKR pillar (the pillar formula lives in `calc/work/`, exposed through `CalcService`, and is compared with the oracle's pillar for every seeded person), check-ins, okr.own and okr.team permissions, signals for Progress, import and export service methods); verify tests for every scenario in `growth/okrs`.
 - [x] 14.3 Expose the OKR import and export service interface (find owner, upsert objective, bulk check-in, list for export) for Track 3's CSV engine and register the off-track next-step provider; verify a service-level test that an update of a matching objective acts as a check-in and that Track 3's stub can call it.
-- [ ] 14.4 Build the OKR screens (cards, quarter dropdown, New and Edit modals, Check-in, delete confirmation, Import and Export entry points that link to the Data imports modal); verify Playwright as `priya@` and `rahul@` and the UI audit.
+- [x] 14.4 Build the OKR screens (cards, quarter dropdown, New and Edit modals, Check-in, delete confirmation, Import and Export entry points that link to the Data imports modal); verify Playwright as `priya@` and `rahul@` and the UI audit.
 
 ## 15. Road map
 
 - [x] 15.1 Write migration V220 for milestones, promotion_targets and skills_matrix and the road-map seed (V220 range); verify the migration applies after V210 and a seeded road map exists for Priya.
 - [x] 15.2 Implement milestones (propose and confirm), promotion readiness criteria (reading the performance index through the calc service) and the skills matrix with visibility rules; verify tests for every scenario in `growth/roadmap`.
-- [ ] 15.3 Build the Road map screen and the Add milestone modal; verify Playwright as `priya@` and `rahul@`, that a peer gets the no-access card, and the UI audit.
+- [x] 15.3 Build the Road map screen and the Add milestone modal; verify Playwright as `priya@` and `rahul@`, that a peer gets the no-access card, and the UI audit.
 
 # TRACK 3 — CSV engine, Attendance, Visits, Culture, Reviews (incl. 1:1s and kudos), Training, Appraisal
 

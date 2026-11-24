@@ -1,0 +1,9 @@
+# Role matrix (task 13.5, spec platform/rbac-visibility "Contract test matrix"), run by Track2ContractTest.
+# METHOD /path [json body] => ADMIN (hr@) MANAGER (rahul@, Priya's manager) EMPLOYEE (priya@) PEER (arjun@)
+# Writes send a body that fails validation where the route lets the role in, so no data changes.
+GET /api/v1/roadmap/people/{person:priya@pulse.demo} => 200 200 200 403
+POST /api/v1/roadmap/people/{person:priya@pulse.demo}/milestones {"title":""} => 400 400 400 400
+POST /api/v1/roadmap/milestones/{milestone:Lead a cross-team epic (tenant rate limiting)}/confirm {"version":"x"} => 400 400 403 403
+PUT /api/v1/roadmap/people/{person:priya@pulse.demo}/skills {"skill":"System design","current":9,"needed":4} => 400 400 403 403
+# removing is idempotent: a skill that is not there succeeds with nothing to remove
+DELETE /api/v1/roadmap/people/{person:priya@pulse.demo}/skills/00000000-0000-0000-0000-000000000000 => 204 204 403 403

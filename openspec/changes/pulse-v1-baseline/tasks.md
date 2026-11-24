@@ -164,7 +164,7 @@ Priority order inside the track (do in this order; the last two are the first to
 
 ## 20. Reviews: performance, 1:1s and kudos, 360°
 
-- [ ] 20.1 Implement performance review (index breakdown, trend, calibration for `reviews.calibrate`, summary, submit for calibration, self-calibration refusal); verify tests for `culture/reviews-performance`.
+- [x] 20.1 Implement performance review (index breakdown, trend, calibration for `reviews.calibrate`, summary, submit for calibration, self-calibration refusal); verify tests for `culture/reviews-performance`.
 - [x] 20.2 Implement 1:1s (signal agenda, shared notes, action items, overdue signal) and kudos (self-kudos refusal, feed, outbox copy to Slack); verify tests for `culture/one-on-ones-kudos` and the action provider for overdue 1:1s.
 - [ ] 20.3 Implement 360° cycles, assignment (derived groups, duplicates skipped), reminders, form validation, draft and submit, results with server-side anonymity threshold (the merge, hidden-strength and blind-spot aggregation lives in `calc/people/`, exposed through `CalcService`), preliminary results for managers, publish that feeds culture values, pseudonymous reviewer storage; verify tests for every scenario in `culture/review-360`, including a group under threshold merged or hidden in every response.
 - [ ] 20.4 Build the Reviews screens (Performance with the Review summary modal and Copy summary, 1:1s & feedback with Give kudos, 360° with To give, My feedback, Team, Cycles, review form, results, assign and cycle modals); verify Playwright of assign, notify, submit and publish end to end with three demo accounts and the UI audit.

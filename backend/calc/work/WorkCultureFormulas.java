@@ -28,10 +28,10 @@ import static com.pulse.calc.work.WorkloadFormulas.uuid;
  *
  * <ul>
  *   <li>Last 3 finished sprints ({@code work.sprintMetrics}): {@code commitment_met} (average commitment
- *       %), {@code issues_carried_over}, {@code median_cycle_time} (median over their done issues) and
- *       {@code logged_vs_estimate} (average estimate accuracy %).</li>
+ *       %), {@code issues_carried_over} and {@code logged_vs_estimate} (average estimate accuracy %);
+ *       {@code median_cycle_time} (median over their done issues, {@code work.sprintCultureFacts}).</li>
  *   <li>Last 6 finished sprints: {@code bugs_fixed_without_reopening} (% of done bugs not reopened, of
- *       the done bugs) and {@code delivery_overloaded_sprints} (average commitment % in sprints over 100%
+ *       the done bugs, {@code work.sprintCultureFacts}) and {@code delivery_overloaded_sprints} (average commitment % in sprints over 100%
  *       utilization, in that many sprints).</li>
  *   <li>Bugs and support ({@code work.bugStats}): {@code open_bugs_own_code} (with the high ones),
  *       {@code others_bugs_fixed_proactively} and {@code support_tickets_resolved}.</li>
@@ -117,6 +117,12 @@ public final class WorkCultureFormulas implements FormulaModule
                     .map(k -> ctx.get(WorkloadFormulas.SPRINT_METRICS, ref.copy().put("period", k)))
                     .toList();
 
+            // cycle times and done bugs come from a formula that is never frozen, so sprints closed before
+            // these inputs existed still have them
+            List<Future<Object>> facts = finished.stream()
+                    .map(k -> ctx.get(WorkloadFormulas.SPRINT_CULTURE_FACTS, ref.copy().put("period", k)))
+                    .toList();
+
             List<Future<Object>> utilization = finished.stream()
                     .map(k -> ctx.get(WorkloadFormulas.UTILIZATION, ref.copy().put("period", k)))
                     .toList();
@@ -141,6 +147,7 @@ public final class WorkCultureFormulas implements FormulaModule
             List<Future<?>> waits = new ArrayList<>(List.of(bugs, prs, live, training, extra, areas, pulses));
 
             waits.addAll(metrics);
+            waits.addAll(facts);
             waits.addAll(utilization);
 
             return Future.all(waits).map(all ->
@@ -149,9 +156,11 @@ public final class WorkCultureFormulas implements FormulaModule
 
                 List<JsonObject> last3 = sprints.subList(0, Math.min(LAST_3, sprints.size()));
 
+                List<JsonObject> sprintFacts = facts.stream().map(f -> (JsonObject) f.result()).toList();
+
                 JsonObject inputs = new JsonObject();
 
-                sprintInputs(inputs, last3, sprints, utilization);
+                sprintInputs(inputs, last3, sprints, sprintFacts, utilization);
 
                 bugInputs(inputs, (JsonObject) bugs.result());
 
@@ -185,7 +194,8 @@ public final class WorkCultureFormulas implements FormulaModule
 
     // ------------------------------------------------------------------ groups
 
-    private static void sprintInputs(JsonObject inputs, List<JsonObject> last3, List<JsonObject> last6, List<Future<Object>> utilization)
+    private static void sprintInputs(JsonObject inputs, List<JsonObject> last3, List<JsonObject> last6, List<JsonObject> facts,
+                                     List<Future<Object>> utilization)
     {
         List<Double> commits = numbers(last3, "commit");
 
@@ -195,7 +205,8 @@ public final class WorkCultureFormulas implements FormulaModule
 
         List<Double> cycles = new ArrayList<>();
 
-        last3.forEach(m -> m.getJsonArray("cycles").forEach(c -> cycles.add(((Number) c).doubleValue())));
+        facts.subList(0, Math.min(LAST_3, facts.size()))
+                .forEach(f -> f.getJsonArray("cycles").forEach(c -> cycles.add(((Number) c).doubleValue())));
 
         inputs.put("median_cycle_time", raw(cycles.isEmpty() ? null : SprintMetrics.median(cycles)));
 
@@ -203,9 +214,9 @@ public final class WorkCultureFormulas implements FormulaModule
 
         inputs.put("logged_vs_estimate", raw(estimates.isEmpty() ? null : Math.round(average(estimates))));
 
-        int done = last6.stream().mapToInt(m -> m.getJsonObject("doneBugs").getInteger("done")).sum();
+        int done = facts.stream().mapToInt(f -> f.getJsonObject("doneBugs").getInteger("done")).sum();
 
-        int reopened = last6.stream().mapToInt(m -> m.getJsonObject("doneBugs").getInteger("reopened")).sum();
+        int reopened = facts.stream().mapToInt(f -> f.getJsonObject("doneBugs").getInteger("reopened")).sum();
 
         inputs.put("bugs_fixed_without_reopening", raw(done == 0 ? null : Math.round((1 - reopened / (double) done) * 100)).put("of", done));
 

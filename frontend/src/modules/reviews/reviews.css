@@ -37,3 +37,61 @@
   align-items: center;
   margin-bottom: var(--space-2);
 }
+/* Performance (task 20.4) */
+.rv-index {
+  font-size: 48px;
+  line-height: 52px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.rv-index small {
+  font-size: 16px;
+  color: var(--ink-muted);
+  margin-left: var(--space-1);
+}
+.rv-trend {
+  width: 100%;
+  height: auto;
+  margin-top: var(--space-3);
+}
+.rv-trend text {
+  fill: var(--ink-muted);
+  font-size: 11px;
+}
+.rv-trend-grid {
+  stroke: var(--border);
+}
+.rv-trend-line {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 2;
+}
+.rv-trend-dot {
+  fill: var(--brand);
+}
+.rv-pillar {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+.rv-pillar:last-child {
+  border-bottom: 0;
+}
+.rv-mono {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.rv-bar {
+  height: 8px;
+  margin: var(--space-2) 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+.rv-bar span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}
+.rv-bar span.is-low {
+  background: var(--accent);
+}

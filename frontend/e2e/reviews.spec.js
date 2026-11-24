@@ -113,11 +113,53 @@ test.describe('Reviews screens', () => {
     await page.keyboard.press('Escape');
   });
 
-  test('Performance waits for the performance index; phone width has no page scroll', async ({ page }) => {
+  test('Performance: index, breakdown, trend and Copy summary; no calibration for an employee; phone width', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.setViewportSize({ width: 390, height: 844 });
     await open(page, DEMO.employee, '?tab=performance');
 
-    await expect(card(page, 'Performance review')).toBeVisible();
+    await expect(card(page, 'Performance index')).toContainText('/ 5');
+    await expect(page.getByRole('img', { name: /Index trend: Q4 2025 3\.4/ })).toBeVisible();
+    const breakdown = card(page, 'Breakdown');
+    for (const pillar of ['Delivery', 'Quality', 'Culture values', 'Goals / OKRs', 'Growth']) {
+      await expect(breakdown.getByRole('meter', { name: `${pillar} score` })).toBeAttached();
+    }
+    await expect(breakdown).toContainText('35%');
+    await expect(card(page, 'Calibration')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Submit for calibration' })).toHaveCount(0);
     await expectNoHorizontalScroll(page);
+
+    await page.getByRole('button', { name: 'Review summary' }).click();
+    const dialog = page.getByRole('dialog', { name: /Review summary · Priya Shah/ });
+    await expect(dialog.getByRole('row', { name: /Performance index/ })).toBeVisible();
+    await dialog.getByRole('button', { name: 'Copy summary' }).click();
+    await expect(page.getByText('Summary copied')).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Performance index');
+  });
+
+  test.describe('calibration', () => {
+    const clear = () =>
+      sql(`DELETE FROM performance_reviews r USING people p WHERE p.id = r.person_id AND p.name = 'Priya Shah' AND r.quarter = '2026-Q3'`);
+
+    test.beforeAll(clear);
+    test.afterAll(clear);
+
+    test('rahul@ sees the calibration table and submits Priya for calibration', async ({ page }) => {
+      await open(page, DEMO.manager, '?tab=performance');
+
+      const table = card(page, 'Calibration');
+      const row = table.getByRole('row', { name: /Priya Shah/ });
+      await expect(row).toContainText(/Exceeds|Meets|Developing/);
+      await row.click();
+
+      await expect(page.getByRole('heading', { level: 2, name: 'Performance index' })).toBeVisible();
+      await page.getByRole('button', { name: 'Submit for calibration' }).click();
+      const confirm = page.getByRole('dialog', { name: 'Submit for calibration?' });
+      await confirm.getByRole('button', { name: 'Submit for calibration' }).click();
+
+      await expect(page.getByText('Submitted to calibration')).toBeVisible();
+      await expect(page.getByText(/Submitted for calibration by Rahul Nair/)).toBeVisible();
+      await expect(row).toContainText('Submitted');
+    });
   });
 });

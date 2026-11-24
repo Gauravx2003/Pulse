@@ -112,7 +112,7 @@ no data).
 | Port | Params | Returns | Used by |
 |---|---|---|---|
 | `work.okrPillar` | person, period (quarter) | number 1–5, or null with no OKRs | `core.pillars` (OKR pillar) |
-| `work.cultureInputs` | person, period (quarter) | `{"<param key>": {raw, of?, high?}}` for the work-measured culture parameters | `core.cultureData` |
+| `work.cultureInputs` | person, period (quarter) | `{"<param key>": {raw, of?, high?}}` for the 18 work-measured culture parameters (sprints, bugs and support, PRs, live sprint, extra-mile items, coverage areas, weekly pulse) — registered in `calc/work/WorkCultureFormulas`, oracle-checked by `CoreSeedOracleTest` | `core.cultureData` |
 | `people.cultureInputs` | person, period (quarter) | the same, for the people-measured parameters: `office_presence`, `customer_visit_rating`, `training_rating`, `kudos_received`, `incidents_handled` (done incident extra-mile items + reported Escalation visits) — registered by Track 3, oracle-checked | `core.cultureData` |
 | `work.extraMileItems` | person, period (quarter) | `[{state, points, values}]` | `core.culture` (bonus) |
 | `work.disciplineInputs` | person | `{days, stale, replan, status, block, logSame, bulk, dod, review, standup}`, as `Discipline.metrics` | `core.discipline` |

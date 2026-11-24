@@ -160,7 +160,7 @@ class WorkloadFormulasTest
                         + "(perMetrics(person('" + id + "'),perOf('" + period + "')))");
 
                 JsonObject port = without((JsonObject) get(WorkloadFormulas.SPRINT_METRICS, person(id).put("period", period)),
-                        "reopenRate", "period");
+                        "reopenRate", "cycles", "doneBugs", "period");
 
                 assertSame(id + " " + period, prototype, port);
             }
@@ -176,7 +176,7 @@ class WorkloadFormulasTest
                     + "q3:q.q3.length,prod:q.prod,fixedOthers:q.fixedOthers.length,proactive:q.proactive.length,"
                     + "sup:q.sup.length,supM:q.supM.length,supH:q.supH,csat:q.csat}})(qStats('" + id + "'))");
 
-            JsonObject port = without((JsonObject) get(WorkloadFormulas.BUG_STATS, person(id).put("period", "s:S43")), "period");
+            JsonObject port = without((JsonObject) get(WorkloadFormulas.BUG_STATS, person(id).put("period", "s:S43")), "supResolved", "period");
 
             assertSame(id, prototype, port);
         }

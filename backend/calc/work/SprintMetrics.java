@@ -134,6 +134,53 @@ public final class SprintMetrics
     }
 
     /**
+     * The cycle times behind {@code cyc}: done issues' {@code cycle}, zero and unknown left out (the
+     * culture parameter "Median cycle time", {@code work.cultureInputs}).
+     */
+    public static JsonArray cycles(List<JsonObject> issues)
+    {
+        JsonArray out = new JsonArray();
+
+        for (JsonObject issue : issues)
+        {
+            Double cycle = Workload.number(issue, "cycle");
+
+            if ("Done".equals(issue.getString("status")) && cycle != null && cycle != 0)
+            {
+                out.add(cycle);
+            }
+        }
+
+        return out;
+    }
+
+    /**
+     * {@code {done, reopened}}: done bugs and how many of them were reopened (the culture parameter
+     * "Bugs fixed without reopening", {@code work.cultureInputs}).
+     */
+    public static JsonObject doneBugs(List<JsonObject> issues)
+    {
+        int done = 0;
+
+        int reopened = 0;
+
+        for (JsonObject issue : issues)
+        {
+            if ("Bug".equals(issue.getString("issueType")) && "Done".equals(issue.getString("status")))
+            {
+                done++;
+
+                if (issue.getBoolean("reopened", false))
+                {
+                    reopened++;
+                }
+            }
+        }
+
+        return new JsonObject().put("done", done).put("reopened", reopened);
+    }
+
+    /**
      * Reopen rate (spec section 12): done issues reopened within 14 days, as % of done issues; null
      * without done issues.
      */

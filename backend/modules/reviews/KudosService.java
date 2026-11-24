@@ -1,5 +1,7 @@
 package com.pulse.modules.reviews;
 
+import com.pulse.calc.core.CalcService;
+import com.pulse.calc.people.CultureInputsFormulas;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
@@ -80,7 +82,9 @@ final class KudosService
                                                 .put("sharedTo", shareTo))))
                                 .map(v -> row.put("personId", personId.toString()).put("personName", recipient.getString("name"))
                                         .put("value", value).put("message", message).put("sharedTo", shareTo));
-                    }));
+                    }))
+                    // The Collaboration "Kudos received" input reads the kudos table.
+                    .onSuccess(row -> CalcService.publish(ctx.vertx(), CultureInputsFormulas.KUDOS));
         });
     }
 

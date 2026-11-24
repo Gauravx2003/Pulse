@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.Map;
 
 import static com.pulse.testsupport.TestApi.await;
@@ -161,9 +160,9 @@ class VisitsRoutesTest
 
         TestApi.Session sana = RoleMatrix.session(api, SANA);
 
-        String last = LocalDate.now().minusDays(20).toString();
+        String last = "2026-06-12";
 
-        String first = LocalDate.now().minusDays(22).toString();
+        String first = "2026-06-10";
 
         // The engineer logs a past visit: it is due a report.
         JsonObject logged = ok(api.post("/api/v1/visits/items", priya, visit(first, last)), 201);
@@ -198,7 +197,7 @@ class VisitsRoutesTest
         assertEquals(409, api.post("/api/v1/visits/items/" + id + "/verify", rahul, new JsonObject().put("version", 2)).statusCode());
 
         JsonObject withFeedback = ok(api.post("/api/v1/visits/items/" + id + "/feedback", sana, new JsonObject()
-                .put("csat", 4.8).put("askAgain", true).put("source", "Customer call").put("feedbackOn", LocalDate.now().toString())
+                .put("csat", 4.8).put("askAgain", true).put("source", "Customer call").put("feedbackOn", "2026-06-15")
                 .put("quote", "Stayed until it worked.").put("version", 2)), 200);
 
         assertEquals("awaiting_manager", withFeedback.getString("status"));
@@ -343,13 +342,12 @@ class VisitsRoutesTest
         long planned = notices(RoleMatrix.EMPLOYEE, "visit.planned");
 
         // The manager plans a visit for the engineer: the engineer is told.
-        ok(api.post("/api/v1/visits/items", rahul, visit(LocalDate.now().plusDays(40).toString(), LocalDate.now().plusDays(41).toString())), 201);
+        ok(api.post("/api/v1/visits/items", rahul, visit("2026-11-09", "2026-11-10")), 201);
 
         assertEquals(planned + 1, notices(RoleMatrix.EMPLOYEE, "visit.planned"));
 
         // The engineer logs their own past visit: no "planned" notice to themselves.
-        String id = ok(api.post("/api/v1/visits/items", priya, visit(LocalDate.now().minusDays(50).toString(),
-                LocalDate.now().minusDays(49).toString())), 201).getString("id");
+        String id = ok(api.post("/api/v1/visits/items", priya, visit("2026-06-22", "2026-06-23")), 201).getString("id");
 
         assertEquals(planned + 1, notices(RoleMatrix.EMPLOYEE, "visit.planned"));
 
@@ -381,5 +379,33 @@ class VisitsRoutesTest
 
         // Priya owns no accounts and verifies nothing, so her badge is her overdue reports.
         assertEquals(overdue, badge(priya, "visits"));
+    }
+
+    @Test
+    void theTeamViewListsEveryoneAndAveragesWithoutNewJoiners() throws Exception
+    {
+        // Spec "Person with no visits": the team table lists people with no visits too.
+        HttpResponse<Buffer> res = api.get("/api/v1/visits/team?period=all", RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        JsonObject team = res.bodyAsJsonObject();
+
+        boolean withoutVisits = false;
+
+        for (Object o : team.getJsonArray("people"))
+        {
+            JsonObject p = (JsonObject) o;
+
+            withoutVisits |= p.getJsonObject("stats").getInteger("visits", 0) == 0;
+        }
+
+        assertTrue(withoutVisits, team.encodePrettily());
+
+        assertTrue(team.getJsonObject("average").containsKey("points"));
+
+        assertEquals(403, api.get("/api/v1/visits/team", RoleMatrix.session(api, RoleMatrix.EMPLOYEE)).statusCode());
+
+        assertEquals(400, api.get("/api/v1/visits/team?period=nonsense", RoleMatrix.session(api, RoleMatrix.MANAGER)).statusCode());
     }
 }

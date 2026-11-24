@@ -143,7 +143,7 @@ Priority order inside the track (do in this order; the last two are the first to
 - [x] 16.1 Write migration V300 for import_checks (staging), import_log, import_before_images and the Track 3 base tables; verify the migration applies after V100 and V200.
 - [x] 16.2 Implement the CSV framework (streaming parser with BOM, delimiters, aliases, dates in two formats, limits 5,000 rows and 5 MB, check ids bound to user, type and file hash with 30-minute expiry, idempotent commit, serialization of commits, undo within 24 hours with conflict refusal, history, formula-safe exports) with an import-type registry that modules join through their descriptors; verify tests for every scenario in `platform/csv-import-framework`, including 5,000 rows validated in under 3 seconds.
 - [x] 16.3 Register the import types Users (with optional `ctc` column, role limits, manager in the same file, trainee-title warning), OKRs, Customer visits, Holiday calendar and Attendance as definitions (columns, checks, modes) calling the owning module's service (the OKR definition calls the Track 2 OKR service from task 14.3, using a stub until it lands); verify the sample file of each type passes check and commit, and the error cases of `admin/data-imports-exports` each produce the stated message.
-- [ ] 16.4 Build the Data imports screen and the three-step upload modal (choose, check, done), import cards, exports (including the Appraisal proposals payroll CSV card for appraisal roles), data sources map and history with Undo, and wire the entry points on other screens (Import and Export CSV on Users, Import CSV on Customer visits, Upload monthly CSV and per-month Upload or Replace on Attendance, Holiday calendar import on Rules & thresholds); verify Playwright with `hr@` and `rahul@` and a malformed-CSV test.
+- [x] 16.4 Build the Data imports screen and the three-step upload modal (choose, check, done), import cards, exports (including the Appraisal proposals payroll CSV card for appraisal roles), data sources map and history with Undo, and wire the entry points on other screens (Import and Export CSV on Users, Import CSV on Customer visits, Upload monthly CSV and per-month Upload or Replace on Attendance, Holiday calendar import on Rules & thresholds); verify Playwright with `hr@` and `rahul@` and a malformed-CSV test.
 
 ## 17. Attendance
 
@@ -155,30 +155,30 @@ Priority order inside the track (do in this order; the last two are the first to
 ## 18. Customer visits
 
 - [x] 18.1 Implement visits (lifecycle, validation incl. overlap with leave and visits, report, feedback by the account owner, verify and reject, points via formulas in `calc/people/` exposed through `CalcService`, verified against the oracle `visitPts` (line ~1288) and `vStats` (line ~1306), capacity and On duty effect, notifications) and the action providers; verify tests for every scenario in `time/customer-visits` including the 5-point example.
-- [ ] 18.2 Build the Customer visits screens (Team, Person, account-owner view, plan and log modal, report, feedback, detail); verify Playwright as `rahul@`, `priya@` and `sana@` and the UI audit.
+- [x] 18.2 Build the Customer visits screens (Team, Person, account-owner view, plan and log modal, report, feedback, detail); verify Playwright as `rahul@`, `priya@` and `sana@` and the UI audit.
 
 ## 19. Culture values
 
 - [ ] 19.1 Implement the culture endpoints that return the calculation payload from the calc service (values, per-value detail, Discipline view, period selector, evidence log) and the Discipline override with reason and self-refusal; verify tests for every scenario in `culture/culture-values` and that the payload reproduces each score.
-- [ ] 19.2 Build the Culture values screens (11-value list, radar, calculation detail, Discipline rules and heatmap, override modal, kudos modal, rules table); verify Playwright as `priya@` and `rahul@` and the UI audit.
+- [x] 19.2 Build the Culture values screens (11-value list, radar, calculation detail, Discipline rules and heatmap, override modal, kudos modal, rules table); verify Playwright as `priya@` and `rahul@` and the UI audit.
 
 ## 20. Reviews: performance, 1:1s and kudos, 360°
 
-- [ ] 20.1 Implement performance review (index breakdown, trend, calibration for `reviews.calibrate`, summary, submit for calibration, self-calibration refusal); verify tests for `culture/reviews-performance`.
+- [x] 20.1 Implement performance review (index breakdown, trend, calibration for `reviews.calibrate`, summary, submit for calibration, self-calibration refusal); verify tests for `culture/reviews-performance`.
 - [x] 20.2 Implement 1:1s (signal agenda, shared notes, action items, overdue signal) and kudos (self-kudos refusal, feed, outbox copy to Slack); verify tests for `culture/one-on-ones-kudos` and the action provider for overdue 1:1s.
-- [ ] 20.3 Implement 360° cycles, assignment (derived groups, duplicates skipped), reminders, form validation, draft and submit, results with server-side anonymity threshold (the merge, hidden-strength and blind-spot aggregation lives in `calc/people/`, exposed through `CalcService`), preliminary results for managers, publish that feeds culture values, pseudonymous reviewer storage; verify tests for every scenario in `culture/review-360`, including a group under threshold merged or hidden in every response.
-- [ ] 20.4 Build the Reviews screens (Performance with the Review summary modal and Copy summary, 1:1s & feedback with Give kudos, 360° with To give, My feedback, Team, Cycles, review form, results, assign and cycle modals); verify Playwright of assign, notify, submit and publish end to end with three demo accounts and the UI audit.
+- [x] 20.3 Implement 360° cycles, assignment (derived groups, duplicates skipped), reminders, form validation, draft and submit, results with server-side anonymity threshold (the merge, hidden-strength and blind-spot aggregation lives in `calc/people/`, exposed through `CalcService`), preliminary results for managers, publish that feeds culture values, pseudonymous reviewer storage; verify tests for every scenario in `culture/review-360`, including a group under threshold merged or hidden in every response.
+- [x] 20.4 Build the Reviews screens (Performance with the Review summary modal and Copy summary, 1:1s & feedback with Give kudos, 360° with To give, My feedback, Team, Cycles, review form, results, assign and cycle modals); verify Playwright of assign, notify, submit and publish end to end with three demo accounts and the UI audit.
 
 ## 21. Training and mentoring
 
-- [ ] 21.1 Implement the plan library, assignment (skips, load warning, notifications), lifecycle with the 422 on a failed assessment, check-ins, checkpoints through the 360° form, assessment, final reviews, sign-off, acknowledgements, mentoring tools and suggestions, with `trRating` taken from task 4.7; verify tests for every scenario in `growth/training-mentoring` and a rating comparison against the oracle for all seeded assignments.
+- [x] 21.1 Implement the plan library, assignment (skips, load warning, notifications), lifecycle with the 422 on a failed assessment, check-ins, checkpoints through the 360° form, assessment, final reviews, sign-off, acknowledgements, mentoring tools and suggestions, with `trRating` taken from task 4.7; verify tests for every scenario in `growth/training-mentoring` and a rating comparison against the oracle for all seeded assignments.
 - [x] 21.2 Register the training action providers (final review due, blockers, behind sessions) and the onboarding effect on utilization; verify they appear for `rahul@` and that onboarding joiners are excluded from rebalance.
-- [ ] 21.3 Build the Training screens (My training, Mentoring, Trainees & assignments, plan detail with the multi-plan picker, Plan library with pass rate, average outcome and trainee rating, Mentors table and all modals); verify Playwright as `rohit@`, `sara@` and `rahul@` through assign, check-in, assessment, final review and sign-off, and the UI audit.
+- [x] 21.3 Build the Training screens (My training, Mentoring, Trainees & assignments, plan detail with the multi-plan picker, Plan library with pass rate, average outcome and trainee rating, Mentors table and all modals); verify Playwright as `rohit@`, `sara@` and `rahul@` through assign, check-in, assessment, final review and sign-off, and the UI audit.
 
 ## 22. Appraisal
 
 - [x] 22.1 Implement appraisal (score and bands via `aprRecommend` from task 4.8, 20% cap, budget 12% editable, per-cycle effective date, exceptions with reasons, submit blocked over budget, approve and send back, release letters, self-approval refusal, frozen at submit, evidence panel without reviewer identity, CTC only to appraisal roles, export with audit); verify tests for every scenario in `appraisal/appraisal`.
-- [ ] 22.2 Build the Appraisal & increments screens (KPIs, distribution, standards modal, people table with inline percent, evidence modal, Release letters, Approve all) and register the draft and waiting-for-approval action providers; verify Playwright as `rahul@` and `hr@` and that `priya@` gets no access.
+- [x] 22.2 Build the Appraisal & increments screens (KPIs, distribution, standards modal, people table with inline percent, evidence modal, Release letters, Approve all) and register the draft and waiting-for-approval action providers; verify Playwright as `rahul@` and `hr@` and that `priya@` gets no access.
 
 # ALL TRACKS — Integration and acceptance (after tracks merge)
 

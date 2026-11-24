@@ -1,0 +1,104 @@
+/* Culture values (task 19.2): layout only, tokens only. */
+.cv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-4);
+}
+.cv-formula {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+.cv-formula > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-width: 7.5rem;
+}
+.cv-formula b {
+  font-family: var(--font-mono);
+  font-size: 20px;
+}
+.cv-formula .cv-result {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+}
+.cv-op {
+  align-self: center;
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+.cv-note {
+  margin: var(--space-2) 0 var(--space-3);
+}
+.cv-anchors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.cv-anchors li {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+}
+.cv-anchors li.is-current {
+  background: var(--brand-soft);
+}
+.cv-evidence {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.cv-evidence p {
+  margin: var(--space-1) 0 0;
+}
+.cv-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.cv-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-3);
+}
+.cv-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border);
+}
+.cv-days {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-4);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: var(--space-1);
+}
+.cv-days li {
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.cv-h3 {
+  margin: var(--space-4) 0 var(--space-2);
+}

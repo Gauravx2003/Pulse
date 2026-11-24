@@ -294,4 +294,22 @@ final class VisitRepository extends ScopedRepository
                 """,
                 Tuple.of(from, to));
     }
+
+    /** People in the visits scope (the Team view lists everyone, with or without visits), by name. */
+    Future<JsonArray> people(Scope scope)
+    {
+        return scopedList(scope, "p.id", """
+                SELECT p.id, p.name, p.title, p.joined_on AS "joinedOn" FROM people p WHERE {scope} ORDER BY p.name
+                """,
+                Tuple.tuple());
+    }
+
+    /** Everyone who can own an account: active, live accounts {@code [{id, name, title}]}, by name. */
+    Future<JsonArray> ownerOptions()
+    {
+        return queryList("""
+                SELECT u.id, u.name, u.title FROM users u WHERE u.status = 'Active' AND u.deleted_at IS NULL ORDER BY lower(u.name)
+                """,
+                Tuple.tuple());
+    }
 }

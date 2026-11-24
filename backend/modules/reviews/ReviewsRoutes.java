@@ -12,7 +12,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 /**
- * 1:1s and kudos under {@code /api/v1/reviews} (task 20.2), built from docs/backend-guide.md: every
+ * Performance review (task 20.1), 1:1s and kudos under {@code /api/v1/reviews} (task 20.2), built from docs/backend-guide.md: every
  * route declares {@code oneonone}, bodies have a {@link BodySchema}, person data goes through the
  * policy service, writes audit in their transaction and edits use optimistic locking.
  */
@@ -90,6 +90,8 @@ public final class ReviewsRoutes
 
     private final KudosService kudos;
 
+    private final PerformanceService performance;
+
     private final ModuleContext ctx;
 
     ReviewsRoutes(ModuleContext ctx)
@@ -103,10 +105,28 @@ public final class ReviewsRoutes
         this.reviews360 = new Review360Service(ctx);
 
         this.kudos = new KudosService(ctx);
+
+        this.performance = new PerformanceService(ctx);
     }
 
     void mount(Router router)
     {
+        // Performance review (task 20.1): anyone reads the people they see; calibration needs reviews.calibrate.
+        // GET /performance/people/:personId · GET /performance/calibration · POST /performance/people/:personId/submit
+        // POST /performance/submit (every unsubmitted review of the viewer's people)
+        router.get("/performance/people/:personId").handler(rc -> performance.review(PolicyService.user(rc),
+                Ids.path(rc, "personId").toString()).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.get("/performance/calibration").handler(policy.requires(PerformanceService.CALIBRATE))
+                .handler(rc -> performance.calibration(PolicyService.user(rc)).onSuccess(rc::json).onFailure(rc::fail));
+
+        router.post("/performance/people/:personId/submit").handler(policy.requires(PerformanceService.CALIBRATE))
+                .handler(rc -> performance.submit(PolicyService.user(rc), Ids.path(rc, "personId").toString(), policy.request(rc))
+                        .onSuccess(rc::json).onFailure(rc::fail));
+
+        router.post("/performance/submit").handler(policy.requires(PerformanceService.CALIBRATE))
+                .handler(rc -> performance.submitTeam(PolicyService.user(rc)).onSuccess(rc::json).onFailure(rc::fail));
+
         // GET /api/v1/reviews/one-on-ones?personId=...
         router.get("/one-on-ones").handler(policy.requires("oneonone")).handler(this::list);
 
@@ -172,6 +192,15 @@ public final class ReviewsRoutes
         router.get("/360/cycles/:id/results/:personId").handler(policy.requires("review360.manage"))
                 .handler(rc -> reviews360.resultsFor(PolicyService.user(rc), Ids.path(rc, "id"), rc.pathParam("personId"))
                         .onSuccess(rc::json).onFailure(rc::fail));
+
+        // Reviewer choices for the assign form (names and departments only; review360.manage).
+        router.get("/360/reviewer-options").handler(policy.requires("review360.manage"))
+                .handler(rc -> new Review360Repository(ctx.sql()).reviewerOptions()
+                        .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
+
+        // Admin publishes: subjects see their results and are told (task 20.3).
+        router.post("/360/cycles/:id/publish").handler(policy.requires("users.all", "review360.manage"))
+                .handler(rc -> reviews360.publish(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail));
 
         // Remind everyone who has not submitted, or one reviewer (review360.manage).
         router.post("/360/cycles/:id/remind").handler(policy.requires("review360.manage"))

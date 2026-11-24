@@ -213,4 +213,21 @@ final class AttendanceRepository extends ScopedRepository
                 """,
                 Tuple.of(from, to));
     }
+
+    /** Live, active accounts whose role holds attendance.upload: {@code [{id}]}. */
+    Future<JsonArray> uploaders()
+    {
+        return queryList("""
+                SELECT DISTINCT u.id FROM users u JOIN role_permissions rp ON rp.role_id = u.role_id AND rp.permission = 'attendance.upload'
+                WHERE u.status = 'Active' AND u.deleted_at IS NULL
+                """,
+                Tuple.tuple());
+    }
+
+    /** Whether the user already has this notice (same kind and link), so a re-run sends nothing twice. */
+    Future<Boolean> noticeSent(UUID userId, String kind, String link)
+    {
+        return queryOne("SELECT 1 AS x FROM notifications WHERE user_id = $1 AND kind = $2 AND link = $3 LIMIT 1", Tuple.of(userId, kind, link))
+                .map(row -> row != null);
+    }
 }

@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static com.pulse.testsupport.TestApi.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Spec culture/review-360 (task 20.3, the parts that do not need calc/people), with the demo seed. */
@@ -453,5 +454,112 @@ class Review360RoutesTest
                 .filter(s -> "not_started".equals(s) || "in_progress".equals(s)).count();
 
         assertEquals(open, badge(kiran, "reviews"));
+    }
+
+    @Test
+    void adminPublishesAClosedCycleAndSubjectsSeeTheirResults() throws Exception
+    {
+        // The seeded Q3 cycle is closed in setUp; publishing opens My feedback to its subjects (task 20.3).
+        String q3 = api.queryOne("SELECT id FROM review_cycles WHERE kind = '360' AND name LIKE 'Q3 2026%'").getString("id");
+
+        TestApi.Session priya = RoleMatrix.session(api, RoleMatrix.EMPLOYEE);
+
+        assertEquals(403, api.get("/api/v1/reviews/360/cycles/" + q3 + "/results", priya).statusCode());
+
+        assertEquals(403, api.post("/api/v1/reviews/360/cycles/" + q3 + "/publish", RoleMatrix.session(api, RoleMatrix.MANAGER), new JsonObject())
+                .statusCode());
+
+        long told = notices(RoleMatrix.EMPLOYEE, "review360.results_ready");
+
+        HttpResponse<Buffer> published = api.post("/api/v1/reviews/360/cycles/" + q3 + "/publish", RoleMatrix.session(api, RoleMatrix.ADMIN),
+                new JsonObject());
+
+        assertEquals(200, published.statusCode(), published.bodyAsString());
+
+        assertTrue(published.bodyAsJsonObject().getInteger("subjectsTold") > 0);
+
+        assertEquals(told + 1, notices(RoleMatrix.EMPLOYEE, "review360.results_ready"));
+
+        assertTrue(api.count("SELECT count(*) FROM audit_log WHERE action = 'review360.results.published'") >= 1);
+
+        HttpResponse<Buffer> mine = api.get("/api/v1/reviews/360/cycles/" + q3 + "/results", priya);
+
+        assertEquals(200, mine.statusCode(), mine.bodyAsString());
+
+        assertTrue(mine.bodyAsJsonObject().getBoolean("published"));
+
+        assertEquals(409, api.post("/api/v1/reviews/360/cycles/" + q3 + "/publish", RoleMatrix.session(api, RoleMatrix.ADMIN), new JsonObject())
+                .statusCode());
+
+        // Spec "Publish": culture values use the published ratings — the weighted score per value is the
+        // Combined 360° rating of the cycle's quarter.
+        JsonObject weighted = mine.bodyAsJsonObject().getJsonObject("weighted");
+
+        int checked = 0;
+
+        for (String value : weighted.fieldNames())
+        {
+            if (weighted.getValue(value) == null)
+            {
+                continue;
+            }
+
+            JsonObject row = api.queryOne("SELECT rating::float8 AS rating, source FROM culture_ratings WHERE person_id = '" + priyaPerson
+                    + "' AND quarter = '2026-Q3' AND rater_group = 'Combined' AND value_name = '" + value.replace("'", "''") + "'");
+
+            assertEquals("review360", row.getString("source"), value);
+
+            assertEquals(Math.round(Math.max(1, Math.min(5, weighted.getDouble(value))) * 100) / 100.0, row.getDouble("rating"), 1e-9, value);
+
+            checked++;
+        }
+
+        assertTrue(checked > 0, weighted.encode());
+    }
+
+    @Test
+    void anAdminReadingAnswersGetsNoReviewerIdentityForAnonymousGroups() throws Exception
+    {
+        // Seeded Q2 cycle (published): Priya's internal and cross-department reviewers are anonymous.
+        String q2 = api.queryOne("SELECT id FROM review_cycles WHERE external_id = 'c0'").getString("id");
+
+        JsonArray reviewers = TestApi.await(api.sql().queryList("""
+                SELECT u.id::text AS id, u.name, u.email, k.pseudonym::text AS pseudonym FROM review_requests r
+                JOIN review_reviewer_keys k ON k.pseudonym = r.reviewer_key JOIN users u ON u.id = k.user_id
+                WHERE r.cycle_id = $1 AND r.subject_id = $2 AND r.rater_group IN ('internal', 'cross')
+                """, io.vertx.sqlclient.Tuple.of(java.util.UUID.fromString(q2), java.util.UUID.fromString(priyaPerson))));
+
+        assertFalse(reviewers.isEmpty());
+
+        TestApi.Session hr = RoleMatrix.session(api, RoleMatrix.ADMIN);
+
+        int read = 0;
+
+        for (String path : new String[] {"/api/v1/reviews/360/cycles/" + q2 + "/results/" + priyaPerson,
+                "/api/v1/reviews/360/cycles/" + q2 + "/progress"})
+        {
+            HttpResponse<Buffer> res = api.get(path, hr);
+
+            if (res.statusCode() != 200)
+            {
+                continue;
+            }
+
+            String body = res.bodyAsString();
+
+            read++;
+
+            for (Object o : reviewers)
+            {
+                JsonObject r = (JsonObject) o;
+
+                for (String secret : new String[] {r.getString("id"), r.getString("email"), r.getString("name"), r.getString("pseudonym")})
+                {
+                    assertFalse(body.contains(secret), path + " reveals " + secret);
+                }
+            }
+        }
+
+        assertTrue(read > 0, "the Admin read no answers");
     }
 }

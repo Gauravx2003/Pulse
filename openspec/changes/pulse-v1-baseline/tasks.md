@@ -159,7 +159,7 @@ Priority order inside the track (do in this order; the last two are the first to
 
 ## 19. Culture values
 
-- [ ] 19.1 Implement the culture endpoints that return the calculation payload from the calc service (values, per-value detail, Discipline view, period selector, evidence log) and the Discipline override with reason and self-refusal; verify tests for every scenario in `culture/culture-values` and that the payload reproduces each score.
+- [x] 19.1 Implement the culture endpoints that return the calculation payload from the calc service (values, per-value detail, Discipline view, period selector, evidence log) and the Discipline override with reason and self-refusal; verify tests for every scenario in `culture/culture-values` and that the payload reproduces each score.
 - [x] 19.2 Build the Culture values screens (11-value list, radar, calculation detail, Discipline rules and heatmap, override modal, kudos modal, rules table); verify Playwright as `priya@` and `rahul@` and the UI audit.
 
 ## 20. Reviews: performance, 1:1s and kudos, 360°

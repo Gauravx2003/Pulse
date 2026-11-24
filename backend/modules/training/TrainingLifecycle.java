@@ -13,21 +13,21 @@ import java.time.LocalDate;
  * Completed or Not completed. The stage follows from the dates and the parts recorded: the outcome is
  * set when the trainee signs off, from the manager's decision.
  */
-final class TrainingLifecycle
+public final class TrainingLifecycle
 {
-    static final String NOT_STARTED = "Not started";
+    public static final String NOT_STARTED = "Not started";
 
-    static final String IN_TRAINING = "In training";
+    public static final String IN_TRAINING = "In training";
 
-    static final String ASSESSMENT = "Assessment";
+    public static final String ASSESSMENT = "Assessment";
 
-    static final String FINAL_REVIEW = "Final review";
+    public static final String FINAL_REVIEW = "Final review";
 
-    static final String SIGN_OFF = "Trainee sign-off";
+    public static final String SIGN_OFF = "Trainee sign-off";
 
-    static final String COMPLETED = "Completed";
+    public static final String COMPLETED = "Completed";
 
-    static final String NOT_COMPLETED = "Not completed";
+    public static final String NOT_COMPLETED = "Not completed";
 
     /** About 16 hours a week: above it, assigning warns about the load (spec "Assignment"). */
     static final double WEEKLY_LOAD_WARNING = 16;
@@ -37,14 +37,14 @@ final class TrainingLifecycle
     }
 
     /** The last day of the training period: the stored end, else start + weeks × 7 − 1. */
-    static LocalDate end(JsonObject assignment, int weeks)
+    public static LocalDate end(JsonObject assignment, int weeks)
     {
         String end = assignment.getString("endOn");
 
         return end != null ? LocalDate.parse(end) : LocalDate.parse(assignment.getString("startOn")).plusDays(weeks * 7L - 1);
     }
 
-    static String stage(JsonObject assignment, int weeks, LocalDate today)
+    public static String stage(JsonObject assignment, int weeks, LocalDate today)
     {
         String outcome = assignment.getString("outcome");
 
@@ -83,13 +83,13 @@ final class TrainingLifecycle
         return SIGN_OFF;
     }
 
-    static boolean finished(String stage)
+    public static boolean finished(String stage)
     {
         return COMPLETED.equals(stage) || NOT_COMPLETED.equals(stage);
     }
 
     /** A plan version's average hours per week (all module hours over its weeks). */
-    static double weeklyHours(JsonObject plan)
+    public static double weeklyHours(JsonObject plan)
     {
         double hours = 0;
 
@@ -109,7 +109,7 @@ final class TrainingLifecycle
      * assessments ({@code as:<attempt>}) and the mentor's and manager's final reviews
      * ({@code fm:<attempt>}, {@code fg:<attempt>}), across earlier attempts too.
      */
-    static JsonArray feedbackKeys(JsonObject assignment, JsonArray checkIns)
+    public static JsonArray feedbackKeys(JsonObject assignment, JsonArray checkIns)
     {
         JsonArray keys = new JsonArray();
 

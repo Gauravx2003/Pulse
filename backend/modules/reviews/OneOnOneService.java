@@ -1,5 +1,7 @@
 package com.pulse.modules.reviews;
 
+import com.pulse.calc.core.CalcService;
+import com.pulse.calc.people.PeopleSignalsFormulas;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
@@ -67,7 +69,8 @@ final class OneOnOneService
                             .compose(row -> AuditService.record(tx, AuditService.entry(user, CREATED, "one_on_one",
                                             row.getString("id"), new JsonObject().put("personId", personId)))
                                     .compose(v -> repo.byId(scope, UUID.fromString(row.getString("id")))));
-                }));
+                }))
+                .onSuccess(created -> CalcService.publish(ctx.vertx(), PeopleSignalsFormulas.ONE_ON_ONES));
     }
 
     /** Saves the shared notes; a stale {@code version} answers 409 so two editors never overwrite each other. */

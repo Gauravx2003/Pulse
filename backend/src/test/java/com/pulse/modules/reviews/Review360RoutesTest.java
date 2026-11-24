@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static com.pulse.testsupport.TestApi.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Spec culture/review-360 (task 20.3, the parts that do not need calc/people), with the demo seed. */
@@ -489,5 +490,76 @@ class Review360RoutesTest
 
         assertEquals(409, api.post("/api/v1/reviews/360/cycles/" + q3 + "/publish", RoleMatrix.session(api, RoleMatrix.ADMIN), new JsonObject())
                 .statusCode());
+
+        // Spec "Publish": culture values use the published ratings — the weighted score per value is the
+        // Combined 360° rating of the cycle's quarter.
+        JsonObject weighted = mine.bodyAsJsonObject().getJsonObject("weighted");
+
+        int checked = 0;
+
+        for (String value : weighted.fieldNames())
+        {
+            if (weighted.getValue(value) == null)
+            {
+                continue;
+            }
+
+            JsonObject row = api.queryOne("SELECT rating::float8 AS rating, source FROM culture_ratings WHERE person_id = '" + priyaPerson
+                    + "' AND quarter = '2026-Q3' AND rater_group = 'Combined' AND value_name = '" + value.replace("'", "''") + "'");
+
+            assertEquals("review360", row.getString("source"), value);
+
+            assertEquals(Math.round(Math.max(1, Math.min(5, weighted.getDouble(value))) * 100) / 100.0, row.getDouble("rating"), 1e-9, value);
+
+            checked++;
+        }
+
+        assertTrue(checked > 0, weighted.encode());
+    }
+
+    @Test
+    void anAdminReadingAnswersGetsNoReviewerIdentityForAnonymousGroups() throws Exception
+    {
+        // Seeded Q2 cycle (published): Priya's internal and cross-department reviewers are anonymous.
+        String q2 = api.queryOne("SELECT id FROM review_cycles WHERE external_id = 'c0'").getString("id");
+
+        JsonArray reviewers = TestApi.await(api.sql().queryList("""
+                SELECT u.id::text AS id, u.name, u.email, k.pseudonym::text AS pseudonym FROM review_requests r
+                JOIN review_reviewer_keys k ON k.pseudonym = r.reviewer_key JOIN users u ON u.id = k.user_id
+                WHERE r.cycle_id = $1 AND r.subject_id = $2 AND r.rater_group IN ('internal', 'cross')
+                """, io.vertx.sqlclient.Tuple.of(java.util.UUID.fromString(q2), java.util.UUID.fromString(priyaPerson))));
+
+        assertFalse(reviewers.isEmpty());
+
+        TestApi.Session hr = RoleMatrix.session(api, RoleMatrix.ADMIN);
+
+        int read = 0;
+
+        for (String path : new String[] {"/api/v1/reviews/360/cycles/" + q2 + "/results/" + priyaPerson,
+                "/api/v1/reviews/360/cycles/" + q2 + "/progress"})
+        {
+            HttpResponse<Buffer> res = api.get(path, hr);
+
+            if (res.statusCode() != 200)
+            {
+                continue;
+            }
+
+            String body = res.bodyAsString();
+
+            read++;
+
+            for (Object o : reviewers)
+            {
+                JsonObject r = (JsonObject) o;
+
+                for (String secret : new String[] {r.getString("id"), r.getString("email"), r.getString("name"), r.getString("pseudonym")})
+                {
+                    assertFalse(body.contains(secret), path + " reveals " + secret);
+                }
+            }
+        }
+
+        assertTrue(read > 0, "the Admin read no answers");
     }
 }

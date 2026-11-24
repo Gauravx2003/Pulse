@@ -839,7 +839,8 @@ final class Review360Service
                         return Future.failedFuture(ApiException.conflict("not_publishable", "Only a running or closed 360° cycle can be published."));
                     }
 
-                    return repo.subjectUsers(cycleId).compose(subjects ->
+                    return ("360".equals(cycle.getString("kind")) ? feedCulture(repo, cycleId, cycle.getString("quarter"))
+                            : Future.succeededFuture(0)).compose(ratings -> repo.subjectUsers(cycleId)).compose(subjects ->
                     {
                         Future<Integer> chain = Future.succeededFuture(0);
 
@@ -862,9 +863,86 @@ final class Review360Service
             });
         }).map(told ->
         {
+            ctx.calc().invalidate(ReviewFormulas.REVIEWS, CalcService.PERFORMANCE);
+
             CalcService.publish(ctx.vertx(), ReviewFormulas.REVIEWS);
+
+            CalcService.publish(ctx.vertx(), CalcService.PERFORMANCE);
 
             return new JsonObject().put("published", true).put("subjectsTold", told);
         });
+    }
+
+    /** Group keys of the results to the rater-group labels of culture values (app.js RATER_W). */
+    private static final Map<String, String> CULTURE_GROUPS = Map.of("manager", "Manager", "internal", "Internal team",
+            "others", "Peers (combined)", "cross", "Cross-department", "self", "Self");
+
+    /**
+     * Writes each subject's published results into {@code culture_ratings} for the cycle's quarter: the
+     * weighted score per value as {@code Combined} and the average of every group shown (groups under the
+     * anonymity threshold are already merged or hidden). Resolves to the rows written.
+     */
+    private Future<Integer> feedCulture(Review360Repository repo, UUID cycleId, String quarter)
+    {
+        return repo.subjectIds(cycleId).compose(subjects ->
+        {
+            Future<Integer> chain = Future.succeededFuture(0);
+
+            for (Object o : subjects)
+            {
+                UUID person = UUID.fromString(((JsonObject) o).getString("id"));
+
+                chain = chain.compose(n -> ctx.calc().get("people.review360Results", new JsonObject().put("cycle", cycleId.toString())
+                        .put("person", person.toString())).compose(result ->
+                {
+                    if (!(result instanceof JsonObject r))
+                    {
+                        return Future.succeededFuture(n);
+                    }
+
+                    JsonObject weighted = r.getJsonObject("weighted", new JsonObject());
+
+                    JsonObject averages = r.getJsonObject("averages", new JsonObject());
+
+                    JsonArray rows = new JsonArray();
+
+                    List<String> values = new ArrayList<>();
+
+                    for (String value : weighted.fieldNames())
+                    {
+                        Double combined = weighted.getDouble(value);
+
+                        if (combined == null)
+                        {
+                            continue;
+                        }
+
+                        values.add(value);
+
+                        rows.add(new JsonObject().put("value", value).put("group", "Combined").put("rating", rating(combined)));
+
+                        for (String group : averages.fieldNames())
+                        {
+                            Double avg = averages.getJsonObject(group).getDouble(value);
+
+                            if (avg != null && CULTURE_GROUPS.containsKey(group))
+                            {
+                                rows.add(new JsonObject().put("value", value).put("group", CULTURE_GROUPS.get(group)).put("rating", rating(avg)));
+                            }
+                        }
+                    }
+
+                    return values.isEmpty() ? Future.succeededFuture(n)
+                            : repo.replaceRatings(person, quarter, values.toArray(new String[0]), cycleId, rows).map(m -> n + m);
+                }));
+            }
+
+            return chain;
+        });
+    }
+
+    private static java.math.BigDecimal rating(double value)
+    {
+        return java.math.BigDecimal.valueOf(Math.max(1, Math.min(5, value))).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 }

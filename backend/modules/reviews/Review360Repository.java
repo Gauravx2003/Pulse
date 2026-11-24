@@ -64,6 +64,41 @@ final class Review360Repository extends ScopedRepository
     }
 
     /** User ids of the cycle's subjects who can be told (people with an account). */
+    /** The people reviewed in a cycle. */
+    Future<JsonArray> subjectIds(UUID cycleId)
+    {
+        return queryList("SELECT DISTINCT r.subject_id AS id FROM review_requests r WHERE r.cycle_id = $1", Tuple.of(cycleId));
+    }
+
+    /**
+     * Replaces a person's 360° ratings of a quarter for the given values with the published ones (spec "Close
+     * and publish": the published ratings replace the 360° part of culture values). Values the cycle has
+     * no rating for keep their earlier rows.
+     *
+     * @param rows {@code [{value, group, rating}]}, group {@code Combined} or a rater group label
+     */
+    Future<Integer> replaceRatings(UUID person, String quarter, String[] values, UUID cycleId, JsonArray rows)
+    {
+        Future<Integer> chain = execute("DELETE FROM culture_ratings WHERE person_id = $1 AND quarter = $2 AND value_name = ANY($3)",
+                Tuple.of(person, quarter, values));
+
+        for (Object o : rows)
+        {
+            JsonObject r = (JsonObject) o;
+
+            chain = chain.compose(n -> execute("""
+                    INSERT INTO culture_ratings (person_id, quarter, value_name, rater_group, rating, source, external_id)
+                    VALUES ($1, $2, $3, $4, $5, 'review360', $6)
+                    ON CONFLICT (source, external_id) DO UPDATE SET rating = EXCLUDED.rating, updated_at = now(),
+                        version = culture_ratings.version + 1
+                    """,
+                    Tuple.of(person, quarter, r.getString("value"), r.getString("group"), r.getValue("rating"),
+                            cycleId + "|" + person + "|" + r.getString("value") + "|" + r.getString("group"))).map(m -> n + m));
+        }
+
+        return chain;
+    }
+
     Future<JsonArray> subjectUsers(UUID cycleId)
     {
         return queryList("""

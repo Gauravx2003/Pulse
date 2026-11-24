@@ -217,6 +217,13 @@ class CultureRoutesTest
 
         assertEquals("Confluence · Q3", documented.getString("sourceLabel"));
 
+        // Spec "Source label shown": the reported input's value with the reported-input marker.
+        assertNotNull(documented.getValue("raw"), documented.encode());
+
+        assertFalse("—".equals(documented.getString("display")), documented.encode());
+
+        assertTrue(documented.getBoolean("isSimulated"), documented.encode());
+
         assertEquals(404, api.get("/api/v1/culture/people/" + priya + "/values/Punctuality", as(RoleMatrix.EMPLOYEE)).statusCode());
     }
 

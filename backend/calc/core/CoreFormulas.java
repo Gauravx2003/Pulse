@@ -110,7 +110,7 @@ public final class CoreFormulas implements FormulaModule
     {
         return quarter(ctx, params).compose(q ->
         {
-            Tuple t = Tuple.of(person(params), "Q" + q.substring(5));
+            Tuple t = Tuple.of(person(params), q);
 
             Future<JsonArray> signals = ctx.sql().queryList("SELECT param_key AS key, raw_value AS raw, display_value AS display, "
                     + "source_label AS \"sourceLabel\", is_simulated AS \"isSimulated\" FROM culture_signals "

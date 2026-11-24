@@ -41,6 +41,73 @@ final class Review360Repository extends ScopedRepository
         return queryList(CYCLE + " WHERE c.kind = '360' ORDER BY c.quarter DESC, c.created_at DESC", Tuple.tuple());
     }
 
+    /** Everyone who can review: active, live accounts {@code [{id, name, title, department}]}, by name. */
+    Future<JsonArray> reviewerOptions()
+    {
+        return queryList("""
+                SELECT u.id, u.name, coalesce(p.title, u.title) AS title, coalesce(p.department, u.department) AS department
+                FROM users u LEFT JOIN people p ON p.user_id = u.id
+                WHERE u.status = 'Active' AND u.deleted_at IS NULL
+                ORDER BY lower(u.name)
+                """,
+                Tuple.tuple());
+    }
+
+    /** Publishes a running or closed 360° cycle; resolves to its id, or null when it can't be published. */
+    Future<JsonObject> publish(UUID id)
+    {
+        return queryOne("""
+                UPDATE review_cycles SET status = 'published', published_at = now(), version = version + 1
+                WHERE id = $1 AND kind = '360' AND status IN ('running', 'closed') RETURNING id
+                """,
+                Tuple.of(id));
+    }
+
+    /** User ids of the cycle's subjects who can be told (people with an account). */
+    /** The people reviewed in a cycle. */
+    Future<JsonArray> subjectIds(UUID cycleId)
+    {
+        return queryList("SELECT DISTINCT r.subject_id AS id FROM review_requests r WHERE r.cycle_id = $1", Tuple.of(cycleId));
+    }
+
+    /**
+     * Replaces a person's 360° ratings of a quarter for the given values with the published ones (spec "Close
+     * and publish": the published ratings replace the 360° part of culture values). Values the cycle has
+     * no rating for keep their earlier rows.
+     *
+     * @param rows {@code [{value, group, rating}]}, group {@code Combined} or a rater group label
+     */
+    Future<Integer> replaceRatings(UUID person, String quarter, String[] values, UUID cycleId, JsonArray rows)
+    {
+        Future<Integer> chain = execute("DELETE FROM culture_ratings WHERE person_id = $1 AND quarter = $2 AND value_name = ANY($3)",
+                Tuple.of(person, quarter, values));
+
+        for (Object o : rows)
+        {
+            JsonObject r = (JsonObject) o;
+
+            chain = chain.compose(n -> execute("""
+                    INSERT INTO culture_ratings (person_id, quarter, value_name, rater_group, rating, source, external_id)
+                    VALUES ($1, $2, $3, $4, $5, 'review360', $6)
+                    ON CONFLICT (source, external_id) DO UPDATE SET rating = EXCLUDED.rating, updated_at = now(),
+                        version = culture_ratings.version + 1
+                    """,
+                    Tuple.of(person, quarter, r.getString("value"), r.getString("group"), r.getValue("rating"),
+                            cycleId + "|" + person + "|" + r.getString("value") + "|" + r.getString("group"))).map(m -> n + m));
+        }
+
+        return chain;
+    }
+
+    Future<JsonArray> subjectUsers(UUID cycleId)
+    {
+        return queryList("""
+                SELECT DISTINCT p.user_id AS "userId" FROM review_requests r JOIN people p ON p.id = r.subject_id
+                WHERE r.cycle_id = $1 AND p.user_id IS NOT NULL
+                """,
+                Tuple.of(cycleId));
+    }
+
     Future<JsonObject> cycle(UUID id)
     {
         return queryOne(CYCLE + " WHERE c.id = $1", Tuple.of(id));

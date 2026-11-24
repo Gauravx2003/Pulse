@@ -367,4 +367,30 @@ class TrainingAssignmentsRoutesTest
 
         assertEquals(false, detail(rahul, id).getBoolean("disagreementFlagged"));
     }
+
+    @Test
+    void theAssessmentDueJobTellsMentorAndManagerOnce() throws Exception
+    {
+        // A 2-week plan that started 30 days ago has ended without an assessment: it is in the Assessment stage.
+        String id = assign("kiran@pulse.demo", "tp3", "priya@pulse.demo", TODAY.minusDays(30)).getJsonArray("assigned")
+                .getJsonObject(0).getString("id");
+
+        String notices = "SELECT count(*) FROM notifications n JOIN users u ON u.id = n.user_id WHERE n.kind = 'training.assessment_due' "
+                + "AND n.link LIKE '%" + id + "%' AND u.email = ";
+
+        HttpResponse<Buffer> first = api.post("/api/v1/jobs/training.assessment-due/run", as(RoleMatrix.ADMIN), new JsonObject());
+
+        assertEquals(200, first.statusCode(), first.bodyAsString());
+
+        assertEquals(1, api.count(notices + "'priya@pulse.demo'"));
+
+        assertEquals(1, api.count(notices + "'rahul@pulse.demo'"));
+
+        // Run again (a retry or a manual Run now): nothing new for this assignment.
+        assertEquals(200, api.post("/api/v1/jobs/training.assessment-due/run", as(RoleMatrix.ADMIN), new JsonObject()).statusCode());
+
+        assertEquals(1, api.count(notices + "'priya@pulse.demo'"));
+
+        assertEquals(403, api.post("/api/v1/jobs/training.assessment-due/run", as(RoleMatrix.MANAGER), new JsonObject()).statusCode());
+    }
 }

@@ -261,4 +261,17 @@ final class AssignmentRepository extends ScopedRepository
     {
         return queryList("SELECT holiday_on AS date, name, location FROM holidays", Tuple.tuple());
     }
+
+    /** Every unfinished assignment with no assessment yet (candidates for "assessment due"). */
+    Future<JsonArray> awaitingAssessment()
+    {
+        return queryList(ASSIGNMENT + " WHERE a.outcome IS NULL AND a.assessment IS NULL", Tuple.tuple());
+    }
+
+    /** Whether the user already has this notice (same kind and link), so a re-run sends nothing twice. */
+    Future<Boolean> noticeSent(String userId, String kind, String link)
+    {
+        return queryOne("SELECT 1 AS x FROM notifications WHERE user_id = $1 AND kind = $2 AND link = $3 LIMIT 1",
+                Tuple.of(UUID.fromString(userId), kind, link)).map(row -> row != null);
+    }
 }

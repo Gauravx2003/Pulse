@@ -37,7 +37,8 @@ import java.util.UUID;
  * <p>Notifications (platform 5.3): assigned → trainee; check-in submitted → mentor; verified / needs
  * work → trainee; assessment recorded → mentor and manager (final review due); both final reviews →
  * trainee (sign-off due); a disagreement → mentor, and the manager for the final sign-off. The
- * "assessment due" notice at the end of the training period needs the scheduler (5.5).
+ * "assessment due" notice at the end of the training period comes from the daily job
+ * {@code training.assessment-due} ({@link TrainingReminders}).
  */
 final class AssignmentService
 {

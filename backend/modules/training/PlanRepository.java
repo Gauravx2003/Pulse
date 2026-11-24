@@ -27,6 +27,20 @@ final class PlanRepository extends BaseRepository
         super(sql);
     }
 
+    /**
+     * Every assignment's plan, outcome, assessment result and the trainee's plan rating, for the library's
+     * pass rate, average outcome and trainee rating: {@code [{id, planId, outcome, result, planRating}]}.
+     */
+    Future<JsonArray> outcomes()
+    {
+        return queryList("""
+                SELECT id, plan_id AS "planId", outcome, assessment ->> 'result' AS result,
+                       (sign_off ->> 'planRating')::numeric AS "planRating"
+                FROM training_assignments
+                """,
+                Tuple.tuple());
+    }
+
     /** The library: every plan not deleted, by name. */
     Future<JsonArray> library()
     {

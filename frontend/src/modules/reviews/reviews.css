@@ -1,0 +1,97 @@
+/* Reviews (task 20.4): layout only, tokens only. */
+.rv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+.rv-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0;
+}
+.rv-comment {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.rv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.rv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+.rv-score {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9rem;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+/* Performance (task 20.4) */
+.rv-index {
+  font-size: 48px;
+  line-height: 52px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.rv-index small {
+  font-size: 16px;
+  color: var(--ink-muted);
+  margin-left: var(--space-1);
+}
+.rv-trend {
+  width: 100%;
+  height: auto;
+  margin-top: var(--space-3);
+}
+.rv-trend text {
+  fill: var(--ink-muted);
+  font-size: 11px;
+}
+.rv-trend-grid {
+  stroke: var(--border);
+}
+.rv-trend-line {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 2;
+}
+.rv-trend-dot {
+  fill: var(--brand);
+}
+.rv-pillar {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+.rv-pillar:last-child {
+  border-bottom: 0;
+}
+.rv-mono {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.rv-bar {
+  height: 8px;
+  margin: var(--space-2) 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+.rv-bar span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}
+.rv-bar span.is-low {
+  background: var(--accent);
+}

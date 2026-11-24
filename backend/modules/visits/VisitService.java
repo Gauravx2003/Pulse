@@ -548,4 +548,84 @@ final class VisitService
 
         return from.equals(to) ? SHORT.format(from) : SHORT.format(from) + " – " + SHORT.format(to);
     }
+
+    // ------------------------------------------------------------------ Team view
+
+    /** Months after joining during which a person is a new joiner and stays out of the team average. */
+    static final int NEW_JOINER_MONTHS = 3;
+
+    /** Stats fields averaged across the team. */
+    private static final String[] AVERAGED = {"visits", "days", "onsiteHours", "travelHours", "csat", "points"};
+
+    /**
+     * The Team view (spec "Views"): every person in the viewer's visits scope, with or without visits, with
+     * {@code people.visitStats} for the period, and the team average of the people who are not new joiners
+     * ({@value #NEW_JOINER_MONTHS} months): {@code {period, people: [{personId, name, title, newJoiner, stats}], average}}.
+     */
+    Future<JsonObject> team(JsonObject user, String period)
+    {
+        LocalDate today = today();
+
+        return policy.scope(user, PolicyService.DOMAIN_VISITS).compose(scope -> new VisitRepository(ctx.sql()).people(scope)).compose(people ->
+        {
+            java.util.List<Future<JsonObject>> stats = new java.util.ArrayList<>();
+
+            for (Object o : people)
+            {
+                stats.add(ctx.calc().getObject("people.visitStats", new JsonObject().put("person", ((JsonObject) o).getString("id"))
+                        .put("period", period)));
+            }
+
+            return Future.all(stats).map(all ->
+            {
+                JsonArray rows = new JsonArray();
+
+                double[] sums = new double[AVERAGED.length];
+
+                int[] counts = new int[AVERAGED.length];
+
+                for (int i = 0; i < people.size(); i++)
+                {
+                    JsonObject p = people.getJsonObject(i);
+
+                    JsonObject st = stats.get(i).result();
+
+                    boolean joiner = p.getString("joinedOn") != null
+                            && LocalDate.parse(p.getString("joinedOn")).plusMonths(NEW_JOINER_MONTHS).isAfter(today);
+
+                    if (!joiner)
+                    {
+                        for (int k = 0; k < AVERAGED.length; k++)
+                        {
+                            if (st.getValue(AVERAGED[k]) instanceof Number n)
+                            {
+                                sums[k] += n.doubleValue();
+
+                                counts[k]++;
+                            }
+                        }
+                    }
+
+                    rows.add(new JsonObject().put("personId", p.getString("id")).put("name", p.getString("name"))
+                            .put("title", p.getString("title")).put("newJoiner", joiner).put("stats", st));
+                }
+
+                JsonObject average = new JsonObject();
+
+                for (int k = 0; k < AVERAGED.length; k++)
+                {
+                    average.put(AVERAGED[k], counts[k] == 0 ? null : Math.round(sums[k] / counts[k] * 10) / 10.0);
+                }
+
+                return new JsonObject().put("period", period).put("people", rows).put("average", average);
+            });
+        }).recover(error -> error instanceof IllegalArgumentException
+                ? Future.failedFuture(ApiException.badRequest("invalid_parameter", error.getMessage()).field("period"))
+                : Future.failedFuture(error));
+    }
+
+    Future<JsonArray> ownerOptions()
+    {
+        return new VisitRepository(ctx.sql()).ownerOptions();
+    }
 }

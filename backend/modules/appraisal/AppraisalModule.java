@@ -1,5 +1,6 @@
 package com.pulse.modules.appraisal;
 
+import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import io.vertx.ext.web.Router;
@@ -24,6 +25,12 @@ public class AppraisalModule implements PulseModule
     public List<String> auditEvents()
     {
         return List.of(AppraisalService.SUBMITTED_EVENT, AppraisalService.CYCLE_UPDATED);
+    }
+
+    @Override
+    public List<ActionProvider> actionProviders()
+    {
+        return AppraisalActionProvider.all();
     }
 
     @Override

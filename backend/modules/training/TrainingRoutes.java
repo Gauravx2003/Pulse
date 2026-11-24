@@ -26,7 +26,7 @@ import java.util.function.BiFunction;
  * GET    /plans/:id              one plan with its versions
  * PUT    /plans/:id              edit: saves a new version
  * POST   /plans/:id/duplicate    copy as a new plan
- * DELETE /plans/:id              hide from the library (If-Match: version); assignments keep running
+ * DELETE /plans/:id              hide from the library (If-Match: version, or body {version}); assignments keep running
  *
  * GET    /assignments?personId=                 visible assignments (as manager, mentor or trainee)
  * POST   /assignments                           assign plans to people with a mentor (training.manage)
@@ -49,6 +49,7 @@ import java.util.function.BiFunction;
  * POST   /assignments/:id/checkpoints/:day      a manager requests the Day N checkpoint (360° form)
  * GET    /mentors                               Mentors table (training.manage)
  * GET    /suggestions/onboarding                joiners under 3 months without a plan (training.manage)
+ * GET    /mentor-options                        people in scope who can sign in, as mentor choices (training.manage)
  * GET    /onboarding?personId=                  a new joiner's onboarding plan (people.onboarding)
  * GET    /reminders                             the caller's training Action Center items (training.manage)
  * GET    /rating?personId=                      the overall training rating
@@ -222,7 +223,7 @@ public final class TrainingRoutes
                 .handler(rc -> plans.duplicate(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(plan -> created(rc, plan)).onFailure(rc::fail));
 
         router.delete("/plans/:id").handler(policy.requires("training.manage"))
-                .handler(rc -> plans.delete(PolicyService.user(rc), Ids.path(rc, "id"), ExpectedVersion.of(rc, null))
+                .handler(rc -> plans.delete(PolicyService.user(rc), Ids.path(rc, "id"), ExpectedVersion.of(rc, optionalBody(rc)))
                         .onSuccess(v -> rc.response().setStatusCode(204).end()).onFailure(rc::fail));
 
         mountAssignments(router);
@@ -313,6 +314,10 @@ public final class TrainingRoutes
                 .handler(rc -> mentoring.mentors(PolicyService.user(rc))
                         .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
 
+        router.get("/mentor-options").handler(policy.requires("training.manage"))
+                .handler(rc -> mentoring.mentorOptions(PolicyService.user(rc))
+                        .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
+
         router.get("/suggestions/onboarding").handler(policy.requires("training.manage"))
                 .handler(rc -> mentoring.onboardingSuggestions(PolicyService.user(rc))
                         .onSuccess(items -> rc.json(new JsonObject().put("items", items))).onFailure(rc::fail));
@@ -397,5 +402,18 @@ public final class TrainingRoutes
         rc.response().setStatusCode(201);
 
         rc.json(plan);
+    }
+
+    /** A DELETE's JSON body when it has one ({@code {version}}, for clients that can't send If-Match), else null. */
+    private static JsonObject optionalBody(RoutingContext rc)
+    {
+        try
+        {
+            return rc.body() == null || rc.body().length() == 0 ? null : rc.body().asJsonObject();
+        }
+        catch (RuntimeException e)
+        {
+            return null;
+        }
     }
 }

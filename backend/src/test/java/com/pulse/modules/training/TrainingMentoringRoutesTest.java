@@ -297,6 +297,14 @@ class TrainingMentoringRoutesTest
 
         assertEquals("High", blocker.getString("priority"));
 
+        // A blocker stays on the list for 5 days: one raised 6 days ago is gone.
+        HttpResponse<Buffer> old = api.post("/api/v1/training/assignments/" + rohitPlan + "/sessions", as("priya@pulse.demo"),
+                session("Old VPN access blocker", TODAY.minusDays(6)).put("blocker", true).put("blockerNote", "VPN"));
+
+        assertEquals(200, old.statusCode(), old.bodyAsString());
+
+        assertTrue(remindersOf(as(RoleMatrix.MANAGER)).stream().noneMatch(o -> ((JsonObject) o).getString("text", "").contains("Old VPN access blocker")));
+
         assertEquals(403, api.get("/api/v1/training/reminders", as(RoleMatrix.EMPLOYEE)).statusCode());
     }
 

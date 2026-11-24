@@ -1,0 +1,22 @@
+/* Customer visits (task 18.2): layout only, tokens only. */
+.vs-kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+.vs-kv dt {
+  color: var(--text-muted, inherit);
+  font-size: var(--text-sm, 0.875rem);
+}
+.vs-kv dd {
+  margin: 0;
+  font-weight: 600;
+}
+.vs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-end;
+  margin-bottom: var(--space-3);
+}

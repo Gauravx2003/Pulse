@@ -2,6 +2,7 @@ package com.pulse.modules.training;
 
 import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.BadgeProvider;
+import com.pulse.platform.module.JobSpec;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 import com.pulse.platform.policy.PolicyService;
@@ -50,6 +51,14 @@ public class TrainingModule implements PulseModule
     public List<ActionProvider> actionProviders()
     {
         return TrainingActionProvider.all();
+    }
+
+    /** Daily at 09:00: mentors and managers are told when a plan's assessment is due (TrainingReminders). */
+    @Override
+    public List<JobSpec> jobs()
+    {
+        return List.of(JobSpec.of("training.assessment-due", "0 9 * * *",
+                "Tells mentors and managers when a trainee's assessment is due", TrainingReminders::assessmentDue));
     }
 
     @Override

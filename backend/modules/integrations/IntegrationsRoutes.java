@@ -1,6 +1,8 @@
 package com.pulse.modules.integrations;
 
+import com.pulse.platform.accounts.ExternalAccountService;
 import com.pulse.platform.http.BodySchema;
+import com.pulse.platform.http.Ids;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.json.JsonObject;
@@ -23,6 +25,10 @@ import io.vertx.ext.web.RoutingContext;
  * PUT    /jira/config                 save the Jira configuration
  * GET    /sync-log[?tool=]            daily sync log, newest first
  * GET    /credential-log              credential activity log, newest first
+ * GET    /accounts[?status=&tool=&q=] live tool accounts, unmatched by default (task 24.1)
+ * PUT    /accounts/:id/link           {personId}: link an account to a person; 409 when already linked
+ * DELETE /accounts/:id/link           unlink
+ * PUT    /accounts/:id/bot            {isBot}: mark or unmark a bot
  * </pre>
  */
 final class IntegrationsRoutes
@@ -43,16 +49,27 @@ final class IntegrationsRoutes
             .bool("ignoreBotEdits")
             .required("boards", "storyPointsField", "syncMode", "ignoreBotEdits");
 
+    static final BodySchema LINK = BodySchema.object()
+            .uuid("personId")
+            .required("personId");
+
+    static final BodySchema BOT = BodySchema.object()
+            .bool("isBot")
+            .required("isBot");
+
     static final String PERMISSION = "integrations.manage";
 
     private final PolicyService policy;
 
     private final IntegrationsService integrations;
 
+    private final ExternalAccountService accounts;
+
     IntegrationsRoutes(ModuleContext ctx)
     {
         this.policy = ctx.policy();
         this.integrations = new IntegrationsService(ctx, IntegrationsService.connectors(ctx));
+        this.accounts = ctx.accounts();
     }
 
     void mount(Router router)
@@ -82,6 +99,16 @@ final class IntegrationsRoutes
         router.get("/sync-log").handler(policy.requires(PERMISSION)).handler(this::syncLog);
 
         router.get("/credential-log").handler(policy.requires(PERMISSION)).handler(this::credentialLog);
+
+        router.get("/accounts").handler(policy.requires(PERMISSION)).handler(this::accounts);
+
+        router.put("/accounts/:id/link").handler(policy.requires(PERMISSION)).handler(LINK.handler())
+                .handler(this::linkAccount);
+
+        router.delete("/accounts/:id/link").handler(policy.requires(PERMISSION)).handler(this::unlinkAccount);
+
+        router.put("/accounts/:id/bot").handler(policy.requires(PERMISSION)).handler(BOT.handler())
+                .handler(this::setBot);
     }
 
     private void tiles(RoutingContext rc)
@@ -144,5 +171,27 @@ final class IntegrationsRoutes
     private void credentialLog(RoutingContext rc)
     {
         integrations.credentialLog().onSuccess(rc::json).onFailure(rc::fail);
+    }
+
+    private void accounts(RoutingContext rc)
+    {
+        accounts.list(rc.queryParams()).onSuccess(rc::json).onFailure(rc::fail);
+    }
+
+    private void linkAccount(RoutingContext rc)
+    {
+        accounts.link(PolicyService.user(rc), Ids.path(rc, "id"),
+                Ids.parse(BodySchema.body(rc).getString("personId"))).onSuccess(rc::json).onFailure(rc::fail);
+    }
+
+    private void unlinkAccount(RoutingContext rc)
+    {
+        accounts.unlink(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail);
+    }
+
+    private void setBot(RoutingContext rc)
+    {
+        accounts.setBot(PolicyService.user(rc), Ids.path(rc, "id"), BodySchema.body(rc).getBoolean("isBot"))
+                .onSuccess(rc::json).onFailure(rc::fail);
     }
 }

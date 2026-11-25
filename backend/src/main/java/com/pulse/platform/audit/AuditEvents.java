@@ -44,6 +44,15 @@ public final class AuditEvents
     /** An Admin ran a scheduled job by hand (task 5.5, spec platform/jobs-scheduler "Manual trigger"). */
     public static final String JOB_TRIGGERED = "job.triggered";
 
+    /** An Admin linked a live tool account to a person (task 24.1, pulse-v2-live-connectors). */
+    public static final String EXTERNAL_ACCOUNT_LINKED = "integration.account.linked";
+
+    /** An Admin removed a live tool account's person link (task 24.1). */
+    public static final String EXTERNAL_ACCOUNT_UNLINKED = "integration.account.unlinked";
+
+    /** An Admin marked or unmarked a live tool account as a bot (task 24.1). */
+    public static final String EXTERNAL_ACCOUNT_BOT_CHANGED = "integration.account.bot_changed";
+
     // ------------------------------------------------------------------ business
     public static final String DISCIPLINE_OVERRIDE = "discipline.override";
     public static final String BUG_ATTRIBUTION_OVERRIDE = "bugs.attribution.override";
@@ -124,7 +133,8 @@ public final class AuditEvents
 
         for (String e : new String[] {ROLE_CREATED, ROLE_PERMISSIONS_CHANGED, ROLE_DELETED, USER_CREATED,
                 USER_UPDATED, USER_DEACTIVATED, USER_DELETED, CREDENTIAL_CHANGED, RULES_CHANGED, RULES_RESET,
-                CALC_RECALCULATED, JOB_TRIGGERED})
+                CALC_RECALCULATED, JOB_TRIGGERED, EXTERNAL_ACCOUNT_LINKED, EXTERNAL_ACCOUNT_UNLINKED,
+                EXTERNAL_ACCOUNT_BOT_CHANGED})
         {
             events.put(e, "administration");
         }

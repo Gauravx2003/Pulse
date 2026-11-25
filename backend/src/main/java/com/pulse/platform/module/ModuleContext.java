@@ -1,6 +1,8 @@
 package com.pulse.platform.module;
 
 import com.pulse.calc.core.CalcService;
+import com.pulse.platform.accounts.ExternalAccountService;
+import com.pulse.platform.accounts.SqlExternalAccountService;
 import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.notify.NotificationService;
 import com.pulse.platform.policy.PolicyService;
@@ -32,5 +34,11 @@ public record ModuleContext(Vertx vertx, JsonObject config, PgPool pool, PolicyS
     public NotificationService notifications()
     {
         return new NotificationService(sql(), policy);
+    }
+
+    /** Live tool accounts and their person links (task 24.1, change pulse-v2-live-connectors). */
+    public ExternalAccountService accounts()
+    {
+        return new SqlExternalAccountService(sql());
     }
 }

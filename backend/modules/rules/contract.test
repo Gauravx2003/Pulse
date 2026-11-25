@@ -1,0 +1,9 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+GET /api/v1/rules/groups => 200 403 403 403 403 403
+GET /api/v1/rules/groups/staleness_capacity => 200 403 403 403 403 403
+GET /api/v1/rules/groups/staleness_capacity/history => 200 403 403 403 403 403
+PUT /api/v1/rules/groups/staleness_capacity {"values":{},"version":99999} => 400 403 403 403 403 403
+GET /api/v1/rules/reset => 200 403 403 403 403 403
+POST /api/v1/rules/reset {"version":99999} => 409 403 403 403 403 403

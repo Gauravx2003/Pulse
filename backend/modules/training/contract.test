@@ -1,0 +1,38 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+# Mentor exception: Sara mentors Anjali (ta2x9h); Priya mentors Rohit (ta1kk9).
+GET /api/v1/training/plans => 200 200 403 403 403 403
+GET /api/v1/training/plans/{id:training_plans.external_id=tp1} => 200 200 403 403 403 403
+POST /api/v1/training/plans {"name":"","weeks":0} => 400 400 403 403 403 403
+PUT /api/v1/training/plans/{id:training_plans.external_id=tp1} {"version":99999} => 400 400 403 403 403 403
+POST /api/v1/training/plans/{id:training_plans.external_id=tp1}/duplicate {"version":99999} => 400 400 403 403 403 403
+DELETE /api/v1/training/plans/{id:training_plans.external_id=tp1} => 400 400 403 403 403 403
+GET /api/v1/training/assignments => 200 200 200 200 200 200
+GET /api/v1/training/assignments?personId={person:anjali@pulse.demo} => 200 200 200 200 200 200
+GET /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h} => 200 200 404 404 200 404
+GET /api/v1/training/assignments/{id:training_assignments.external_id=ta1kk9} => 200 200 200 404 200 404
+POST /api/v1/training/assignments {"personIds":[],"planIds":[],"mentorId":"{user:sara@pulse.demo}","startOn":"2026-10-01"} => 200 200 403 403 403 403
+PUT /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h} {"version":99999} => 409 409 403 403 403 403
+PUT /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/modules/mxvlzb8 {"done":true,"version":99999} => 409 409 404 404 409 404
+POST /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/checkins {"periodStart":"2026-09-28","done":"x","hours":1,"version":99999} => 400 400 400 400 400 400
+POST /api/v1/training/checkins/{checkin:ta2x9h}/review {"decision":"Verified","version":99999} => 409 409 404 404 409 404
+POST /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/assessment {"date":"2026-09-28","score":50,"notes":"x","version":99999} => 409 409 404 404 409 404
+POST /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/final-review {"role":"mentor","rating":3,"good":"x","improve":"x","version":99999} => 403* 403* 404 404 409 404
+POST /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/sign-off {"agree":true,"planRating":3,"mentorRating":3,"version":99999} => 400 400 400 400 400 400
+POST /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/acknowledgements {"key":"x","agree":true,"version":99999} => 400 400 400 400 400 400
+POST /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/acknowledgements/x/reply {"text":"x","version":99999} => 403* 403* 404 404 404 404
+POST /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/discussed {"version":99999} => 409 409 403 403 403 403
+POST /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/sessions {"heldOn":"2026-09-28","durationMin":30,"mode":"x","topics":"x","version":99999} => 400 400 400 400 400 400
+POST /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/session-requests {"note":"","version":99999} => 400 400 400 400 400 400
+POST /api/v1/training/assignments/{id:training_assignments.external_id=ta2x9h}/checkpoints/30 {"version":99999} => 409 409 403 403 403 403
+GET /api/v1/training/mentoring/pending => 200 200 200 200 200 200
+GET /api/v1/training/mentors => 200 200 403 403 403 403
+GET /api/v1/training/suggestions/onboarding => 200 200 403 403 403 403
+GET /api/v1/training/mentor-options => 200 200 403 403 403 403
+GET /api/v1/training/onboarding?personId={person:anjali@pulse.demo} => 200 200 403 403 200 403
+GET /api/v1/training/reminders => 200 200 403 403 403 403
+GET /api/v1/training/rating?personId={person:anjali@pulse.demo} => 200 200 403 403 200 403
+GET /api/v1/training/rating?personId={person:priya@pulse.demo} => 200 200 200 403 403 403
+# Removing an assignment needs no version, so this line really removes Neha's plan for whoever may: keep it last
+DELETE /api/v1/training/assignments/{id:training_assignments.external_id=ta58eb} => 204 404 403 403 403 403

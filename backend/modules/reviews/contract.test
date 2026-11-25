@@ -1,0 +1,39 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+# Performance
+GET /api/v1/reviews/performance/people/{person:priya@pulse.demo} => 200 200 200 403 403 403
+GET /api/v1/reviews/performance/calibration => 200 200 403 403 403 403
+# Submitting a review takes no version: Admin submits first, so the Manager then gets 409 (already submitted)
+POST /api/v1/reviews/performance/people/{person:priya@pulse.demo}/submit {"version":99999} => 200 409 403 403 403 403
+POST /api/v1/reviews/performance/submit {"version":99999} => 200 200 403 403 403 403
+# 1:1s and kudos
+GET /api/v1/reviews/one-on-ones => 400 400 400 400 400 400
+GET /api/v1/reviews/one-on-ones?personId={person:priya@pulse.demo} => 200 200 200 403 403 403
+# a 1:1 needs a date
+POST /api/v1/reviews/one-on-ones {"personId":"{person:priya@pulse.demo}","heldOn":"not-a-date"} => 400 400 400 400 400 400
+PUT /api/v1/reviews/one-on-ones/{oneOnOne:priya@pulse.demo}/notes {"notes":"x","version":99999} => 403* 409 409 404 404 404
+POST /api/v1/reviews/one-on-ones/{oneOnOne:priya@pulse.demo}/actions {"text":""} => 403* 400 400 404 404 404
+PUT /api/v1/reviews/actions/{action:priya@pulse.demo} {"text":"x","done":true,"version":99999} => 403* 409 409 404 404 404
+GET /api/v1/reviews/kudos => 200 200 200 200 200 200
+POST /api/v1/reviews/kudos {"personId":"{person:priya@pulse.demo}","value":"Not a value","message":"x"} => 400 400 400 400 400 400
+GET /api/v1/reviews/reminders => 200 200 200 200 200 200
+# 360°
+GET /api/v1/reviews/360/cycles => 200 200 200 200 200 200
+POST /api/v1/reviews/360/cycles {"name":"x","quarter":"bad","dueOn":"2026-10-30"} => 400 403 403 403 403 403
+GET /api/v1/reviews/360/cycles/{id:review_cycles.name=Q3%202026%20360°%20review}/assignments => 200 200 403 403 403 403
+POST /api/v1/reviews/360/cycles/{id:review_cycles.name=Q3%202026%20360°%20review}/assignments {"subjectIds":[]} => 200 200 403 403 403 403
+GET /api/v1/reviews/360/cycles/{id:review_cycles.name=Q3%202026%20360°%20review}/progress => 404 404 200 200 200 404
+GET /api/v1/reviews/360/cycles/{id:review_cycles.name=Q2%202026%20360°%20review}/results => 404 404 200 200 200 404
+GET /api/v1/reviews/360/cycles/{id:review_cycles.name=Q2%202026%20360°%20review}/results/{person:priya@pulse.demo} => 200 200 403 403 403 403
+POST /api/v1/reviews/360/cycles/{id:review_cycles.name=Q2%202026%20360°%20review}/publish => 409 403 403 403 403 403
+POST /api/v1/reviews/360/cycles/{id:review_cycles.name=Q2%202026%20360°%20review}/remind => 409 409 403 403 403 403
+GET /api/v1/reviews/360/reviewer-options => 200 200 403 403 403 403
+GET /api/v1/reviews/360/to-give => 200 200 200 200 200 200
+# Priya's open request as a reviewer
+GET /api/v1/reviews/360/requests/{request360:priya@pulse.demo} => 404 404 200 404 404 404
+PUT /api/v1/reviews/360/requests/{request360:priya@pulse.demo} {"version":99999} => 404 404 409 404 404 404
+POST /api/v1/reviews/360/requests/{request360:priya@pulse.demo}/submit {"version":99999} => 404 404 422 404 404 404
+POST /api/v1/reviews/360/requests/{request360:priya@pulse.demo}/decline {"version":99999} => 404 404 409 404 404 404
+POST /api/v1/reviews/360/requests/{request360:priya@pulse.demo}/remind => 200 200 403 403 403 403
+DELETE /api/v1/reviews/360/requests/{request360:priya@pulse.demo} => 204 404 403 403 403 403

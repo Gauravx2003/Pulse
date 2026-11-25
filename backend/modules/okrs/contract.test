@@ -1,13 +1,13 @@
-# Role matrix (task 13.5, spec platform/rbac-visibility "Contract test matrix"), run by Track2ContractTest.
-# METHOD /path [json body] => ADMIN (hr@) MANAGER (rahul@, Priya's manager) EMPLOYEE (priya@) PEER (arjun@)
+# Role matrix (tasks 13.5 and 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] => ADMIN (hr@) MANAGER (rahul@, Priya's manager) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
 # Writes send a body that fails validation where the route lets the role in, so no data changes.
-GET /api/v1/okrs/people/{person:priya@pulse.demo}/objectives?quarter=2026-Q3 => 200 200 200 403
-GET /api/v1/okrs/teams/Platform/objectives?quarter=2026-Q3 => 200 200 200 200
+GET /api/v1/okrs/people/{person:priya@pulse.demo}/objectives?quarter=2026-Q3 => 200 200 200 403 403 403
+GET /api/v1/okrs/teams/Platform/objectives?quarter=2026-Q3 => 200 200 200 200 200 200
 # a peer gets the same answer as for a missing objective
-GET /api/v1/okrs/objectives/{objective:Make ingestion safe for noisy tenants} => 200 200 200 404
-POST /api/v1/okrs/objectives {"title":""} => 400 400 400 400
+GET /api/v1/okrs/objectives/{objective:Make ingestion safe for noisy tenants} => 200 200 200 404 404 404
+POST /api/v1/okrs/objectives {"title":""} => 400 400 400 400 400 400
 # a stale version: those who may change it get 409 and nothing changes; the peer is refused
-PUT /api/v1/okrs/objectives/{objective:Make ingestion safe for noisy tenants} {"title":"Contract check","quarter":"2026-Q3","version":999,"keyResults":[{"description":"Contract check","startValue":0,"targetValue":1,"currentValue":0}]} => 409 409 409 403
+PUT /api/v1/okrs/objectives/{objective:Make ingestion safe for noisy tenants} {"title":"Contract check","quarter":"2026-Q3","version":999,"keyResults":[{"description":"Contract check","startValue":0,"targetValue":1,"currentValue":0}]} => 409 409 409 403 403 403
 # a missing objective is refused like one the caller may not change, so a refusal reveals nothing
-DELETE /api/v1/okrs/objectives/00000000-0000-0000-0000-000000000000 => 403 403 403 403
-POST /api/v1/okrs/key-results/{keyResult:Per-tenant rate limiting live for all tenants}/check-ins {"value":1} => 200 200 200 403
+DELETE /api/v1/okrs/objectives/00000000-0000-0000-0000-000000000000 => 403 403 403 403 403 403
+POST /api/v1/okrs/key-results/{keyResult:Per-tenant rate limiting live for all tenants}/check-ins {"value":1} => 200 200 200 403 403 403

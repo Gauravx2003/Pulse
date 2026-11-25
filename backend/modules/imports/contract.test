@@ -1,0 +1,15 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+GET /api/v1/imports/types => 200 200 200 200 200 200
+GET /api/v1/imports/history => 200 200 200 200 200 200
+GET /api/v1/imports/attendance/template => 200 403 403 403 403 403
+GET /api/v1/imports/attendance/export => 200 403 403 403 403 403
+GET /api/v1/imports/users/template => 200 200 403 403 403 403
+GET /api/v1/imports/users/export => 200 200 403 403 403 403
+# a JSON body is not a CSV file
+POST /api/v1/imports/attendance/check {} => 400 400 400 400 400 400
+POST /api/v1/imports/attendance/commit {} => 400 400 400 400 400 400
+# no import or check carries this id
+DELETE /api/v1/imports/checks/00000000-0000-4000-8000-000000000000 => 404 404 404 404 404 404
+POST /api/v1/imports/history/00000000-0000-4000-8000-000000000000/undo => 404 404 404 404 404 404

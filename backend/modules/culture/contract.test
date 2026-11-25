@@ -1,0 +1,13 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+GET /api/v1/culture/periods => 200 200 200 200 200 200
+GET /api/v1/culture/rules => 200 200 200 200 200 200
+GET /api/v1/culture/people/{person:priya@pulse.demo} => 200 200 200 403 403 403
+GET /api/v1/culture/people/{person:priya@pulse.demo}/values/Discipline => 200 200 200 403 403 403
+GET /api/v1/culture/people/{person:priya@pulse.demo}/discipline => 200 200 200 403 403 403
+# the mentor exception covers training data only, never culture values
+GET /api/v1/culture/people/{person:anjali@pulse.demo} => 200 200 403 403 403 403
+# a score out of range
+PUT /api/v1/culture/people/{person:priya@pulse.demo}/discipline-override {"score":-1,"reason":"x"} => 400 400 403 403 403 403
+DELETE /api/v1/culture/people/{person:priya@pulse.demo}/discipline-override => 409 409 403 403 403 403

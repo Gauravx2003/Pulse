@@ -1,0 +1,10 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+GET /api/v1/attendance/periods => 200 200 200 200 200 200
+GET /api/v1/attendance/team?period=m:2026-08 => 200 200 200 200 200 200
+GET /api/v1/attendance/people/{person:priya@pulse.demo}?period=m:2026-08 => 200 200 200 403 403 403
+# Anjali is Sara's mentee: the mentor exception covers training data only, never attendance
+GET /api/v1/attendance/people/{person:anjali@pulse.demo}?period=m:2026-08 => 200 200 403 403 403 403
+GET /api/v1/attendance/uploads => 200 200 200 200 200 200
+GET /api/v1/attendance/reminders => 200 200 200 200 200 200

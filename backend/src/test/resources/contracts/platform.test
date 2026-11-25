@@ -1,0 +1,25 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+# Platform routes mounted by HttpServerVerticle (auth, me, shell, audit, notifications, jobs).
+GET /api/v1/auth/options => 200 200 200 200 200 200
+POST /api/v1/auth/login {} => 400 400 400 400 400 400
+POST /api/v1/auth/password/forgot {} => 400 400 400 400 400 400
+POST /api/v1/auth/password/set {} => 422 422 422 422 422 422
+POST /api/v1/auth/password/change {} => 400 400 400 400 400 400
+POST /api/v1/auth/logout fresh => 204 204 204 204 204 204
+GET /api/v1/me => 200 200 200 200 200 200
+GET /api/v1/periods => 200 200 200 200 200 200
+GET /api/v1/sync-status => 200 200 200 200 200 200
+GET /api/v1/people => 200 200 200 200 200 200
+GET /api/v1/audit => 200 403 403 403 403 403
+GET /api/v1/audit/export => 200 403 403 403 403 403
+GET /api/v1/notifications => 200 200 200 200 200 200
+GET /api/v1/notifications/badges => 200 200 200 200 200 200
+POST /api/v1/notifications/read-all => 200 200 200 200 200 200
+# only the recipient may mark a notification read; to anyone else it does not exist
+POST /api/v1/notifications/{notification:priya@pulse.demo}/read => 404 404 200 404 404 404
+GET /api/v1/jobs => 200 403 403 403 403 403
+GET /api/v1/jobs/runs => 200 403 403 403 403 403
+# the stale-signal refresh is idempotent, so the Admin run changes nothing the other lines read
+POST /api/v1/jobs/work.stale-signal-refresh/run => 200 403 403 403 403 403

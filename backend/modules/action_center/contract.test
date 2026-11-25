@@ -1,12 +1,12 @@
-# Role matrix (task 13.5, spec platform/rbac-visibility "Contract test matrix"), run by Track2ContractTest.
-# METHOD /path [json body] => ADMIN (hr@) MANAGER (rahul@, Priya's manager) EMPLOYEE (priya@) PEER (arjun@)
+# Role matrix (tasks 13.5 and 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] => ADMIN (hr@) MANAGER (rahul@, Priya's manager) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
 # Writes send a body that fails validation where the route lets the role in, so no data changes.
-GET /api/v1/action_center/items => 200 200 403 403
-GET /api/v1/action_center/signals => 200 200 403 403
-GET /api/v1/action_center/forecast => 200 200 403 403
-GET /api/v1/action_center/capacity => 200 200 403 403
-GET /api/v1/action_center/coverage => 200 200 403 403
-GET /api/v1/action_center/pulse => 200 200 403 403
-GET /api/v1/action_center/wins => 200 200 403 403
-GET /api/v1/action_center/digest => 200 200 403 403
-GET /api/v1/action_center/overview => 200 200 403 403
+GET /api/v1/action_center/items => 200 200 403 403 403 403
+GET /api/v1/action_center/signals => 200 200 403 403 403 403
+GET /api/v1/action_center/forecast => 200 200 403 403 403 403
+GET /api/v1/action_center/capacity => 200 200 403 403 403 403
+GET /api/v1/action_center/coverage => 200 200 403 403 403 403
+GET /api/v1/action_center/pulse => 200 200 403 403 403 403
+GET /api/v1/action_center/wins => 200 200 403 403 403 403
+GET /api/v1/action_center/digest => 200 200 403 403 403 403
+GET /api/v1/action_center/overview => 200 200 403 403 403 403

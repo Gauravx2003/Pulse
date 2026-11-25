@@ -74,7 +74,7 @@ Suggested order: 24.3, 24.1, 24.4 (Day 1 freeze), then 24.2, 24.5, 24.6, 24.7, 2
     - save is refused without the key, with a 422 message
     - a tampered ciphertext fails to decrypt and blocks the sync with "key"
     - API responses carry only `last4`
-- [ ] 24.3 **Live connector contract and guarded HTTP.** *(Day 1: the interfaces, the empty connectors module and CODEOWNERS)*
+- [x] 24.3 **Live connector contract and guarded HTTP.** *(Day 1: the interfaces, the empty connectors module and CODEOWNERS)*
   - Add `LiveConnector` and `LiveContext` (design.md decision 1), with `ModuleContext.connectors().register(...)`. All inputs and outputs are `JsonObject` / `JsonArray`.
   - `LiveContext.http()` wraps the Vert.x `WebClient` and enforces:
     - GET only

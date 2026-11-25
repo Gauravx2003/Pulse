@@ -44,6 +44,12 @@ public final class EffortFormulas implements FormulaModule
 
     public static final String TEAM = "work.effortTeam";
 
+    /**
+     * {@code work.effortTotals {people, period}}: the totals of these people's effort in one period
+     * ({@link Effort#teamTotals}); {@code people} is a comma-separated list of ids.
+     */
+    public static final String TOTALS = "work.effortTotals";
+
     public static final String CULTURE_ITEMS = "work.extraMileItems";
 
     public static final String DETECTED = "work.extraDetected";
@@ -81,6 +87,7 @@ public final class EffortFormulas implements FormulaModule
         return List.of(
                 new Formula(EFFORT, Set.of("person", "period"), topics, Set.of(PeriodCalendar.SPRINT), safe(EffortFormulas::effort)),
                 Formula.of(TEAM, Set.of("team", "period"), topics, safe(EffortFormulas::team)),
+                Formula.of(TOTALS, Set.of("people", "period"), topics, safe(EffortFormulas::totals)),
                 Formula.of(CULTURE_ITEMS, Set.of("person", "period"), topics, safe(EffortFormulas::cultureItems)),
                 Formula.of(DETECTED, Set.of("person", "period"), topics, safe(EffortFormulas::detected)),
                 Formula.of(DAILY_LOG, Set.of("person", "period"), topics, safe(EffortFormulas::dailyLog)),
@@ -129,6 +136,19 @@ public final class EffortFormulas implements FormulaModule
                         .put("requesters", Effort.requesters(list));
             });
         });
+    }
+
+    private static Future<Object> totals(CalcContext ctx, JsonObject params)
+    {
+        List<Future<Object>> efforts = new ArrayList<>();
+
+        for (UUID id : TeamFormulas.ids(params))
+        {
+            efforts.add(ctx.get(EFFORT, new JsonObject().put("person", id.toString()).put("period", params.getString("period"))));
+        }
+
+        return Future.all(efforts).map(all -> (Object) Effort.teamTotals(
+                efforts.stream().map(f -> f.result() instanceof JsonObject o ? o : null).toList(), ctx.rules()));
     }
 
     /**
@@ -196,7 +216,7 @@ public final class EffortFormulas implements FormulaModule
                                 .put("people", out)
                                 .put("logged", logged)
                                 .put("personDays", logged / ctx.rules().getDouble("dayHours", 8.0))
-                                .put("share", logged == 0 ? 0 : (int) Math.round(unplanned / logged * 100))
+                                .put("share", Effort.share(unplanned, logged))
                                 .put("items", items.size())
                                 .put("done", (int) items.stream().filter(it -> it.getBoolean("isDone", false)).count())
                                 .put("pending", (int) items.stream().filter(it -> "pending".equals(it.getString("state"))).count())

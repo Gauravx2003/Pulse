@@ -1,5 +1,6 @@
 package com.pulse.modules.reviews;
 
+import com.pulse.calc.core.CoreThresholds;
 import com.pulse.calc.core.ResultGuard;
 import com.pulse.calc.core.SnapshotStore;
 import com.pulse.platform.audit.AuditEvents;
@@ -22,15 +23,12 @@ import java.util.UUID;
  * Performance review (task 20.1, spec culture/reviews-performance): the index with its five pillars and
  * a 4-quarter trend, the calibration table for {@code reviews.calibrate} holders, the review summary and
  * submission for calibration (never yourself; audited). Every number comes from the calc service
- * ({@code core.pillars}, {@code core.index}, {@code core.indexHistory}); the index is an input to
+ * ({@code core.pillars}, {@code core.index}, {@code core.indexHistory}, the proposed rating
+ * {@code core.proposed} and its thresholds {@code core.thresholds}); the index is an input to
  * calibration, not the rating.
  */
 final class PerformanceService
 {
-    static final double EXCEEDS = 4.2;
-
-    static final double MEETS = 3.5;
-
     static final String CALIBRATE = "reviews.calibrate";
 
     /** The pillars in order: key, label, rule weight key and what feeds it. */
@@ -58,12 +56,6 @@ final class PerformanceService
         LocalDate d = ctx.calc().clock().today();
 
         return "q:" + d.getYear() + "-Q" + ((d.getMonthValue() - 1) / 3 + 1);
-    }
-
-    /** Exceeds at 4.2 or more, Meets at 3.5 or more, else Developing. */
-    static String proposed(double index)
-    {
-        return index >= EXCEEDS ? "Exceeds" : index >= MEETS ? "Meets" : "Developing";
     }
 
     private static String label(String key)
@@ -125,13 +117,19 @@ final class PerformanceService
         });
     }
 
-    /** {@code {period, label, index, proposed, pillars:[{key, label, weight, score, inputs}]}} of a person. */
+    /**
+     * {@code {period, label, index, proposed, pillars:[{key, label, weight, score, tone, inputs}]}} of a person;
+     * {@code tone} from {@code core.thresholds} {@code tones.index}.
+     */
     private Future<JsonObject> breakdown(String personId, String period)
     {
         JsonObject pp = new JsonObject().put("person", personId).put("period", period);
 
-        return Future.all(get("core.pillars", pp), get("core.index", pp), weights()).map(all ->
+        return Future.all(List.of(get("core.pillars", pp), get("core.index", pp), weights(), get("core.proposed", pp),
+                get("core.thresholds", new JsonObject()))).map(all ->
         {
+            JsonArray tones = all.<JsonObject>resultAt(4).getJsonObject("tones").getJsonArray("index");
+
             JsonObject p = all.resultAt(0) instanceof JsonObject o ? o : null;
 
             Double index = all.resultAt(1) instanceof Number n ? round(n) : null;
@@ -147,6 +145,7 @@ final class PerformanceService
                         .put("label", def[1])
                         .put("weight", w.getValue(def[0]))
                         .put("score", p == null ? null : round(p.getValue(def[0])))
+                        .put("tone", p == null ? "" : CoreThresholds.tone(round(p.getValue(def[0])), tones))
                         .put("inputs", def[2]));
             }
 
@@ -154,7 +153,7 @@ final class PerformanceService
                     .put("period", period)
                     .put("label", label(period))
                     .put("index", index)
-                    .put("proposed", index == null ? null : proposed(index))
+                    .put("proposed", index == null ? null : all.resultAt(3))
                     .put("pillars", pillars);
         });
     }
@@ -189,7 +188,13 @@ final class PerformanceService
                         each.add(breakdown(p.getString("id"), live));
                     }
 
-                    return Future.all(each).map(all ->
+                    Future<JsonObject> thresholds = ctx.calc().getObject("core.thresholds", new JsonObject());
+
+                    List<Future<?>> waits = new ArrayList<>(each);
+
+                    waits.add(thresholds);
+
+                    return Future.all(waits).map(all ->
                     {
                         JsonArray out = new JsonArray();
 
@@ -209,7 +214,7 @@ final class PerformanceService
                         }
 
                         return new JsonObject().put("period", live).put("label", label(live)).put("people", out)
-                                .put("thresholds", new JsonObject().put("exceeds", EXCEEDS).put("meets", MEETS));
+                                .put("thresholds", thresholds.result().getJsonObject("index"));
                     });
                 }));
     }

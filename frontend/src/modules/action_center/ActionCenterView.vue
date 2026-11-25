@@ -8,6 +8,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { api } from '@/api/client.js';
 import { Badge, StatTile } from '@/kit/index.js';
+import { heatClass } from '@/kit/tones.js';
 import { loadPeriods } from '@/shell/period.js';
 import { setPerson } from '@/shell/person.js';
 import { formatDate } from '@/ui/format.js';
@@ -140,12 +141,9 @@ function openPerson(row) {
   }
 }
 
-function fitTone(pct) {
-  return pct >= 100 ? '' : pct >= 80 ? 'is-accent' : 'is-danger';
-}
-
-function heat(count) {
-  return count >= 4 ? 'u2' : count >= 2 ? 'u1' : 'u0';
+// meter fill class for a tone from the server ('' and ok are the default fill)
+function fill(tone) {
+  return tone && tone !== 'ok' ? `is-${tone}` : '';
 }
 
 function meter(value) {
@@ -276,7 +274,7 @@ function meter(value) {
         <template #cell-pct="{ row }">
           <span class="fit">
             <span class="pl-meter" role="img" :aria-label="`${row.name}: ${row.pct}% fits`">
-              <span class="pl-meter-fill" :class="fitTone(row.pct)" :style="{ width: `${Math.min(row.pct, 100)}%` }" />
+              <span class="pl-meter-fill" :class="fill(row.tone)" :style="{ width: `${Math.min(row.pct, 100)}%` }" />
             </span>
             <span class="pl-mono">{{ row.pct }}%</span>
           </span>
@@ -323,7 +321,7 @@ function meter(value) {
       <template v-if="data.coverage">
         <PlTable :columns="coverageColumns" :rows="coverageRows" row-key="area" label="Skills coverage">
           <template v-for="p in coveragePeople" :key="p.id" #[`cell-p:${p.id}`]="{ row }">
-            <span v-if="row[`p:${p.id}`]" class="pl-heat-cell cell" :class="heat(row[`p:${p.id}`])" :aria-label="`${p.name}: ${row[`p:${p.id}`]}`">{{ row[`p:${p.id}`] }}</span>
+            <span v-if="row[`p:${p.id}`]" class="pl-heat-cell cell" :class="heatClass(row.heat?.[p.id])" :aria-label="`${p.name}: ${row[`p:${p.id}`]}`">{{ row[`p:${p.id}`] }}</span>
             <span v-else class="pl-caption" :aria-label="`${p.name}: none`">·</span>
           </template>
           <template #cell-area="{ row }"><b>{{ row.area }}</b></template>
@@ -349,14 +347,14 @@ function meter(value) {
             <span class="bar">
               <span class="pl-caption label">Mood</span>
               <span class="pl-meter" role="img" :aria-label="`Mood ${w.mood} of 5`">
-                <span class="pl-meter-fill" :class="w.mood >= 3.5 ? '' : 'is-accent'" :style="{ width: meter(w.mood) }" />
+                <span class="pl-meter-fill" :class="fill(w.moodTone)" :style="{ width: meter(w.mood) }" />
               </span>
               <span class="pl-mono">{{ num(w.mood, 1) }}</span>
             </span>
             <span class="bar">
               <span class="pl-caption label">Load</span>
               <span class="pl-meter" role="img" :aria-label="`Workload ${w.workload} of 5`">
-                <span class="pl-meter-fill" :class="w.workload >= 4 ? 'is-warn' : 'is-info'" :style="{ width: meter(w.workload) }" />
+                <span class="pl-meter-fill" :class="fill(w.workloadTone)" :style="{ width: meter(w.workload) }" />
               </span>
               <span class="pl-mono">{{ num(w.workload, 1) }}</span>
             </span>

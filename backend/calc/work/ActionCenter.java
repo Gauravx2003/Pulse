@@ -1,5 +1,6 @@
 package com.pulse.calc.work;
 
+import com.pulse.calc.core.CoreThresholds;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -38,6 +39,14 @@ public final class ActionCenter
      */
     public static final int ONE_ON_ONE_DAYS = 10;
 
+    /**
+     * A weekly pulse answer is low with mood at or below this, or workload at or above
+     * {@link #HIGH_WORKLOAD}.
+     */
+    public static final int LOW_MOOD = 2;
+
+    public static final int HIGH_WORKLOAD = 5;
+
     private static final String NO_DUE = "9";
 
     private ActionCenter()
@@ -49,7 +58,8 @@ public final class ActionCenter
     /**
      * One person's sprint forecast from {@code work.liveSprint}: open issues fill the focus hours left in
      * due-date order (no due date last); what does not fit is likely to carry over.
-     * {@code {remaining, capacity, fits, pct, carry: [{key, rem}]}}.
+     * {@code {remaining, capacity, fits, pct, tone, carry: [{key, rem}]}}; {@code tone} is the meter's
+     * ({@link WorkThresholds#FORECAST_FIT_TONES}).
      */
     public static JsonObject forecast(JsonObject live, double focus)
     {
@@ -86,6 +96,7 @@ public final class ActionCenter
                 .put("capacity", capacity)
                 .put("fits", Math.min(remaining, capacity))
                 .put("pct", pct)
+                .put("tone", CoreThresholds.tone(pct, WorkThresholds.FORECAST_FIT_TONES))
                 .put("carry", carry);
     }
 
@@ -349,7 +360,7 @@ public final class ActionCenter
 
         int workload = last.getInteger("workload");
 
-        if (mood <= 2 || workload >= 5)
+        if (low(last))
         {
             String note = last.getString("note", "");
 
@@ -401,7 +412,8 @@ public final class ActionCenter
 
     /**
      * Skills coverage (prototype {@code coverage} and the Action center table): per area, the people who
-     * worked in it and how often; one person is a Single point of failure, two Thin, more Covered.
+     * worked in it and how often ({@code counts}, with each cell's {@code heat} tone from
+     * {@link WorkThresholds#COVERAGE_TONES}); one person is a Single point of failure, two Thin, more Covered.
      *
      * @param areas  area names in display order
      * @param counts area to person id to count (only the visible people)
@@ -460,11 +472,19 @@ public final class ActionCenter
 
             JsonObject byPerson = new JsonObject();
 
-            who.forEach(byPerson::put);
+            JsonObject heat = new JsonObject();
+
+            who.forEach((person, count) ->
+            {
+                byPerson.put(person, count);
+
+                heat.put(person, CoreThresholds.tone(count, WorkThresholds.COVERAGE_TONES));
+            });
 
             out.add(new JsonObject()
                     .put("area", area)
                     .put("counts", byPerson)
+                    .put("heat", heat)
                     .put("people", n)
                     .put("coverage", mark)
                     .put("tone", tone)
@@ -478,7 +498,9 @@ public final class ActionCenter
 
     /**
      * The team's pulse trend (prototype {@code pulseTrend}): per week, the average mood and workload of
-     * the answers, oldest week first. {@code pulses}: {@code [{weekStart, mood, workload}]}.
+     * the answers with their meter tones ({@link WorkThresholds#TEAM_MOOD_TONES},
+     * {@link WorkThresholds#TEAM_WORKLOAD_TONES}), oldest week first. {@code pulses}:
+     * {@code [{weekStart, mood, workload}]}.
      */
     public static JsonArray pulseTrend(List<JsonObject> pulses)
     {
@@ -497,21 +519,38 @@ public final class ActionCenter
 
         JsonArray out = new JsonArray();
 
-        weeks.forEach((week, sum) -> out.add(new JsonObject()
-                .put("week", week)
-                .put("mood", Math.round(sum[0] / sum[2] * 10) / 10.0)
-                .put("workload", Math.round(sum[1] / sum[2] * 10) / 10.0)
-                .put("answers", (int) sum[2])));
+        weeks.forEach((week, sum) ->
+        {
+            double mood = Math.round(sum[0] / sum[2] * 10) / 10.0;
+
+            double workload = Math.round(sum[1] / sum[2] * 10) / 10.0;
+
+            out.add(new JsonObject()
+                    .put("week", week)
+                    .put("mood", mood)
+                    .put("workload", workload)
+                    .put("moodTone", CoreThresholds.tone(mood, WorkThresholds.TEAM_MOOD_TONES))
+                    .put("workloadTone", CoreThresholds.tone(workload, WorkThresholds.TEAM_WORKLOAD_TONES))
+                    .put("answers", (int) sum[2]));
+        });
 
         return out;
     }
 
     /**
-     * True for a low answer: mood 2 or lower, or workload 5.
+     * True for a low answer: mood {@value #LOW_MOOD} or lower, or workload {@value #HIGH_WORKLOAD}.
      */
     public static boolean low(JsonObject pulse)
     {
-        return pulse.getInteger("mood") <= 2 || pulse.getInteger("workload") >= 5;
+        return low(pulse.getInteger("mood"), pulse.getInteger("workload"));
+    }
+
+    /**
+     * True for a low answer: mood {@value #LOW_MOOD} or lower, or workload {@value #HIGH_WORKLOAD}.
+     */
+    public static boolean low(int mood, int workload)
+    {
+        return mood <= LOW_MOOD || workload >= HIGH_WORKLOAD;
     }
 
     // ------------------------------------------------------------------ helpers

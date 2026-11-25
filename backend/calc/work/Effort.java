@@ -336,7 +336,95 @@ public final class Effort
                 .put("ptsPend", Math.round((workPoints[1] + visitPts[1]) * 100) / 100.0)
                 .put("capped", workPoints[2] > 0 || visitPts[2] > 0)
                 .put("visitPts", visitPts[0])
-                .put("share", logged == 0 ? 0 : (int) Math.round((unplanned + untracked) / logged * 100));
+                .put("share", share(unplanned + untracked, logged));
+    }
+
+    /**
+     * The unplanned share %: unplanned and untracked hours over the hours logged, rounded; 0 with
+     * nothing logged.
+     */
+    public static int share(double unplannedAndUntracked, double logged)
+    {
+        return logged == 0 ? 0 : (int) Math.round(unplannedAndUntracked / logged * 100);
+    }
+
+    /**
+     * The totals of several people's {@code work.effort} results for one period (the Effort team KPIs and
+     * the period table); null or not applicable results are left out.
+     *
+     * @return {@code {logged, daysWorked, work, unplanned, share, planning, weekend, visitHours, items,
+     *         doneItems, points, pending}}; {@code unplanned} counts unplanned and untracked hours
+     */
+    public static JsonObject teamTotals(List<JsonObject> efforts, JsonObject rules)
+    {
+        double logged = 0;
+
+        double daysWorked = 0;
+
+        double work = 0;
+
+        double unplanned = 0;
+
+        double weekend = 0;
+
+        double visitHours = 0;
+
+        int items = 0;
+
+        int doneItems = 0;
+
+        double points = 0;
+
+        double pending = 0;
+
+        for (JsonObject e : efforts)
+        {
+            if (e == null || e.getBoolean("notApplicable", false))
+            {
+                continue;
+            }
+
+            logged += Workload.orZero(Workload.number(e, "logged"));
+
+            daysWorked += Workload.orZero(Workload.number(e, "daysWorked"));
+
+            work += Workload.orZero(Workload.number(e, "work"));
+
+            unplanned += Workload.orZero(Workload.number(e, "unplanned")) + Workload.orZero(Workload.number(e, "untracked"));
+
+            weekend += Workload.orZero(Workload.number(e, "weekend"));
+
+            visitHours += Workload.orZero(Workload.number(e, "visitH"));
+
+            JsonArray list = e.getJsonArray("items", new JsonArray());
+
+            items += list.size();
+
+            for (Object o : list)
+            {
+                doneItems += ((JsonObject) o).getBoolean("isDone", false) ? 1 : 0;
+            }
+
+            points += Workload.orZero(Workload.number(e, "ptsConf"));
+
+            pending += Workload.orZero(Workload.number(e, "ptsPend"));
+        }
+
+        int share = share(unplanned, logged);
+
+        return new JsonObject()
+                .put("logged", logged)
+                .put("daysWorked", daysWorked)
+                .put("work", work)
+                .put("unplanned", unplanned)
+                .put("share", share)
+                .put("planning", planningSignal(share, rules))
+                .put("weekend", weekend)
+                .put("visitHours", visitHours)
+                .put("items", items)
+                .put("doneItems", doneItems)
+                .put("points", points)
+                .put("pending", pending);
     }
 
     /**

@@ -3,6 +3,7 @@ package com.pulse.calc.work;
 import com.pulse.calc.core.Appraisal;
 import com.pulse.calc.core.CalcContext;
 import com.pulse.calc.core.CalcService;
+import com.pulse.calc.core.CoreThresholds;
 import com.pulse.calc.core.Formula;
 import com.pulse.calc.core.FormulaModule;
 import com.pulse.calc.core.PeriodCalendar;
@@ -44,9 +45,10 @@ public final class TeamFormulas implements FormulaModule
     public static final String SKILLS = "work.skills";
 
     /**
-     * A joiner counts as new (never under-used in a closed period) for this many months.
+     * A joiner counts as new (never under-used in a closed period) for this many months
+     * ({@link CoreThresholds#NEW_JOINER_MONTHS}).
      */
-    public static final int NEW_JOINER_MONTHS = 3;
+    public static final int NEW_JOINER_MONTHS = CoreThresholds.NEW_JOINER_MONTHS;
 
     @Override
     public String id()

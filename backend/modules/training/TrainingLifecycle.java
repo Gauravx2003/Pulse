@@ -29,9 +29,6 @@ public final class TrainingLifecycle
 
     public static final String NOT_COMPLETED = "Not completed";
 
-    /** About 16 hours a week: above it, assigning warns about the load (spec "Assignment"). */
-    static final double WEEKLY_LOAD_WARNING = 16;
-
     private TrainingLifecycle()
     {
     }

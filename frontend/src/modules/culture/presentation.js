@@ -1,12 +1,10 @@
 // Presentation helpers for the Culture values screens. Every score and part comes from the server.
 
-/** Badge tone of a 1–5 score (reference: ok at 4, brand at 3, else accent). */
-export function scoreTone(score) {
-  if (score == null) {
-    return '';
-  }
+import { toneFor } from '@/kit/tones.js';
 
-  return score >= 4 ? 'ok' : score >= 3 ? 'brand' : 'accent';
+/** Badge tone of a 1–5 score, from the bands the server sends (`tones.score`, core.thresholds). */
+export function scoreTone(score, bands) {
+  return toneFor(score, bands);
 }
 
 export function fixed(value, digits = 1) {

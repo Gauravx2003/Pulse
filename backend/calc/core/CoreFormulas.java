@@ -27,6 +27,9 @@ import java.util.UUID;
  *   <li>{@code core.indexHistory {person}}: the index of the 3 quarters before today's, oldest first;</li>
  *   <li>{@code core.appraisalPerformance {person}} and {@code core.appraisal {person}}: the appraisal
  *       performance part and the score with its recommendation ({@link Appraisal}).</li>
+ *   <li>{@code core.proposed {person, period}}: the proposed rating of the index
+ *       ({@link CoreThresholds#proposed}), null without an index;</li>
+ *   <li>{@code core.thresholds {}}: the fixed thresholds and tone bands of {@link CoreThresholds}.</li>
  * </ul>
  *
  * <p><b>Input ports</b> (formulas Tracks 2 and 3 register; until they do, the value is missing and the
@@ -66,7 +69,9 @@ public final class CoreFormulas implements FormulaModule
                 new Formula("core.index", PERSON_PERIOD, Set.of(), QUARTERS, CoreFormulas::index),
                 Formula.of("core.indexHistory", PERSON, Set.of(), CoreFormulas::indexHistory),
                 Formula.of("core.appraisalPerformance", PERSON, Set.of(), CoreFormulas::appraisalPerformance),
-                Formula.of("core.appraisal", PERSON, Set.of(CalcService.PEOPLE), CoreFormulas::appraisal));
+                Formula.of("core.appraisal", PERSON, Set.of(CalcService.PEOPLE), CoreFormulas::appraisal),
+                Formula.of("core.proposed", PERSON_PERIOD, Set.of(), CoreFormulas::proposed),
+                Formula.of("core.thresholds", Set.of(), Set.of(), (ctx, params) -> Future.succeededFuture((Object) CoreThresholds.json())));
     }
 
     // ------------------------------------------------------------------ people and periods
@@ -278,6 +283,11 @@ public final class CoreFormulas implements FormulaModule
     {
         return ctx.get("core.pillars", params).map(p -> p == null ? null
                 : PerformanceIndex.index((JsonObject) p, ctx.rules().getJsonObject("weights", new JsonObject())));
+    }
+
+    private static Future<Object> proposed(CalcContext ctx, JsonObject params)
+    {
+        return ctx.get("core.index", params).map(i -> i instanceof Number n ? CoreThresholds.proposed(n.doubleValue()) : null);
     }
 
     private static Future<Object> indexHistory(CalcContext ctx, JsonObject params)

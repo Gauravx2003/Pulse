@@ -210,7 +210,7 @@ function openWorkItems() {
             :foot="`${num(kpis.storyPoints)} SP · ${num(kpis.done, 0)} done · ${num(kpis.open, 0)} open`"
           />
           <StatTile
-            eyebrow="No update > 2 days"
+            :eyebrow="`No update > ${num(kpis.staleAfter, 0)} days`"
             :value="num(kpis.stale, 0)"
             :foot="val(kpis.oldest) !== null ? `Oldest ${num(kpis.oldest, 0)} d` : 'None stale'"
             :badge="kpis.stale ? 'Stale' : ''"

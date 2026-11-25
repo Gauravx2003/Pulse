@@ -2,6 +2,7 @@ package com.pulse.calc.work;
 
 import com.pulse.calc.core.CalcContext;
 import com.pulse.calc.core.CalcService;
+import com.pulse.calc.core.CoreThresholds;
 import com.pulse.calc.core.CultureParameters;
 import com.pulse.calc.core.Formula;
 import com.pulse.calc.core.FormulaModule;
@@ -37,7 +38,8 @@ import static com.pulse.calc.work.WorkloadFormulas.uuid;
  *   stale issues, code-only days, PR titles to fix, Track 3's (reviews to give, training feedback,
  *   sign-off, check-ins, visit reports), this week's pulse ({@code selfOnly}) and OKRs off track.</li>
  *   <li>{@code work.progressTrends {person}}: the index over 4 quarters, culture values last quarter to
- *   this one by biggest gain, OKRs this quarter, the PR standard by month and Track 3's training.</li>
+ *   this one by biggest gain (each with its {@code tone}), OKRs this quarter, the PR standard by month (its
+ *   {@code tone} from rule {@code prTarget}) and Track 3's training.</li>
  * </ul>
  *
  * <p>Track 3's parts come from the optional port {@code people.progress {person}}
@@ -374,11 +376,14 @@ public final class ProgressFormulas implements FormulaModule
 
                     Double b = i < before.size() && before.getValue(i) instanceof Number x ? x.doubleValue() : null;
 
+                    Double gain = n == null || b == null ? null : Math.round((n - b) * 10) / 10.0;
+
                     rows.add(new JsonObject()
                             .put("value", CultureParameters.VALUES.get(i))
                             .put("before", b)
                             .put("now", n)
-                            .put("gain", n == null || b == null ? null : (Object) (Math.round((n - b) * 10) / 10.0)));
+                            .put("gain", gain)
+                            .put("tone", WorkThresholds.gainTone(gain)));
                 }
 
                 rows.sort((x, y) -> Double.compare(gain(y), gain(x)));
@@ -396,6 +401,8 @@ public final class ProgressFormulas implements FormulaModule
 
             JsonArray prByMonth = new JsonArray();
 
+            JsonArray prTones = WorkThresholds.prComplianceTones(ctx.rules());
+
             for (int i = 0; i < months.size(); i++)
             {
                 JsonObject pr = prs.get(i).result() instanceof JsonObject p ? p : new JsonObject();
@@ -404,6 +411,7 @@ public final class ProgressFormulas implements FormulaModule
                         .put("month", monthKey(months.get(i)).substring(2))
                         .put("label", monthName(months.get(i)))
                         .put("comp", pr.getValue("comp"))
+                        .put("tone", CoreThresholds.tone(pr.getNumber("comp"), prTones))
                         .put("stdPct", pr.getValue("stdPct")));
             }
 

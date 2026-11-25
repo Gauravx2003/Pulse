@@ -13,7 +13,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -164,11 +163,6 @@ final class AppraisalService
 
             double pct = proposal != null ? proposal.getNumber("pct").doubleValue() : rec.getNumber("pct", 0).doubleValue();
 
-            JsonObject band = rec.getJsonObject("band", new JsonObject());
-
-            boolean exception = rec.getBoolean("eligible", false) && band.getNumber("lo") != null
-                    && (pct < band.getNumber("lo").doubleValue() || pct > band.getNumber("hi").doubleValue());
-
             return new JsonObject()
                     .put("personId", p.getString("id"))
                     .put("name", p.getString("name"))
@@ -188,19 +182,18 @@ final class AppraisalService
                             .put("status", proposal == null ? DRAFT : proposal.getString("status"))
                             .put("sendBackReason", proposal == null ? null : proposal.getString("sendBackReason"))
                             .put("version", proposal == null ? null : proposal.getInteger("version")))
-                    .put("exception", exception)
-                    .put("newCtc", ctc == null ? null : money(ctc.doubleValue() * (1 + pct / 100)))
+                    .put("exception", Appraisal.exception(rec, pct))
+                    .put("newCtc", Appraisal.newCtc(ctc, pct))
                     .put("frozen", frozen);
         });
     }
 
+    /** The table's counts by status and its money ({@link Appraisal#budget}). */
     private static JsonObject kpis(JsonArray rows, JsonObject rules)
     {
-        double payroll = 0;
-
-        double spend = 0;
-
         Map<String, Integer> counts = new HashMap<>();
+
+        JsonArray money = new JsonArray();
 
         for (Object o : rows)
         {
@@ -208,25 +201,18 @@ final class AppraisalService
 
             counts.merge(r.getJsonObject("proposal").getString("status"), 1, Integer::sum);
 
-            if (r.getNumber("ctc") != null)
-            {
-                double ctc = r.getNumber("ctc").doubleValue();
-
-                payroll += ctc;
-
-                spend += ctc * r.getJsonObject("proposal").getNumber("pct").doubleValue() / 100;
-            }
+            money.add(new JsonObject().put("ctc", r.getNumber("ctc")).put("pct", r.getJsonObject("proposal").getNumber("pct")));
         }
 
-        double budget = payroll * rules.getNumber("budget", 12).doubleValue() / 100;
+        JsonObject totals = Appraisal.budget(money, rules);
 
         return new JsonObject()
                 .put("people", rows.size())
-                .put("payroll", money(payroll))
-                .put("budget", money(budget))
-                .put("spend", money(spend))
-                .put("overBudget", spend > budget + 1e-9)
-                .put("averagePct", payroll == 0 ? 0 : Math.round(spend / payroll * 1000) / 10.0)
+                .put("payroll", totals.getValue("payroll"))
+                .put("budget", totals.getValue("budget"))
+                .put("spend", totals.getValue("spend"))
+                .put("overBudget", totals.getValue("overBudget"))
+                .put("averagePct", totals.getValue("averagePct"))
                 .put("statuses", new JsonObject(new HashMap<>(counts)));
     }
 
@@ -271,8 +257,7 @@ final class AppraisalService
 
                     String reason = body.getString("reason", "").strip();
 
-                    boolean outside = rec.getBoolean("eligible", false) && band.getNumber("lo") != null
-                            && (pct < band.getNumber("lo").doubleValue() || pct > band.getNumber("hi").doubleValue());
+                    boolean outside = Appraisal.exception(rec, pct);
 
                     if (outside && reason.length() < MIN_REASON)
                     {
@@ -718,11 +703,6 @@ final class AppraisalService
         }
 
         return null;
-    }
-
-    private static double money(double lakh)
-    {
-        return BigDecimal.valueOf(lakh).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
     private static String num(double v)

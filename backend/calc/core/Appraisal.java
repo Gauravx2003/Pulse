@@ -3,6 +3,8 @@ package com.pulse.calc.core;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 
 /**
@@ -278,6 +280,75 @@ public final class Appraisal
         }
 
         return pct;
+    }
+
+    // ------------------------------------------------------------------ increments and budget
+
+    /**
+     * The new CTC after an increment of {@code pct}%, in lakh to 2 decimals; null without a CTC.
+     */
+    public static Double newCtc(Number ctc, double pct)
+    {
+        return ctc == null ? null : money(ctc.doubleValue() * (1 + pct / 100));
+    }
+
+    /**
+     * True when an eligible person's increment is outside the range of their band (spec "Bands and
+     * recommendation": an exception needs a reason).
+     *
+     * @param recommendation {@link #recommend}'s result ({@code eligible}, {@code band: {lo, hi}})
+     */
+    public static boolean exception(JsonObject recommendation, double pct)
+    {
+        JsonObject band = recommendation.getJsonObject("band", new JsonObject());
+
+        return recommendation.getBoolean("eligible", false) && band.getNumber("lo") != null
+                && (pct < band.getNumber("lo").doubleValue() || pct > band.getNumber("hi").doubleValue());
+    }
+
+    /**
+     * The cycle's money (spec "Cap and budget"): payroll is the sum of the CTCs given, spend the sum of
+     * CTC × increment, budget rule {@code budget}% of payroll; rows without a CTC are left out.
+     *
+     * @param rows  {@code [{ctc, pct}]}, amounts in lakh
+     * @param rules the appraisal rules ({@code budget})
+     * @return {@code {payroll, budget, spend, overBudget, averagePct}}, amounts to 2 decimals and the
+     *         average increment to 1
+     */
+    public static JsonObject budget(JsonArray rows, JsonObject rules)
+    {
+        double payroll = 0;
+
+        double spend = 0;
+
+        for (Object o : rows)
+        {
+            JsonObject r = (JsonObject) o;
+
+            if (r.getNumber("ctc") != null)
+            {
+                double ctc = r.getNumber("ctc").doubleValue();
+
+                payroll += ctc;
+
+                spend += ctc * r.getNumber("pct", 0).doubleValue() / 100;
+            }
+        }
+
+        double budget = payroll * rules.getNumber("budget", 12).doubleValue() / 100;
+
+        return new JsonObject()
+                .put("payroll", money(payroll))
+                .put("budget", money(budget))
+                .put("spend", money(spend))
+                .put("overBudget", spend > budget + 1e-9)
+                .put("averagePct", payroll == 0 ? 0 : Math.round(spend / payroll * 1000) / 10.0);
+    }
+
+    /** An amount in lakh to 2 decimals, halves up. */
+    public static double money(double lakh)
+    {
+        return BigDecimal.valueOf(lakh).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
     // ------------------------------------------------------------------ helpers

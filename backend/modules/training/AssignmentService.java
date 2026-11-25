@@ -2,6 +2,8 @@ package com.pulse.modules.training;
 
 import com.pulse.calc.core.CalcService;
 import com.pulse.calc.core.TrainingRating;
+import com.pulse.calc.people.PeopleFormulas;
+import com.pulse.calc.people.PeopleThresholds;
 import com.pulse.calc.people.TrainingFormulas;
 import com.pulse.calc.core.WorkingDays;
 import com.pulse.platform.audit.AuditService;
@@ -154,7 +156,7 @@ final class AssignmentService
 
         return visible
                 .compose(v -> Future.all(repo.mentor(mentorId), repo.plans(uuids(planIds)), repo.people(uuids(personIds)),
-                        repo.openFor(uuids(personIds))))
+                        repo.openFor(uuids(personIds)), thresholds()))
                 .compose(all ->
                 {
                     JsonObject mentor = all.resultAt(0);
@@ -172,12 +174,21 @@ final class AssignmentService
                         return Future.failedFuture(PolicyService.notFound());
                     }
 
-                    return save(user, body, mentor, plans, all.resultAt(2), all.resultAt(3));
+                    double weeklyHours = all.<JsonObject>resultAt(4).getDouble("trainingWeeklyHours");
+
+                    return save(user, body, mentor, plans, all.resultAt(2), all.resultAt(3), weeklyHours);
                 });
     }
 
+    /** {@code people.thresholds}: the training load warning. */
+    private Future<JsonObject> thresholds()
+    {
+        return ctx.calc() == null ? Future.succeededFuture(PeopleThresholds.json())
+                : ctx.calc().getObject(PeopleFormulas.THRESHOLDS, new JsonObject());
+    }
+
     private Future<JsonObject> save(JsonObject user, JsonObject body, JsonObject mentor, JsonArray plans, JsonArray people,
-                                    JsonArray open)
+                                    JsonArray open, double weeklyHours)
     {
         JsonArray assigned = new JsonArray();
 
@@ -241,11 +252,11 @@ final class AssignmentService
                         .put("endOn", body.getString("endOn"))
                         .put("assessmentWindowDays", body.getInteger("assessmentWindowDays", 3)));
 
-                if (hours > TrainingLifecycle.WEEKLY_LOAD_WARNING)
+                if (hours > weeklyHours)
                 {
                     warnings.add(new JsonObject().put("personName", person.getString("name"))
                             .put("message", person.getString("name") + " would have about " + Math.round(hours)
-                                    + " hours of training a week (more than 16)."));
+                                    + " hours of training a week (more than " + Math.round(weeklyHours) + ")."));
                 }
             }
         }

@@ -1,9 +1,11 @@
 package com.pulse.modules.progress;
 
 import com.pulse.calc.core.CalcService;
+import com.pulse.calc.core.CoreThresholds;
 import com.pulse.calc.core.ResultGuard;
 import com.pulse.calc.work.ActionCenterFormulas;
 import com.pulse.calc.work.ProgressFormulas;
+import com.pulse.calc.work.WorkFormulas;
 import com.pulse.calc.work.WorkViewFormulas;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
@@ -31,13 +33,6 @@ import java.util.stream.Collectors;
  */
 final class ProgressService
 {
-
-    /**
-     * Mood at or below this, or workload at or above {@link #HIGH_WORKLOAD}, is a low answer.
-     */
-    static final int LOW_MOOD = 2;
-
-    static final int HIGH_WORKLOAD = 5;
 
     static final int NOTE_MAX = 500;
 
@@ -146,15 +141,27 @@ final class ProgressService
     }
 
     /**
-     * {@code {items: [{weekStart, mood, workload, note, submittedAt}]}}, newest first; refused unless the
-     * user is the person, their manager or holds all.view.
+     * True for a low answer under {@code work.thresholds} {@code pulse}: mood at or below {@code lowMood},
+     * or workload at or above {@code highWorkload}.
+     */
+    static boolean low(int mood, int workload, JsonObject pulse)
+    {
+        return mood <= pulse.getInteger("lowMood") || workload >= pulse.getInteger("highWorkload");
+    }
+
+    /**
+     * {@code {items: [{weekStart, mood, workload, moodTone, workloadTone, note, submittedAt}]}}, newest
+     * first, the badge tones from {@code work.thresholds}; refused unless the user is the person, their
+     * manager or holds all.view.
      */
     Future<JsonObject> pulse(JsonObject user, UUID personId)
     {
         return policy.requireVisible(user, personId.toString(), PolicyService.DOMAIN_PULSE)
                 .compose(scope -> new PulseRepository(ctx.sql()).forPerson(scope, personId))
-                .map(rows ->
+                .compose(rows -> calc.get(WorkFormulas.THRESHOLDS, new JsonObject()).map(t ->
                 {
+                    JsonObject tones = ((JsonObject) t).getJsonObject("tones");
+
                     JsonArray items = new JsonArray();
 
                     for (int i = rows.size() - 1; i >= 0; i--)
@@ -165,12 +172,14 @@ final class ProgressService
                                 .put("weekStart", r.getString("weekStart"))
                                 .put("mood", r.getInteger("mood"))
                                 .put("workload", r.getInteger("workload"))
+                                .put("moodTone", CoreThresholds.tone(r.getInteger("mood"), tones.getJsonArray("mood")))
+                                .put("workloadTone", CoreThresholds.tone(r.getInteger("workload"), tones.getJsonArray("workload")))
                                 .put("note", r.getString("note"))
                                 .put("submittedAt", r.getValue("submittedAt")));
                     }
 
                     return new JsonObject().put("items", items);
-                });
+                }));
     }
 
     /**
@@ -209,8 +218,13 @@ final class ProgressService
 
         LocalDate week = calc.clock().today().with(DayOfWeek.MONDAY);
 
-        boolean low = mood <= LOW_MOOD || workload >= HIGH_WORKLOAD;
+        return calc.get(WorkFormulas.THRESHOLDS, new JsonObject()).compose(t -> save(personId, week, mood, workload, note,
+                low(mood, workload, ((JsonObject) t).getJsonObject("pulse"))));
+    }
 
+    /** Stores the answer and, for a low one, notifies the manager in the same transaction. */
+    private Future<JsonObject> save(UUID personId, LocalDate week, int mood, int workload, String note, boolean low)
+    {
         return ctx.sql().inTransaction(tx ->
         {
             PulseRepository repo = new PulseRepository(tx);

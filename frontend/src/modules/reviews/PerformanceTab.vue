@@ -67,7 +67,7 @@
             aria-valuemax="5"
             :aria-valuenow="p.score ?? 0"
           >
-            <span :class="{ 'is-low': p.score != null && p.score < 3.5 }" :style="{ width: `${Math.round(((p.score ?? 0) / 5) * 100)}%` }" />
+            <span :class="{ 'is-low': p.tone === 'accent' }" :style="{ width: `${Math.round(((p.score ?? 0) / 5) * 100)}%` }" />
           </div>
           <p class="pl-caption">{{ p.inputs }}</p>
         </div>

@@ -2,6 +2,7 @@ package com.pulse.calc.people;
 
 import com.pulse.calc.core.CalcContext;
 import com.pulse.calc.core.CalcService;
+import com.pulse.calc.core.CoreThresholds;
 import com.pulse.calc.core.Formula;
 import com.pulse.calc.core.FormulaModule;
 import com.pulse.calc.core.TrainingRating;
@@ -63,7 +64,7 @@ public final class TrainingFormulas implements FormulaModule
     }
 
     /** Months after joining during which a person counts as a new joiner (prototype {@code isNewJoiner}). */
-    static final int NEW_JOINER_MONTHS = 3;
+    static final int NEW_JOINER_MONTHS = CoreThresholds.NEW_JOINER_MONTHS;
 
     private static Future<Object> menteeCount(CalcContext ctx, JsonObject params)
     {

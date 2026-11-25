@@ -1,6 +1,6 @@
 <template>
   <PlCard :title="`Discipline · ${weight ?? '—'}% weight`" subtitle="Data only: base from daily update compliance, adjusted by rules b–h">
-    <template #actions><Badge :text="`${fixed(discipline?.score)} / 5`" :tone="scoreTone(discipline?.score)" /></template>
+    <template #actions><Badge :text="`${fixed(discipline?.score)} / 5`" :tone="scoreTone(discipline?.score, tones)" /></template>
 
     <PlEmpty v-if="!m" text="No Jira history yet — Discipline shows 3.0 until 4 weeks of data exist." />
     <template v-else>
@@ -63,6 +63,8 @@ const props = defineProps({
   weight: { type: Number, default: null },
   canOverride: { type: Boolean, default: false },
   personName: { type: String, default: '' },
+  // score badge bands from the server (core.thresholds tones.score)
+  tones: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(['override', 'clear']);
@@ -97,22 +99,24 @@ const kpis = computed(() => {
 const ruleRows = computed(() => {
   const x = m.value;
   const att = x.attendance ?? {};
+  // each rule's target from the server (core.discipline metrics.targets; a from rules d4/d5)
+  const t = x.targets ?? {};
 
   return [
-    { code: 'a', measure: 'Daily update compliance', how: 'Days with a meaningful update on active tickets ÷ working days with active tickets', value: `${x.compliance}%`, target: '≥ 85% (5 at ≥ 95%)', ok: x.compliance >= 85 },
+    { code: 'a', measure: 'Daily update compliance', how: 'Days with a meaningful update on active tickets ÷ working days with active tickets', value: `${x.compliance}%`, target: `≥ ${t.compliance}% (5 at ≥ ${t.complianceTop}%)`, ok: x.compliance >= t.compliance },
     { code: 'b', measure: 'Stale tickets', how: 'Assigned tickets with no recent update', value: String(x.stale), target: '0', ok: x.stale === 0 },
-    { code: 'c', measure: 'Proactive re-planning', how: `${x.replanN?.[0] ?? 0} due-date changes before the due date, ${x.replanN?.[1] ?? 0} after it had passed`, value: `${x.replan}%`, target: '≥ 80%', ok: x.replan >= 80 },
-    { code: 'd', measure: 'Status accuracy', how: `${x.statusN?.[0] ?? 0} of ${x.statusN?.[1] ?? 0} tickets had a status not matching reality`, value: `${x.status}%`, target: '≥ 90%', ok: x.status >= 90 },
-    { code: 'e', measure: 'Time logging accuracy', how: `${x.bulk} bulk entries (3+ days logged at once)`, value: `${x.logSame}% same-day`, target: '≥ 70%, < 3 bulk', ok: x.logSame >= 70 && x.bulk < 3 },
-    { code: 'f', measure: 'Early blocker reporting', how: `${x.blockN?.[0] ?? 0} of ${x.blockN?.[1] ?? 0} blockers flagged within 1 working day`, value: `${x.block}%`, target: '≥ 70%', ok: x.block >= 70 },
-    { code: 'g', measure: 'Process adherence', how: 'Definition of done, PR standard and stand-up attendance', value: `${x.process}%`, target: '≥ 85%', ok: x.process >= 85 },
+    { code: 'c', measure: 'Proactive re-planning', how: `${x.replanN?.[0] ?? 0} due-date changes before the due date, ${x.replanN?.[1] ?? 0} after it had passed`, value: `${x.replan}%`, target: `≥ ${t.replan}%`, ok: x.replan >= t.replan },
+    { code: 'd', measure: 'Status accuracy', how: `${x.statusN?.[0] ?? 0} of ${x.statusN?.[1] ?? 0} tickets had a status not matching reality`, value: `${x.status}%`, target: `≥ ${t.status}%`, ok: x.status >= t.status },
+    { code: 'e', measure: 'Time logging accuracy', how: `${x.bulk} bulk entries (3+ days logged at once)`, value: `${x.logSame}% same-day`, target: `≥ ${t.logSame}%, < ${t.bulkBelow} bulk`, ok: x.logSame >= t.logSame && x.bulk < t.bulkBelow },
+    { code: 'f', measure: 'Early blocker reporting', how: `${x.blockN?.[0] ?? 0} of ${x.blockN?.[1] ?? 0} blockers flagged within 1 working day`, value: `${x.block}%`, target: `≥ ${t.block}%`, ok: x.block >= t.block },
+    { code: 'g', measure: 'Process adherence', how: 'Definition of done, PR standard and stand-up attendance', value: `${x.process}%`, target: `≥ ${t.process}%`, ok: x.process >= t.process },
     {
       code: 'h',
       measure: 'Attendance & leave',
       how: `Monthly HR upload${att.absent ? ` · ${att.absent} absent without leave` : ''} · sick and approved leave never count`,
       value: att.score == null ? '—' : `${att.score}%`,
-      target: '≥ 85%, no absence',
-      ok: att.score == null ? null : att.score >= 85 && !att.absent,
+      target: `≥ ${t.attendance}%, no absence`,
+      ok: att.score == null ? null : att.score >= t.attendance && !att.absent,
     },
   ];
 });

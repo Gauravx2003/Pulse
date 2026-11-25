@@ -2,7 +2,6 @@ package com.pulse.modules.effort;
 
 import com.pulse.calc.core.CalcService;
 import com.pulse.calc.core.PeriodCalendar;
-import com.pulse.calc.core.ResultGuard;
 import com.pulse.calc.work.EffortFormulas;
 import com.pulse.modules.work.PersonRepository;
 import com.pulse.modules.work.Reports;
@@ -80,7 +79,7 @@ public final class EffortService
 
             Future<Object> culture = ctx.calc().get(EffortFormulas.CULTURE_UPDATES, new JsonObject().put("person", personId));
 
-            Future<JsonArray> history = history(period).compose(keys -> periodRows(List.of(personId), keys));
+            Future<JsonArray> history = history(period).compose(keys -> periodRows(personId, keys));
 
             return Future.all(List.of(identity, effort, daily, culture, history)).map(all -> new JsonObject()
                     .put("person", identity.result())
@@ -110,13 +109,19 @@ public final class EffortService
                         .put("period", period.getString("key"))));
             }
 
-            Future<JsonArray> history = history(period).compose(keys -> periodRows(people.stream().map(p -> p.getString("id")).toList(), keys));
+            String ids = String.join(",", people.stream().map(p -> p.getString("id")).toList());
+
+            Future<Object> totals = ctx.calc().get(EffortFormulas.TOTALS, new JsonObject().put("people", ids).put("period", period.getString("key")));
+
+            Future<JsonArray> history = history(period).compose(keys -> periodRows(ids, keys));
 
             Future<JsonObject> teamName = ctx.sql().queryOne(
                     "SELECT string_agg(DISTINCT department, ', ') AS team FROM people WHERE id = ANY($1)",
                     Tuple.of(people.stream().map(p -> UUID.fromString(p.getString("id"))).toArray(UUID[]::new)));
 
             List<Future<?>> all = new ArrayList<>(efforts);
+
+            all.add(totals);
 
             all.add(history);
 
@@ -130,16 +135,6 @@ public final class EffortService
 
                 Map<String, JsonObject> requesters = new LinkedHashMap<>();
 
-                double logged = 0;
-
-                double daysWorked = 0;
-
-                double unplanned = 0;
-
-                int items = 0;
-
-                int doneItems = 0;
-
                 for (int i = 0; i < people.size(); i++)
                 {
                     JsonObject person = people.get(i);
@@ -148,19 +143,9 @@ public final class EffortService
 
                     JsonArray list = e.getJsonArray("items", new JsonArray());
 
-                    logged += number(e.getValue("logged"));
-
-                    daysWorked += number(e.getValue("daysWorked"));
-
-                    unplanned += number(e.getValue("unplanned")) + number(e.getValue("untracked"));
-
-                    items += list.size();
-
                     for (Object o : list)
                     {
                         JsonObject item = (JsonObject) o;
-
-                        doneItems += item.getBoolean("isDone", false) ? 1 : 0;
 
                         if (PENDING.equals(item.getString("state")))
                         {
@@ -197,16 +182,18 @@ public final class EffortService
 
                 long awaiting = review.stream().filter(i -> ((JsonObject) i).getBoolean("isDone", false)).count();
 
+                JsonObject sum = (JsonObject) totals.result();
+
                 return new JsonObject()
                         .put("period", period)
                         .put("team", teamName.result() == null ? null : teamName.result().getString("team"))
                         .put("kpis", new JsonObject()
-                                .put("logged", logged)
-                                .put("daysWorked", daysWorked)
-                                .put("unplanned", unplanned)
-                                .put("share", logged == 0 ? 0 : (int) Math.round(unplanned / logged * 100))
-                                .put("items", items)
-                                .put("doneItems", doneItems)
+                                .put("logged", sum.getValue("logged"))
+                                .put("daysWorked", sum.getValue("daysWorked"))
+                                .put("unplanned", sum.getValue("unplanned"))
+                                .put("share", sum.getValue("share"))
+                                .put("items", sum.getValue("items"))
+                                .put("doneItems", sum.getValue("doneItems"))
                                 .put("awaiting", awaiting))
                         .put("people", rows)
                         .put("periods", history.result())
@@ -252,61 +239,39 @@ public final class EffortService
     }
 
     /**
-     * Per period, the totals of these people: {@code [{period, short, logged, daysWorked, work, unplanned,
-     * weekend, visitHours, items, points}]}.
+     * Per period, the totals of these people ({@code work.effortTotals}): {@code [{period, short, logged,
+     * daysWorked, work, unplanned, weekend, visitHours, items, points}]}.
      */
-    private Future<JsonArray> periodRows(List<String> people, List<JsonObject> periods)
+    private Future<JsonArray> periodRows(String people, List<JsonObject> periods)
     {
         List<Future<Object>> cells = new ArrayList<>();
 
         for (JsonObject p : periods)
         {
-            for (String id : people)
-            {
-                cells.add(ctx.calc().get(EffortFormulas.EFFORT, new JsonObject().put("person", id).put("period", p.getString("key"))));
-            }
+            cells.add(ctx.calc().get(EffortFormulas.TOTALS, new JsonObject().put("people", people).put("period", p.getString("key"))));
         }
 
         return Future.all(cells).map(done ->
         {
             JsonArray out = new JsonArray();
 
-            int i = 0;
-
-            for (JsonObject p : periods)
+            for (int i = 0; i < periods.size(); i++)
             {
-                JsonObject sum = new JsonObject().put("period", p.getString("key")).put("short", p.getString("short"));
+                JsonObject p = periods.get(i);
 
-                double[] totals = new double[8];
+                JsonObject t = (JsonObject) cells.get(i).result();
 
-                for (int k = 0; k < people.size(); k++, i++)
-                {
-                    JsonObject e = (JsonObject) cells.get(i).result();
-
-                    if (e == null || ResultGuard.isNotApplicable(e))
-                    {
-                        continue;
-                    }
-
-                    totals[0] += number(e.getValue("logged"));
-
-                    totals[1] += number(e.getValue("daysWorked"));
-
-                    totals[2] += number(e.getValue("work"));
-
-                    totals[3] += number(e.getValue("unplanned")) + number(e.getValue("untracked"));
-
-                    totals[4] += number(e.getValue("weekend"));
-
-                    totals[5] += number(e.getValue("visitH"));
-
-                    totals[6] += e.getJsonArray("items", new JsonArray()).size();
-
-                    totals[7] += number(e.getValue("ptsConf"));
-                }
-
-                out.add(sum.put("logged", totals[0]).put("daysWorked", totals[1]).put("work", totals[2]).put("unplanned", totals[3])
-                        .put("weekend", totals[4]).put("visitHours", totals[5]).put("items", (int) totals[6]).put("points", totals[7]));
+                out.add(new JsonObject()
+                        .put("period", p.getString("key"))
+                        .put("short", p.getString("short"))
+                        .put("logged", t.getValue("logged"))
+                        .put("daysWorked", t.getValue("daysWorked"))
+                        .put("work", t.getValue("work"))
+                        .put("unplanned", t.getValue("unplanned"))
+                        .put("weekend", t.getValue("weekend"))
+                        .put("visitHours", t.getValue("visitHours"))
+                        .put("items", t.getValue("items"))
+                        .put("points", t.getValue("points")));
             }
 
             return out;

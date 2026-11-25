@@ -258,6 +258,8 @@ Depends on the Track 1 Day 1 freeze (`LiveConnector`, `LiveContext`, mock server
   - the fixtures load in the mock server
   - a grep finds no password or real email
   - both sprint field formats (string and object) are represented
+
+  **Status (2026-11-25), left open on purpose:** there are no read-only Jira credentials yet, so the fixtures are built from the recorded, sanitized live answers (`field.json`, `search.json`, `jira-search.json`) in their recorded shape. `search-page1.json` and `search-page2.json` add the sprint (string and object), story points, time tracking, an assignee without `emailAddress`, an unassigned issue and a bot edit. Only `error-401.xml` is recorded as is (the unauthenticated `/rest/api/2/myself`); 429 and 500 use Jira's `errorMessages` format. The recorded pages hold 5 issues, so page 2 starts at `startAt` 5, not 100. `JiraFixturesTest` covers the three Verify points and passes. To close it: record `/myself`, a 100-issue page pair and real 429/500 answers with a read-only user, then re-run the test.
 - [ ] 26.2 **`JiraConnector`** in `backend/modules/connectors/jira/`, registered by the connectors module descriptor. It is `JsonObject` in and out, with no model classes.
   - **Config:** Base URL, auth mode (`basic` / `bearer`), Username, Project Keys, story points and sprint field ids, optional Expiry Date, and "ignore bot and non-assignee edits".
   - **Secret:** "Password / Token".
@@ -286,6 +288,8 @@ Depends on the Track 1 Day 1 freeze (`LiveConnector`, `LiveContext`, mock server
     - a bot-only edit leaves last activity unchanged
     - an unknown story points field is stored as null
     - a base URL with user info, or `http://169.254.169.254`, is rejected on save
+
+  **Status (2026-11-25), left open:** `JiraConnector` and `JiraMapper` are built and registered; `JiraConnectorContractTest` (13) and `JiraConnectorTest` (14) pass, and the full backend suite (1139) is green. Open: (1) `fields.description` is not stored, because `issues` has no description column (Track 2 to add one, or the spec to drop it); comment bodies go to `issue_events.to_value` with kind `comment`. (2) "Rejected on save" is checked through `BaseUrls.validate`; the save route itself is Track 1's 24.5. Mapping choices for the 25.4 review: sprint key `S<jira sprint id>` and number = the Jira id; sprints without dates (future) are not stored and the issue's `sprint_id` is null; `ends_on` is the Sunday on or after `endDate`; an in-progress status whose name contains "review" maps to In Review; more than one sprint sets `carried_over`; `started_on` is the first status change; with the bot switch off, Jira's `updated` is written as a `transition` event of the assignee so it counts as last activity.
 - [ ] 26.3 **Jira mapping record and end-to-end flow.**
   - Write the Jira Server → Pulse mapping section of `docs/live-connectors.md` (sent to Track 1 for the merge, reviewed by Track 2 in 25.4).
   - Add a Playwright flow against the mock server:

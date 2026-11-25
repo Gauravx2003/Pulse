@@ -1,5 +1,6 @@
 package com.pulse.modules.connectors;
 
+import com.pulse.modules.connectors.jira.JiraConnector;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.module.PulseModule;
 
@@ -23,6 +24,7 @@ public class ConnectorsModule implements PulseModule
     @Override
     public void start(ModuleContext ctx)
     {
-        // task 26.2 registers the Jira connector here, task 26.5 the GitHub connector
+        // task 26.5 adds the GitHub connector here
+        ctx.connectors().register(new JiraConnector());
     }
 }

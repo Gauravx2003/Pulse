@@ -74,7 +74,12 @@
       </div>
     </PlCard>
 
-    <PlCard title="What each role sees" subtitle="The menu each role gets, generated from its permissions">
+    <PlCard
+      title="What each role sees"
+      subtitle="The menu each role gets, generated from its permissions"
+      :loading="loading"
+      :empty="!loading && !roles.length"
+    >
       <div class="role-cards">
         <article v-for="role in roles" :key="role.id" class="role-card" :aria-label="`${role.name} menu`">
           <div class="role-card-head">

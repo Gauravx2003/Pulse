@@ -18,7 +18,8 @@ if ! PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d
   PGPASSWORD="$DB_PASSWORD" createdb -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME"
 fi
 
-JAR="$(dirname "$0")/../../backend/target/pulse-backend-1.0.0-SNAPSHOT-fat.jar"
+# PULSE_E2E_JAR runs a copy of the jar, so a rebuild in another terminal cannot pull it from under this run
+JAR="${PULSE_E2E_JAR:-$(dirname "$0")/../../backend/target/pulse-backend-1.0.0-SNAPSHOT-fat.jar}"
 
 if [ ! -f "$JAR" ]; then
   echo "Backend jar not found: run 'mvn -f backend package -DskipTests' first" >&2

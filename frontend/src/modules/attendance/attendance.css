@@ -50,8 +50,13 @@
   background: transparent;
   color: var(--ink-muted);
 }
+/* days outside the period: no fill and no text, only the cell outline (dimmed text fails 4.5:1) */
 .att-out {
-  opacity: 0.25;
+  background: transparent;
+  box-shadow: none;
+}
+.att-out > * {
+  visibility: hidden;
 }
 .att-late::after {
   content: '';

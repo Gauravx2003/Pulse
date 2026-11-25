@@ -568,6 +568,23 @@ module whose tables yours uses) after the config, `TestApi.start(port, null, "re
 `V3xx` migrations and `S3xx` seed files through the production migration runner. Don't read and `exec`
 the SQL files yourself.
 
+Every endpoint also needs a line in its module's `backend/modules/<id>/contract.test` (platform routes:
+`backend/src/test/resources/contracts/platform.test`). `ContractMatrixTest` runs all of them on one server
+with every module's seed, for six roles: hr@ (Admin), rahul@ (Manager), priya@ (Employee), arjun@ (peer),
+sara@ (mentor of Anjali, Neha, Kiran and Rohit) and sana@ (account owner of Priya's, Arjun's and Dev's
+visits). It fails for any mounted endpoint without a line.
+
+```
+# METHOD /path [json body] [fresh] => ADMIN MANAGER EMPLOYEE PEER MENTOR OWNER
+GET /api/v1/visits/items/{id:visits.external_id=VIS-102} => 200 200 200 404 404 200
+POST /api/v1/visits/items/{id:visits.external_id=VIS-107}/report {"done":"x","onsiteHours":1,"travelHours":1,"outcome":"Resolved","version":99999} => 403* 403* 422 404 404 403*
+```
+
+For every refusal it also sends the request with the ids swapped for ones that address nothing; the answer
+must be identical, so a refusal never reveals that a record exists. Star a refusal (`403*`) only when the
+role may see the record but not do the action; the starred answer must then differ from the missing one.
+Give writes a body that fails validation or a stale `version`, so the matrix changes no data.
+
 Run the tests with `DB_PASSWORD=pulse_secret_dev mvn test` from `backend/` while the compose PostgreSQL
 is up.
 
@@ -584,3 +601,4 @@ is up.
 - [ ] Ingest tables (with `source`/`external_id`/`synced_at`) are seeded only through a `SeedMapper`.
 - [ ] Notifications go through `ctx.notifications().notify(tx, NotificationTriggers.…)` in the action's transaction.
 - [ ] A `RoleMatrix` contract test covers Admin, Manager, Employee and peer.
+- [ ] `modules/<id>/contract.test` has a line for the endpoint with all six roles (`ContractMatrixTest`).

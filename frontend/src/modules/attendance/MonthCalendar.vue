@@ -159,7 +159,7 @@ const cells = computed(() => {
   font-size: 13px;
 }
 .att-day small {
+  /* no opacity: dimmed day numbers fall below 4.5:1 on the soft status fills */
   font: 400 10px/1 var(--font-mono);
-  opacity: 0.8;
 }
 </style>

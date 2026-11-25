@@ -1,0 +1,17 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+GET /api/v1/appraisal/proposals => 200 200 403 403 403 403
+GET /api/v1/appraisal/cycle => 200 200 403 403 403 403
+GET /api/v1/appraisal/people/{person:priya@pulse.demo}/evidence => 200 200 403 403 403 403
+GET /api/v1/appraisal/export => 200 200 403 403 403 403
+PUT /api/v1/appraisal/proposals/{person:priya@pulse.demo} {"pct":-50} => 400 400 403 403 403 403
+POST /api/v1/appraisal/proposals/{person:priya@pulse.demo}/approve => 409 403 403 403 403 403
+POST /api/v1/appraisal/proposals/{person:priya@pulse.demo}/send-back {"reason":""} => 422 403 403 403 403 403
+PUT /api/v1/appraisal/cycle {"effectiveOn":"2026-04-01","version":99999} => 409 403 403 403 403 403
+# These four take no body, so they run for whoever may: apply, submit, approve and release the cycle in
+# that order. Keep them last so the lines above see the seeded cycle.
+POST /api/v1/appraisal/proposals/apply => 200 200 403 403 403 403
+POST /api/v1/appraisal/proposals/submit => 200 200 403 403 403 403
+POST /api/v1/appraisal/proposals/approve-all => 200 403 403 403 403 403
+POST /api/v1/appraisal/release => 200 403 403 403 403 403

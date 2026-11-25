@@ -4,7 +4,7 @@ import globals from 'globals';
 import noHexColors from './eslint-rules/no-hex-colors.js';
 
 export default [
-  { ignores: ['dist/**', 'node_modules/**'] },
+  { ignores: ['dist/**', '.audit-dist/**', 'node_modules/**'] },
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
   {

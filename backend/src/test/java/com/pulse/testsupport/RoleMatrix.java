@@ -47,6 +47,12 @@ public final class RoleMatrix
     /** Employee in the same team as {@link #EMPLOYEE}: a peer. */
     public static final String PEER = "arjun@pulse.demo";
 
+    /** Employee in Priya's team who mentors Anjali, Neha, Kiran and Rohit (training exception), not a manager. */
+    public static final String MENTOR = "sara@pulse.demo";
+
+    /** Employee outside the Platform team who owns Priya's, Arjun's and Dev's customer visits (visits exception). */
+    public static final String OWNER = "sana@pulse.demo";
+
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{(person|user):([^}]+)}");
 
     private static final Map<String, TestApi.Session> SESSIONS = new ConcurrentHashMap<>();
@@ -68,6 +74,19 @@ public final class RoleMatrix
     public static void assertRoleMatrix(TestApi api, String endpoint, JsonObject body, Map<String, Integer> expectations)
             throws Exception
     {
+        assertRoleMatrix(api, endpoint, body, expectations, false, true);
+    }
+
+    /**
+     * As {@link #assertRoleMatrix(TestApi, String, JsonObject, Map)}. With {@code fresh} each role signs in
+     * again for this call instead of using its cached session (for calls that end the session, like sign-out).
+     * With {@code refusalsAlike} false the refusals of different roles may differ (a role without the
+     * permission gets 403, one with it gets 404 for a record it cannot see); the caller then checks per role
+     * that a refusal matches the answer for a record that does not exist (see {@code ContractMatrixTest}).
+     */
+    public static void assertRoleMatrix(TestApi api, String endpoint, JsonObject body, Map<String, Integer> expectations,
+                                        boolean fresh, boolean refusalsAlike) throws Exception
+    {
         for (String role : List.of(ADMIN, MANAGER, EMPLOYEE, PEER))
         {
             if (!expectations.containsKey(role))
@@ -88,7 +107,9 @@ public final class RoleMatrix
 
         for (Map.Entry<String, Integer> expectation : expectations.entrySet())
         {
-            TestApi.Session session = session(api, expectation.getKey());
+            TestApi.Session session = fresh
+                    ? api.signIn(expectation.getKey(), TestApi.DEMO_PASSWORD)
+                    : session(api, expectation.getKey());
 
             HttpResponse<Buffer> res = switch (method)
             {
@@ -117,7 +138,7 @@ public final class RoleMatrix
                 {
                     firstRefusal = shape;
                 }
-                else
+                else if (refusalsAlike)
                 {
                     assertEquals(firstRefusal, shape, "all refusals of " + endpoint + " must look alike");
                 }

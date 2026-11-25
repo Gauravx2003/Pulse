@@ -1,0 +1,15 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+GET /api/v1/integrations/tools => 200 403 403 403 403 403
+GET /api/v1/integrations/tools/jira => 200 403 403 403 403 403
+POST /api/v1/integrations/tools/jira/test {} => 400 403 403 403 403 403
+PUT /api/v1/integrations/tools/jira/credentials {} => 400 403 403 403 403 403
+# Disconnect and Sync now take no body, so they run for the Admin (cf is not used by any other line)
+DELETE /api/v1/integrations/tools/cf/credentials => 200 403 403 403 403 403
+PUT /api/v1/integrations/tools/jira/settings {} => 400 403 403 403 403 403
+POST /api/v1/integrations/tools/jira/sync => 200 403 403 403 403 403
+GET /api/v1/integrations/jira/config => 200 403 403 403 403 403
+PUT /api/v1/integrations/jira/config {} => 400 403 403 403 403 403
+GET /api/v1/integrations/sync-log => 200 403 403 403 403 403
+GET /api/v1/integrations/credential-log => 200 403 403 403 403 403

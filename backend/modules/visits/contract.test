@@ -1,0 +1,23 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+GET /api/v1/visits/items => 200 200 200 200 200 200
+GET /api/v1/visits/items?personId={person:priya@pulse.demo} => 200 200 200 403 403 403
+GET /api/v1/visits/items?owned=true => 200 200 200 200 200 200
+GET /api/v1/visits/stats?personId={person:priya@pulse.demo} => 200 200 200 403 403 403
+GET /api/v1/visits/team => 200 200 403 403 403 403
+GET /api/v1/visits/owner-options => 200 200 200 200 200 200
+# VIS-102: Priya's visit, owned by Sana (account owner exception)
+GET /api/v1/visits/items/{id:visits.external_id=VIS-102} => 200 200 200 404 404 200
+# VIS-104: Priya's visit, owned by Kavya: Sana is not its owner
+GET /api/v1/visits/items/{id:visits.external_id=VIS-104} => 200 200 200 404 404 404
+# the visit ends before it starts
+POST /api/v1/visits/items {"personId":"{person:priya@pulse.demo}","customer":"Acme","city":"Pune","purpose":"Health check","from":"2026-10-09","to":"2026-10-08","requestedBy":"Ops","ownerId":"{user:sana@pulse.demo}"} => 400 400 400 403 403 403
+PUT /api/v1/visits/items/{id:visits.external_id=VIS-107} {"customer":"Acme","city":"Pune","purpose":"Health check","from":"2026-10-08","to":"2026-10-09","requestedBy":"Ops","ownerId":"{user:sana@pulse.demo}","version":99999} => 409 409 409 404 404 403*
+# No If-Match version: 400 for every role before the visit is looked up (the visibility is covered by PUT above)
+DELETE /api/v1/visits/items/{id:visits.external_id=VIS-107} => 400 400 400 400 400 400
+POST /api/v1/visits/items/{id:visits.external_id=VIS-107}/report {"done":"x","onsiteHours":1,"travelHours":1,"outcome":"Resolved","version":99999} => 403* 403* 422 404 404 403*
+POST /api/v1/visits/items/{id:visits.external_id=VIS-107}/feedback {"csat":5,"askAgain":true,"source":"Email","feedbackOn":"2026-09-20","version":99999} => 409 409 403* 404 404 409
+POST /api/v1/visits/items/{id:visits.external_id=VIS-102}/remind => 409 409 403 403 403 403
+POST /api/v1/visits/items/{id:visits.external_id=VIS-105}/verify {"version":99999} => 409 409 403 403 403 403
+POST /api/v1/visits/items/{id:visits.external_id=VIS-105}/reject {"version":99999} => 409 409 403 403 403 403

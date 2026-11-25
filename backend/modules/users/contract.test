@@ -1,0 +1,19 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# Writes send a body that fails validation, or a stale version, where the route lets the role in, so no data changes.
+GET /api/v1/users/items => 200 200 403 403 403 403
+GET /api/v1/users/options => 200 200 403 403 403 403
+# a missing name fails validation
+POST /api/v1/users/items {"email":"x@pulse.demo"} => 400 400 403 403 403 403
+GET /api/v1/users/items/{user:priya@pulse.demo} => 200 200 403 403 403 403
+GET /api/v1/users/items/{user:priya@pulse.demo}/deletion => 200 200 403 403 403 403
+# a stale version: 409 where the caller may edit Priya
+PUT /api/v1/users/items/{user:priya@pulse.demo} {"title":"Senior Engineer","version":99999} => 409 409 403 403 403 403
+# deleting oneself is refused (separation of duties), so the Admin line changes nothing
+DELETE /api/v1/users/items/{user:hr@pulse.demo} => 422 403 403 403 403 403
+POST /api/v1/users/items/{user:priya@pulse.demo}/invite => 409 409 403 403 403 403
+GET /api/v1/users/roles => 200 403 403 403 403 403
+POST /api/v1/users/roles {"name":"x"} => 400 403 403 403 403 403
+PUT /api/v1/users/roles/{id:roles.name=Employee}/permissions/okr.own {} => 400 403 403 403 403 403
+# a built-in role in use cannot be deleted
+DELETE /api/v1/users/roles/{id:roles.name=Employee} => 422 403 403 403 403 403

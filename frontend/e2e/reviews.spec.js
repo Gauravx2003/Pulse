@@ -32,7 +32,7 @@ test.beforeEach(async ({ context }) => {
   await distinctIp(context);
 });
 
-test.describe.serial('360° assign, notify, submit and publish', () => {
+test.describe.serial('360° assign, notify, submit and publish', { tag: '@flow' }, () => {
   // This suite's own notices would change other suites' unread counts; only its kinds, as suites run in parallel.
   let notificationsSince = '';
 

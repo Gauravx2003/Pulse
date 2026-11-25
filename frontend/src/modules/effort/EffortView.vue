@@ -406,12 +406,20 @@ async function confirmAll() {
           subtitle="Verified against Jira worklog timestamps, GitHub commits, leave and holidays"
           :empty="!calendar.days.length"
         >
-          <div class="calendar" role="grid" aria-label="Daily log">
-            <span v-for="w in WEEKDAYS" :key="w" class="pl-caption head">{{ w }}</span>
-            <span v-for="n in calendar.lead" :key="`lead-${n}`" />
-            <span v-for="d in calendar.days" :key="d.date" class="pl-heat-cell day" :class="d.cls" :title="`${formatDate(d.date)} · ${d.kind}`">
-              <span class="dn">{{ d.day }}</span>
-              <b>{{ d.label }}</b>
+          <div class="calendar" role="list" aria-label="Daily log">
+            <span v-for="w in WEEKDAYS" :key="w" class="pl-caption head" aria-hidden="true">{{ w }}</span>
+            <span v-for="n in calendar.lead" :key="`lead-${n}`" aria-hidden="true" />
+            <span
+              v-for="d in calendar.days"
+              :key="d.date"
+              role="listitem"
+              class="pl-heat-cell day"
+              :class="d.cls"
+              :title="`${formatDate(d.date)} · ${d.kind}`"
+              :aria-label="`${formatDate(d.date)} · ${d.kind}${d.label ? ` · ${d.label}` : ''}`"
+            >
+              <span class="dn" aria-hidden="true">{{ d.day }}</span>
+              <b aria-hidden="true">{{ d.label }}</b>
             </span>
           </div>
           <p class="pl-caption legend-line">Code = commits with no worklog · Hol = holiday · colours show the day against {{ num(person.dailyLog?.dayHours) }} h</p>
@@ -524,7 +532,7 @@ async function confirmAll() {
 }
 
 .dn {
-  opacity: 0.75;
+  font-size: 10px;
 }
 
 .legend-line {

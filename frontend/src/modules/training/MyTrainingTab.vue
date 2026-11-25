@@ -18,13 +18,16 @@
 
     <div class="tr-picker" role="tablist" aria-label="My training plans">
       <button
-        v-for="it in items"
+        v-for="(it, i) in items"
         :key="it.id"
+        ref="picks"
         type="button"
         role="tab"
         class="tr-pick"
         :aria-selected="it.id === selectedId ? 'true' : 'false'"
+        :tabindex="it.id === selectedId ? 0 : -1"
         @click="selectedId = it.id"
+        @keydown="onPickKey($event, i)"
       >
         <b>{{ it.planName }}</b>
         <Badge :text="it.stage" :tone="stageTone(it.stage)" />
@@ -66,6 +69,24 @@ const items = ref(null);
 const overall = ref(null);
 const error = ref('');
 const selectedId = ref('');
+const picks = ref([]);
+
+// the picker is a tab list: arrow keys, Home and End move between plans (WAI-ARIA tabs pattern, as PlTabs)
+function onPickKey(event, i) {
+  const n = items.value.length;
+  const moves = { ArrowRight: i + 1, ArrowLeft: i - 1 + n, Home: 0, End: n - 1 };
+
+  if (!(event.key in moves)) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const next = moves[event.key] % n;
+
+  selectedId.value = items.value[next].id;
+  picks.value[next]?.focus();
+}
 
 const ORDER = ['Trainee sign-off', 'Final review', 'Assessment', 'In training', 'Not started', 'Not completed', 'Completed'];
 

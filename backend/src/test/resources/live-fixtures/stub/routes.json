@@ -1,0 +1,11 @@
+{
+  "routes": [
+    { "path": "/myself", "file": "myself.json" },
+    { "path": "/items", "query": { "page": "1" }, "file": "items-page1.json" },
+    { "path": "/items", "query": { "page": "2" }, "file": "items-page2.json" },
+    { "path": "/items", "query": { "page": "3" }, "file": "items-empty.json" }
+  ],
+  "errors": {
+    "401": { "file": "error-401.json", "headers": { "WWW-Authenticate": "Bearer realm=\"stub\"" } }
+  }
+}

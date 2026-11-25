@@ -96,7 +96,7 @@ Suggested order: 24.3, 24.1, 24.4 (Day 1 freeze), then 24.2, 24.5, 24.6, 24.7, 2
     - `http://172.16.10.6:8080` is allowed when configured
     - a stall hits the read timeout
     - a stub connector registered from a test module is listed by the registry
-- [ ] 24.4 **Mock server and connector contract test.** *(Day 1: skeleton)*
+- [x] 24.4 **Mock server and connector contract test.** *(Day 1: skeleton)*
   - Add a test utility that serves recorded fixtures from `backend/src/test/resources/live-fixtures/<tool>/` on `http://127.0.0.1:<port>`. Its test-only loopback flag is refused in the production profile.
   - Add `AbstractLiveConnectorContractTest`, which covers:
     - paged ingest

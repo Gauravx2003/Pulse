@@ -258,6 +258,8 @@ Depends on the Track 1 Day 1 freeze (`LiveConnector`, `LiveContext`, mock server
   - the fixtures load in the mock server
   - a grep finds no password or real email
   - both sprint field formats (string and object) are represented
+
+  **Status (2026-11-25), left open on purpose:** there are no read-only Jira credentials yet, so the fixtures are built from the recorded, sanitized live answers (`field.json`, `search.json`, `jira-search.json`) in their recorded shape. `search-page1.json` and `search-page2.json` add the sprint (string and object), story points, time tracking, an assignee without `emailAddress`, an unassigned issue and a bot edit. Only `error-401.xml` is recorded as is (the unauthenticated `/rest/api/2/myself`); 429 and 500 use Jira's `errorMessages` format. The recorded pages hold 5 issues, so page 2 starts at `startAt` 5, not 100. `JiraFixturesTest` covers the three Verify points and passes. To close it: record `/myself`, a 100-issue page pair and real 429/500 answers with a read-only user, then re-run the test.
 - [ ] 26.2 **`JiraConnector`** in `backend/modules/connectors/jira/`, registered by the connectors module descriptor. It is `JsonObject` in and out, with no model classes.
   - **Config:** Base URL, auth mode (`basic` / `bearer`), Username, Project Keys, story points and sprint field ids, optional Expiry Date, and "ignore bot and non-assignee edits".
   - **Secret:** "Password / Token".

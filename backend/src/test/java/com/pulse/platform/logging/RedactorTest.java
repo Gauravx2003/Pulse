@@ -50,4 +50,32 @@ class RedactorTest
 
         assertEquals(once, Redactor.redact(once));
     }
+
+    @Test
+    void masksLiveToolAuthorizationHeadersAndBasicCredentials()
+    {
+        // task 24.2: "jira-reader:S3cret-Pass" in base64
+        String basic = java.util.Base64.getEncoder().encodeToString("jira-reader:S3cret-Pass".getBytes());
+
+        String out = Redactor.redact("GET /rest/api/2/myself Authorization: Basic " + basic + " status=401 "
+                + "{\"Authorization\":\"Basic " + basic + "\",\"token\":\"ghp_x1\",\"secret\":\"s-2\"} "
+                + "header Basic " + basic + " authorization=token ghp_Abc");
+
+        for (String secret : new String[] {basic, "ghp_x1", "s-2", "ghp_Abc"})
+        {
+            assertFalse(out.contains(secret), secret + " leaked: " + out);
+        }
+
+        assertTrue(out.contains("Authorization: ***"), out);
+        assertTrue(out.contains("status=401"), out);
+        assertEquals(out, Redactor.redact(out));
+    }
+
+    @Test
+    void leavesOrdinaryBasicWordsAlone()
+    {
+        String line = "Basic setup done; basic auth mode chosen for tool jira";
+
+        assertEquals(line, Redactor.redact(line));
+    }
 }

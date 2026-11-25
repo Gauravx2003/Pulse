@@ -4,9 +4,11 @@ import com.pulse.calc.core.CalcService;
 import com.pulse.platform.accounts.ExternalAccountService;
 import com.pulse.platform.accounts.SqlExternalAccountService;
 import com.pulse.platform.db.SqlExecutor;
+import com.pulse.platform.live.ConnectionStore;
 import com.pulse.platform.live.LiveConnectorRegistry;
 import com.pulse.platform.notify.NotificationService;
 import com.pulse.platform.policy.PolicyService;
+import com.pulse.platform.secrets.SecretBox;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
@@ -50,5 +52,20 @@ public record ModuleContext(Vertx vertx, JsonObject config, PgPool pool, PolicyS
     public ExternalAccountService accounts()
     {
         return new SqlExternalAccountService(sql());
+    }
+
+    /** Encryption of live-tool secrets under {@code PULSE_SECRET_KEY} (task 24.2). */
+    public SecretBox secrets()
+    {
+        return SecretBox.from(vertx, config);
+    }
+
+    /**
+     * Stored live connections: config and encrypted secret (task 24.2). Pass a transaction's executor to
+     * save in the same transaction as the credential log and the audit entry.
+     */
+    public ConnectionStore connections(SqlExecutor sql)
+    {
+        return new ConnectionStore(sql, secrets(), connectors);
     }
 }

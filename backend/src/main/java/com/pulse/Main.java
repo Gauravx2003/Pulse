@@ -4,6 +4,7 @@ import com.pulse.platform.config.RuntimeProfile;
 import com.pulse.platform.db.DatabaseBootstrap;
 import com.pulse.platform.db.Db;
 import com.pulse.platform.jobs.SchedulerVerticle;
+import com.pulse.platform.live.LoopbackFlag;
 import com.pulse.platform.module.ModuleRegistry;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -39,6 +40,8 @@ public class Main {
         RuntimeProfile profile;
         try {
             profile = RuntimeProfile.from(config).guard();
+            // the mock server's loopback switch is test-only (task 24.4)
+            LoopbackFlag.guard(config, profile);
         } catch (IllegalStateException e) {
             return Future.failedFuture(e);
         }

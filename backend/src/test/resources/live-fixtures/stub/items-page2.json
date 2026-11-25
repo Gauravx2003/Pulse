@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "id": "ST-3", "updated": "2026-11-21T08:30:00Z",
+      "assignee": { "accountId": "kmehta", "login": "kmehta", "displayName": "K. Mehta", "email": "kmehta@elsewhere.example" } },
+    { "id": "ST-4", "updated": "2026-11-21T11:15:00Z" }
+  ]
+}

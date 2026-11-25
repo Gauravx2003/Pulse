@@ -5,90 +5,121 @@
 Phase 1 delivered the connector seam this change plugs into (baseline design.md decision 6, task 5.4). It lives in `backend/src/main/java/com/pulse/platform/ingest/`:
 - `ConnectorPort`: `tool()`, `source()`, `live()`, `fetchChanges(since)`.
 - `ConnectorRegistry`.
-- `IngestService`: the single, idempotent write path. It upserts by (source, external_id) and never deletes.
+- `IngestService`: the single, idempotent write path. It upserts by (source, external_id), stamps `synced_at` and never deletes.
 - `SeedConnector`.
 
 Ingest tables:
-- GitHub feeds `pull_requests` and `commit_days`.
 - Jira feeds `issues` and the base `sprints` table.
-- `pull_requests`, `commit_days` and `issues` are defined in `backend/modules/work/migrations/V200__work_data_layer.sql`; `sprints` is in `V100`.
+- GitHub feeds `pull_requests` and `commit_days`.
+- `issues`, `pull_requests` and `commit_days` are defined in `backend/modules/work/migrations/V200__work_data_layer.sql`; `sprints` is in `V100`.
 
-Every baseline rule still applies:
-- the Vert.x & Java Coding Standards (baseline decision 1, `openspec/config.yaml`)
-- module self-registration (decision 10)
-- formulas only in `calc/`, read through `CalcService` (decision 5)
-- the oracle rule
+**Target Jira.** The target is the internal self-hosted **Jira Server / Data Center** at `http://172.16.10.6:8080`, not Jira Cloud. It was verified to answer `200 OK` on REST API v2 with Basic auth (`username:password`). Jira is therefore built first; GitHub follows on the same platform.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- **GitHub first.** Real GitHub pull requests and commit days appear beside seed data on every screen, with the same numbers on every screen.
-- **Jira as a plug-in.** Adding Jira afterwards means adding one connector package, its fixtures and its mapping, with **no change to platform code, the Integrations UI or the sync orchestrator**. The same holds for any later tool.
-- **Safe credentials.** Credentials are encrypted at rest and never returned or logged. Only GET requests go out, only to the hosts the connector declares.
+- **Jira first.** Real Jira Server issues and sprints appear beside seed data on every screen, with the same numbers on every screen.
+- **GitHub as a plug-in.** Adding GitHub afterwards means adding one connector package, its fixtures and its mapping, with **no change to platform code, the Integrations UI or the sync orchestrator**. The same holds for any later tool.
+- **Safe credentials.** Credentials are encrypted at rest and never returned or logged. Only GET requests go out, only to the origins the connector declares. A LAN `http://` Jira is allowed explicitly, without opening the rest of the internal network.
 - **Phase 1 unchanged.** No Phase 1 contract or formula changes, and the Phase 1 acceptance still passes.
 
 **Non-Goals:**
-- Webhooks, scheduled polling, OAuth, other live tools, write calls, key rotation, KMS.
+- Jira Cloud, webhooks, scheduled polling, OAuth, other live tools, write calls, key rotation, KMS.
 - A three-track split. One owner builds this in order.
 
 ## Decisions
+
+### 0. Coding standards for this change (binding on every task)
+
+The rules from `openspec/config.yaml` and baseline design.md decision 1 apply without exception:
+- **Data shapes.** No POJOs, DTOs, records or entity beans. Config, secrets in transit, API payloads, normalized batches, host rules, test results and sync results are all `io.vertx.core.json.JsonObject` / `JsonArray`. The only new types are services and interfaces: `LiveConnector`, `LiveContext`, `SecretBox`, `GuardedHttp`, `ExternalAccountService`, `LiveSyncService`, and repositories.
+- **Data access.** All SQL lives in repository classes that extend `BaseRepository` and use `SqlExecutor` (`queryList`, `queryOne`, `execute`, `inTransaction`) with parameterized `Tuple`s. There is no SQL in handlers, services or connectors.
+- **Ingest tables.** They are written only through `IngestService`, with `source = 'jira'` or `'github'`, the tool's id as `external_id`, and `synced_at` stamped by the service.
+- **Event loop.** Nothing blocks it:
+  - HTTP goes through the Vert.x `WebClient` (async).
+  - AES-GCM, base64 key decoding and large JSON mapping run in `vertx.executeBlocking(() -> ...)` when they can take time.
+  - Futures are composed with `.compose(...)` and `Future.all(...)`, never nested callbacks.
+- **Errors.** Route failures go through `ctx.fail(status, exception)` to the central `FailureHandler`.
+- **Verticles.** There are still only two verticle classes; connectors are plain classes registered by a module.
+- **Style.** Allman braces (opening `{` on its own line for classes, methods, if/else, loops and try/catch), with blank lines between logical statements and blocks.
 
 ### 1. Live connector contract (what a tool must provide)
 
 ```java
 public interface LiveConnector extends ConnectorPort
 {
-    // live() returns true; tool() is the tile id ("gh", "jira"); source() is the row source ("github", "jira")
+    // live() returns true; tool() is the tile id ("jira", "gh"); source() is the row source ("jira", "github")
+
     JsonObject configSchema();       // non-secret fields: name, label, type, required, pattern, help
-    JsonObject secretSpec();         // label, help text (token type, where to create it), format check
-    List<HostRule> allowedHosts();   // exact host, or a host suffix that is checked against the config (e.g. site URL)
+
+    JsonObject secretSpec();         // secret label/help, auth modes (e.g. basic | bearer), format check
+
+    JsonArray allowedOrigins(JsonObject config);   // [{"scheme","host","port"}] derived from config or fixed
+
     JsonArray requiredScopes();      // shown on the tile; used for the write-scope warning when the tool reports scopes
-    Future<JsonObject> testConnection(LiveContext ctx);                       // {ok, status, account, scopes, scopeNote, expiresAt, hint}
+
+    Future<JsonObject> testConnection(LiveContext ctx);       // {ok, status, account, scopes, scopeNote, fields, expiresAt, hint}
+
     Future<JsonObject> fetchPages(LiveContext ctx, String since,
-                                  Function<JsonObject, Future<Void>> sink);  // resolves to {cursor}
+                                  Function<JsonObject, Future<Void>> sink);   // resolves to {"cursor": ...}
 }
 ```
 
-- `LiveContext` gives the connector four things:
-  - its validated config
-  - its decrypted secret, for the duration of the call only
-  - `http()`, the guarded client of decision 3, already bound to the connector's allowed hosts
-  - `accounts()`, the person resolver of decision 5
-- **Batches.** Each batch handed to the sink uses the existing `ConnectorPort` batch format: entities, records and `$ref`.
+- **`LiveContext`** is a service, not a data bean. It gives the connector:
+  - `config()`: a `JsonObject`
+  - `secret()`: decrypted only for the duration of the call
+  - `http()`: the guarded client of decision 3, bound to `allowedOrigins(config)`
+  - `accounts()`: the person resolver of decision 5
+- **Batches.** Each batch handed to the sink uses the existing `ConnectorPort` batch format (entities, records, `$ref`).
 - **`fetchChanges(since)`.** It is still implemented. It collects every page into one batch, so the Phase 1 contract is unchanged.
 - **No tool-specific code outside a connector.** The connector is the only place that knows URLs, auth headers, paging or field names.
-- **Registration.** Connectors live in a new module, `backend/modules/connectors/`, one package per tool (`github/`, `jira/`). The module's descriptor registers them through `ModuleContext.connectors().register(...)`. Platform code never imports a connector.
-- *Why:* adding Jira, or any tool later, is then a new package plus fixtures. The tile, settings form, test, save, sync, logs, failure states, unmatched-accounts panel and secrets all work unchanged.
+- **Registration.** Connectors live in a new module, `backend/modules/connectors/`, one package per tool: `jira/` first, then `github/`. The module's descriptor registers them through `ModuleContext.connectors().register(...)`. Platform code never imports a connector.
 
 ### 2. Secrets (generic per tool)
 
-- `SecretBox` encrypts with AES-256-GCM: a random 96-bit IV per secret, and `PULSE_SECRET_KEY` (32 bytes, base64) taken from the environment.
-- `integration_connections` has one row per live tool:
+- **`SecretBox`.** It encrypts with AES-256-GCM: a random 96-bit IV per secret, and `PULSE_SECRET_KEY` (32 bytes, base64) taken from the environment.
+- **What it encrypts:**
+  - for Jira, the password, or the PAT when the Bearer mode is chosen
+  - for GitHub, the PAT
+- **`integration_connections`** has one row per live tool. Columns:
   - tool
-  - config jsonb (validated against `configSchema`)
+  - config jsonb (non-secret, validated against `configSchema`). For Jira this holds base URL, auth mode, username, project keys, field ids and the bot switch.
   - secret_ciphertext
   - secret_iv
   - secret_last4
-  - expires_at
+  - expires_at (optional, entered by the Admin for Jira)
   - state
   - rotated_at
   - version
-- A save is refused when the key is missing.
-- A secret that cannot be decrypted blocks the sync with "Sync failed · key", and no request is sent.
-- Secrets never appear in responses, logs, the sync log, the audit log or error messages. Redaction covers the `Authorization` header and every field named `token`, `secret` or `password`.
-- **Seeded tools** keep the Phase 1 masked-placeholder path.
+- **Refusals.**
+  - A save is refused when the key is missing.
+  - A secret that cannot be decrypted blocks the sync with "Sync failed · key", and no request is sent.
+- **Redaction.** Secrets never appear in responses, logs, the sync log, the audit log or error messages. Redaction covers the `Authorization` header and every field named `password`, `token` or `secret`.
+- **Seeded tools.** They keep the Phase 1 masked-placeholder path.
 
-### 3. Guarded outbound HTTP
+### 3. Guarded outbound HTTP and URL validation (SSRF)
 
-`LiveContext.http()` wraps the Vert.x `WebClient` and is the only way connector code reaches the network. Its rules:
+`LiveContext.http()` wraps the Vert.x `WebClient` and is the only way connector code reaches the network.
+
+**Rules on every request**
 - **Methods:** GET only.
-- **Hosts:** `https` only, and only the hosts in `allowedHosts()`. A host suffix rule (Jira's `.atlassian.net`) is matched against the configured site URL on save and re-checked on every request.
-- **Redirects:** never followed; a 3xx is a failure.
+- **Origin:** the request's scheme, host and port must exactly equal one of `allowedOrigins(config)`.
+  - Jira declares exactly the origin of its configured base URL, which may be `http://` or `https://` and may be a LAN IP or host.
+  - GitHub declares `https://api.github.com:443`.
+  - Every other origin is refused, including other private, LAN and loopback addresses.
+- **Path prefix:** a configured context path (e.g. `/jira`) is kept as a prefix, and requests may not climb out of it with `..`.
+- **Redirects:** never followed (`setFollowRedirects(false)`). A 3xx is a failure, so a redirect to another internal host is never reached.
+- **DNS:** the host is re-resolved per request. The connection is refused if the resolved address falls in loopback (`127.0.0.0/8`, `::1`), link-local or cloud metadata ranges (`169.254.0.0/16`, `fe80::/10`) or `0.0.0.0`, unless the configured base URL literally names it. This guards against DNS rebinding to metadata endpoints. RFC 1918 LAN ranges are allowed only for the exact configured origin.
 - **Timeouts:** 5 s to connect, 15 s to read.
-- **Response size:** capped at 5 MB.
+- **Response size:** capped at 10 MB, enough for `expand=changelog` pages.
 - **Logging:** tool, path and status only.
+- **Retries:** none. A 429 or 5xx stops the sync.
 
-It does not retry. A 429 stops the sync.
+**Base URL validation on save (Jira)**
+- The scheme is `http` or `https`.
+- No user info, query or fragment.
+- A trailing slash is normalized.
+- An `http://` URL is accepted with a visible warning that credentials and data travel unencrypted on the network.
 
 ### 4. Sync orchestration (generic)
 
@@ -113,114 +144,147 @@ Test connection and Save go through the same generic routes:
 
 ### 5. Person matching (generic per tool)
 
-- **Table.** `external_accounts` holds person_id (nullable), tool, tool_account_id, login, email (nullable), is_bot and first_seen_at. It is unique on (tool, tool_account_id).
-- **Resolving.** Connectors call `accounts().resolve(accountId, login, email)`. The order is:
+- **Table.** `external_accounts` holds:
+  - person_id (nullable)
+  - tool
+  - tool_account_id
+  - login
+  - display_name
+  - email (nullable)
+  - is_bot
+  - first_seen_at
+
+  It is unique on (tool, tool_account_id).
+- **Resolving.** Connectors call `accounts().resolve(JsonObject {accountId, login, displayName, email})`. The order is:
   1. an existing link
-  2. a case-insensitive match on work email
+  2. a case-insensitive match of `email` against `people.email`
   3. otherwise, an unmatched row
+- **Jira identifier.** For Jira Server the account id and login are the Jira username (`name`), and the email is `emailAddress` when the instance exposes it.
 - **Raw account id.** Live rows keep the raw account id. Their person is resolved at read time through `external_accounts`, so linking applies from the next read with no re-sync.
 - **What counts.** Per-person calculations count only rows with a person. Bots are excluded from activity.
 - **UI.** The Integrations panel lists unmatched accounts for every tool, with link, unlink and bot actions.
+- **Later.** A bulk CSV mapping is a later follow-up; the username stored here is what it would match on.
 
-### 6. GitHub connector (first)
+### 6. Jira Server / Data Center connector (first)
+
+**Config (`configSchema`)**
+- Base URL, for example `http://172.16.10.6:8080`.
+- Auth mode: `basic` (default) or `bearer`.
+- Username: required for `basic`.
+- Project Keys.
+- Story points field id and sprint field id: proposed by field discovery and confirmed by the Admin.
+- Optional Expiry Date.
+- The "ignore bot and non-assignee edits" switch.
+
+**Secret (`secretSpec`)**
+- "Password / Token".
+- Basic sends `Authorization: Basic base64(username:password)`; the base64 encoding happens in the connector, from the decrypted secret.
+- Bearer sends `Authorization: Bearer <token>` (a Jira Data Center personal access token).
+
+**Allowed origins**
+- Exactly the scheme, host and port of the base URL.
+
+**Test connection**
+- `GET /rest/api/2/myself`: username, display name and email.
+- Then `GET /rest/api/2/field`: custom fields whose name or schema match story points (`Story Points`, `Story point estimate`) and sprint (`com.pyxis.greenhopper.jira:gh-sprint`) are returned as proposals.
+- The test passes only when both calls answer 200.
+
+**Fetch pages**
+- `GET /rest/api/2/search` with these parameters:
+  - `jql=project in (<keys>) AND updated >= "<cursor yyyy-MM-dd HH:mm>" ORDER BY updated ASC`
+  - `startAt` and `maxResults=100`
+  - `expand=changelog`
+  - `fields=` limited to what is mapped
+- It pages until `startAt + issues.length >= total`.
+- **Cursor.** The cursor is the greatest `fields.updated` seen. Jira JQL has minute precision, so the next run uses a one-minute overlap, and the idempotent upsert absorbs the repeats.
+
+**Mapping (`JsonObject` → normalized batch)**
+- Issue key becomes `external_id`.
+- `fields.status.statusCategory.key` (`new`, `indeterminate`, `done`) maps onto the seed statuses.
+- `timeoriginalestimate` and `timeestimate` are converted from seconds to hours.
+- Story points come from the configured field.
+- The sprint field is upserted as a `sprints` row with `source = 'jira'` and referenced by `$ref`. Jira Server returns the sprint either as an array of strings (`com.atlassian.greenhopper.service.sprint.Sprint@...[id=..,name=..,state=..,startDate=..,endDate=..]`, parsed) or as objects, depending on version; both are handled.
+- `html_url` is `<baseUrl>/browse/<key>`.
+- `fields.description` and comment bodies are **plain text / Jira wiki markup strings** (v2 format). They are stored as text, with no ADF parsing.
+- Assignee: `assignee.name` and `assignee.emailAddress` go through `accounts().resolve`.
+- Last activity: with the bot switch on, it is the latest changelog `created` time whose `author` is neither a bot nor a non-assignee. Changelog authors are resolved by `author.name` and `author.emailAddress`.
+
+**Rows written**
+- `source = 'jira'`.
+
+**Migration V290 (additive)**
+- `html_url` and `assignee_account_id` on `issues`.
+- An index on (source, synced_at).
+- A read view that resolves the person of live issues.
+- The `calc/work` issue loaders read through this view; no formula changes.
+
+### 7. GitHub connector (after Jira acceptance; no platform change)
 
 **Config**
 - owner and repo
-- the secret is a PAT
-- allowed host `api.github.com`
+- the secret is a PAT; `secretSpec` recommends a fine-grained, read-only PAT on one repo
+- allowed origin `https://api.github.com:443`
 
 **Token types**
-- A fine-grained PAT is recommended: Metadata, Pull requests and Contents read, on the one repo.
-- A classic PAT also works and reports scopes in `X-OAuth-Scopes`.
-- A fine-grained token sends no scopes header. The test then shows "Fine-grained token: permissions set on GitHub", and the 200 from `GET /repos/{owner}/{repo}` is the proof of access.
-- Expiry is read from `github-authentication-token-expiration` when present.
+- A classic token reports scopes in `X-OAuth-Scopes`.
+- A fine-grained token sends no scopes header, so the test shows "Fine-grained token: permissions set on GitHub".
+- Expiry is read from `github-authentication-token-expiration`.
 
 **Test connection**
 - `GET /user` and `GET /repos/{owner}/{repo}`.
 
 **Pull requests**
-- Read with `GET /repos/{owner}/{repo}/pulls?state=all&sort=updated&direction=desc&per_page=100`, paged by the `Link` header until `updated_at < cursor`.
+- Read with `pulls?state=all&sort=updated&direction=desc&per_page=100`, paged by `Link` until `updated_at < cursor`.
 - Capped at 1,000 per run.
-- Mapped to state, opened_at, merged_at, author and `html_url`.
 
 **Commits**
-- Read with `GET /repos/{owner}/{repo}/commits?since=cursor&per_page=100`.
+- Read with `commits?since=cursor&per_page=100`.
 - Aggregated per author per day into `commit_days`, with external_id `{login}:{date}`.
 
 **Rows written**
-- `source = 'github'`, with the GitHub id as `external_id`.
-
-**Migration V290 (additive)**
-- `html_url` and `author_account_id` on `pull_requests`.
-- `author_account_id` on `commit_days`.
-- An index on (source, synced_at).
-- Read views that resolve the person of live rows. The `calc/work` loaders read through these views; no formula changes.
-
-### 7. Jira connector (after GitHub acceptance; no platform change)
-
-**Config**
-- site URL, email and project keys
-- the story points field id
-- the token expiry date, entered by hand because the API does not report it
-- "ignore bot and non-assignee edits"
-- allowed host suffix `.atlassian.net`, checked against the site URL
-
-**Secret**
-- Only a classic (unscoped) Atlassian API token, sent with basic auth.
-- A scoped token needs `api.atlassian.com/ex/jira/{cloudId}`, which is outside the allow-list. The secret help text says so.
-
-**Test connection**
-- `GET /rest/api/3/myself`.
-
-**Issues**
-- Read with `GET /rest/api/3/search/jql`, using `project in (keys) AND updated >= cursor ORDER BY updated ASC` and following `nextPageToken`.
-- The status category maps onto the seed statuses.
-- Estimate and remaining time are converted from seconds to hours.
-- Story points come from the configured field.
-- The sprint field is upserted as a `sprints` row with `source = 'jira'`.
-- With "ignore bot edits" on, last activity comes from the changelog, skipping bots and non-assignees.
-
-**Rows written**
-- `source = 'jira'`, with the issue key as `external_id`.
+- `source = 'github'`.
 
 **Migration V291 (additive)**
-- `html_url` and `assignee_account_id` on `issues`.
-- A read view for `issues`.
+- `html_url` and `author_account_id` on `pull_requests`.
+- `author_account_id` on `commit_days`.
+- Read views that resolve the person of live rows.
 
 **Proof of the plug-in claim**
-- The Jira task must not edit `backend/src/` or the Integrations frontend.
+- The GitHub task must not edit `backend/src/` or the Integrations frontend.
 - If it needs to, the platform gap is fixed in a separate task first.
 
 ### 8. Fixtures, mock server and the connector contract test
 
 - **Mock server.** A test utility starts a local HTTP server that serves recorded JSON from `backend/src/test/resources/live-fixtures/<tool>/`.
-- **Override.** Tests point a connector's allowed hosts at the mock host through a test-only override, which the production profile refuses.
+- **Origin.** Because Jira allows an `http://` LAN origin, the mock server's `http://127.0.0.1:<port>` origin is configured like any Jira base URL. A test-only flag allows a loopback origin; the production profile refuses that flag.
 - **Contract test.** `AbstractLiveConnectorContractTest` is the shared test that every connector extends with its fixtures. It checks:
   - paged 200 responses ingest
   - a re-sync gives no duplicates
   - the second run uses the cursor
-  - 401, 429, 500, a stall and a 302 each fail cleanly, keeping earlier pages
-  - only GET requests go to allowed hosts
+  - 401, 429, 500, a stall and a 302 to another host each fail cleanly, keeping earlier pages
+  - only GET requests go to the declared origin
   - the secret never appears in logs or responses
   - unmatched accounts land in `external_accounts`
-- **Fixture source.** Fixtures are recorded once from a sandbox and sanitized: tokens, emails and names removed.
+- **Fixture source.** Jira fixtures are recorded once from the internal instance (`/myself`, `/field`, two `/search` pages with changelog) and sanitized: passwords, emails and names removed.
 
 ### 9. Ownership and migrations
 
 - **Owner.** One person owns this change, and the groups run in order.
-- **Directory rules.** The Phase 1 rules still hold for review. Shared files and platform code are reviewed by the Track 1 owner. The work-table migrations (V290, V291) and the `calc/work` loader changes are reviewed by the Track 2 owner.
+- **Reviews.** Platform and shared files are reviewed by the Track 1 owner. The work-table migrations and the `calc/work` loader changes are reviewed by the Track 2 owner.
 - **Migration numbers.**
   - V190–V199 for platform tables.
-  - V290–V299 for the work-table columns and views.
+  - V290 (Jira) and V291 (GitHub) for work-table columns and views.
 
 ## Risks / Trade-offs
 
+- **Plain `http` to Jira.** The Basic auth password and issue data cross the LAN unencrypted.
+  - Accepted for the internal demo instance.
+  - The form warns about it, the runbook recommends `https` or a Bearer PAT with limited rights, and a read-only Jira user is required.
+- **Allowing a private origin.** The guard allows only the one configured origin, follows no redirects and blocks metadata and loopback addresses. An Admin can still point Pulse at another LAN service, which is why the setting is Admin-only and audited.
+- **Jira Server version differences.** The sprint field format differs (string versus object), and so do field names. Both formats are parsed; unknown fields are stored as null, never guessed.
+- **JQL minute precision.** A one-minute overlap on the cursor, plus idempotent upserts, avoids missing updates.
 - **Live data changes demo numbers.** Seed and live rows are both counted. The runbook says so, and the oracle comparison runs on seed rows only.
-- **Generic form limits.** A schema-driven settings form cannot express every tool-specific widget. The schema supports text, secret, URL, list of strings, date and boolean, which is enough for GitHub and Jira. A richer widget would be a platform change.
-- **GitHub pull requests have no `since` filter.** The first sync of a large repository is capped at 1,000 pull requests, with a note on the tile.
-- **Rate limits.** A 429 stops the sync. There is no automatic retry, so the Admin retries later.
 - **Lost or changed secret key.** Stored secrets become unreadable, and the tile asks for the credentials again. Rotation is deferred.
-- **Jira field variance** (custom story points field id). The field id is Admin-configured. An unknown field is stored as null, never guessed.
 
 ## Migration Plan
 
@@ -228,5 +292,6 @@ All migrations are forward-only and additive. Disconnecting a tool keeps every i
 
 ## Open Questions
 
-- Should a later change add bulk account linking by CSV, live evidence in appraisal and 1:1s, or a "remove live data for this tool" action?
+- Can the internal Jira be put behind `https` before any real (non-demo) use?
+- Should a later change add bulk account linking by CSV (matching on Jira username or GitHub login), live evidence in appraisal and 1:1s, or a "remove live data for this tool" action?
 - Do we want scheduled polling after the demo? It stays in Deferred hardening until decided.

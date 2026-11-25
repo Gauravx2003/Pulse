@@ -195,14 +195,19 @@ Priority order inside the track (do in this order; the last two are the first to
 
 # PHASE 2 — Live read-only connectors (moved)
 
-Phase 2 is now its own change, **`openspec/changes/pulse-v2-live-connectors/`** (proposal, design, delta specs, tasks). It has one owner and runs in order: a generic connector platform, then GitHub, then Jira as a plug-in. Start only when 23.1 to 23.4 pass on seed.
+Phase 2 is now its own change, **`openspec/changes/pulse-v2-live-connectors/`** (proposal, design, delta specs, tasks). It has one owner and runs in order:
+1. a generic connector platform
+2. the self-hosted **Jira Server / Data Center** connector (REST API v2, Basic auth or Bearer PAT; this replaces the Jira Cloud assumption below)
+3. GitHub as a plug-in
+
+Start only when 23.1 to 23.4 pass on seed.
 
 ## 24. Live GitHub and Jira connectors (moved)
 
 The original tasks 24.1 to 24.5 are covered there as follows:
 - 24.1 (V190, external accounts, matching) → v2 24.1, 24.7 (unmatched panel)
-- 24.2 (secret storage, outbound guard) → v2 24.2, 24.3
-- 24.3 (connectors, Test connection, Sync now) → v2 24.4 to 24.6, 25.x (GitHub), 27.x (Jira)
+- 24.2 (secret storage, outbound guard) → v2 24.2, 24.3 (LAN Jira origin allowed explicitly)
+- 24.3 (connectors, Test connection, Sync now) → v2 24.4 to 24.6, 25.x (Jira Server), 27.x (GitHub)
 - 24.4 (Phase 1 acceptance with both sources) → v2 26.3, 27.5
 - 24.5 (demo runbook) → v2 26.4, 27.5
 

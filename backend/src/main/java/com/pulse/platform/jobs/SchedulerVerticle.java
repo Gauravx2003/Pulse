@@ -76,7 +76,11 @@ public class SchedulerVerticle extends AbstractVerticle
                     calc = new CalcService(sql, PulseClock.from(config(), RuntimeProfile.from(config())), formulas)
                             .listen(vertx);
 
-                    runner = new JobRunner(new ModuleContext(vertx, config(), pool, policy, calc, registry));
+                    ModuleContext moduleContext = new ModuleContext(vertx, config(), pool, policy, calc, registry);
+
+                    registry.modules().forEach(module -> module.start(moduleContext));
+
+                    runner = new JobRunner(moduleContext);
 
                     return runner;
                 }))

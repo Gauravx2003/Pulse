@@ -62,3 +62,7 @@
 /frontend/src/modules/training/         @Krupen08
 /backend/modules/appraisal/             @Krupen08
 /frontend/src/modules/appraisal/        @Krupen08
+
+# ---- Phase 2 live connectors (change pulse-v2-live-connectors, task 24.3) ----
+/backend/modules/connectors/                     @Krupen08
+/backend/src/test/resources/live-fixtures/       @Krupen08

@@ -153,6 +153,8 @@ public final class AuthRoutes
 
         user.getJsonArray("permissions", new JsonArray()).forEach(p -> permissions.add(String.valueOf(p)));
 
+        JsonArray menu = navigation.menuFor(permissions, user.getString("personId") != null);
+
         return new JsonObject()
                 .put("user", new JsonObject()
                         .put("id", user.getString("id"))
@@ -161,9 +163,36 @@ public final class AuthRoutes
                         .put("personId", user.getString("personId")))
                 .put("role", user.getString("role"))
                 .put("permissions", new JsonArray(permissions.stream().toList()))
-                .put("menu", navigation.menuFor(permissions, user.getString("personId") != null))
+                .put("menu", menu)
                 .put("csrfToken", csrfToken)
-                .put("landing", user.getString("landing"));
+                .put("landing", landing(user.getString("landing"), menu));
+    }
+
+    /**
+     * The landing page when the menu offers it, else the menu's first page: an account without a person
+     * profile and without team.view or all.view has no Overview (prototype {@code routesFor}), so it
+     * lands on, for example, Customer visits.
+     */
+    static String landing(String preferred, JsonArray menu)
+    {
+        String first = null;
+
+        for (Object g : menu)
+        {
+            for (Object i : ((JsonObject) g).getJsonArray("items", new JsonArray()))
+            {
+                String path = ((JsonObject) i).getString("path");
+
+                if (path != null && path.equals(preferred))
+                {
+                    return preferred;
+                }
+
+                first = first == null ? path : first;
+            }
+        }
+
+        return first == null ? preferred : first;
     }
 
     /**

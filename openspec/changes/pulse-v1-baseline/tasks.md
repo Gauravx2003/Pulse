@@ -193,17 +193,18 @@ Priority order inside the track (do in this order; the last two are the first to
 
 ---
 
-# PHASE 2 — Live read-only connectors (same week, after Phase 1 acceptance)
+# PHASE 2 — Live read-only connectors (moved)
 
-Owner: Track 1 (platform), with one reviewer from Track 2 for the Jira and GitHub record mapping. Start only when 23.1 to 23.4 pass on seed. Migrations stay in the Track 1 range (V190 here).
+Phase 2 is now its own change, **`openspec/changes/pulse-v2-live-connectors/`** (proposal, design, delta specs, tasks). It has one owner and runs in order: a generic connector platform, then GitHub, then Jira as a plug-in. Start only when 23.1 to 23.4 pass on seed.
 
-## 24. Live GitHub and Jira connectors
+## 24. Live GitHub and Jira connectors (moved)
 
-- [ ] 24.1 Write migration V190 for `external_accounts` (person_id, tool, tool_account_id; unique on tool and tool_account_id), `sync_state` (tool, cursor, last_run_at) and `integration_connections` (tool, non-secret config json, secret_ciphertext, secret_last4, state, rotated_at); implement the unmatched accounts list, manual linking and email matching on top of them in the Integrations backend; verify the migration applies after V100 and V300 and that Phase 1 tests still pass unchanged.
-- [ ] 24.2 Implement secret storage and the outbound guard: AES-256-GCM encryption of the GitHub PAT and Jira API token under `PULSE_SECRET_KEY` (never returned, logged or audited; save refused when the key is missing; masked placeholder stays for every other tool), allow-list `https://api.github.com` and `https` hosts ending in `.atlassian.net`, no redirects, connect and read timeouts, GET only; verify the database and logs hold no plain token, a disallowed Jira host is rejected, and only GET requests are sent.
-- [ ] 24.3 Implement the live read-only connectors on the Vert.x `WebClient` (no blocking calls; follow the Vert.x & Java Coding Standards): `GitHubConnector` (PAT plus owner/repo; `GET /repos/{owner}/{repo}/pulls?state=all` paged by `sort=updated&direction=desc` until the stored cursor, and `GET /repos/{owner}/{repo}/commits?since=` aggregated into one `commit_days` record per person per day; upsert with `source = 'github'`, GitHub id as `external_id`) and `JiraConnector` (site URL, email and API token; `GET /rest/api/3/search/jql` with `updated >= cursor` over the configured boards, following `nextPageToken`; upsert with `source = 'jira'`, issue key as `external_id`, sprint field mapped to a `sprints` row with `source = 'jira'`); real **Test connection** (GitHub `GET /user` and `GET /repos/{owner}/{repo}` showing login and `X-OAuth-Scopes`, Jira `GET /rest/api/3/myself`, pass only on HTTP 200, failure shows status and what to check without the secret) and real **Sync now** (`fetchChanges(since)` through `IngestService`, `sync_log` entry with counts, cursor in `sync_state`, `CalcService` cache invalidation, 401/429/5xx stops the run and sets "Sync failed · code" while keeping rows already written); match live authors and assignees through `external_accounts` and store unmatched ones with a null person; verify with recorded HTTP fixtures served by a local mock server (200 pages, a 401, a 429, a timeout) that records upsert with the right `source`, a second sync creates no duplicates and only fetches since the cursor, Test connection passes on 200 and fails on 401 without echoing the token, seed rows are unchanged after a live sync and after a failed one, seeded and live rows appear together in one `CalcService` result, and an unmatched account is excluded from per-person figures until linked; the live smoke test with real credentials is manual and runs once before the demo. Depends on 24.1 and 24.2.
-- [ ] 24.4 Re-run the Phase 1 acceptance with both sources present (23.1 contract matrix, 23.2 oracle comparison on the seed rows, 23.4 UI audit) and verify nothing regresses when GitHub and Jira rows sit beside seed rows, and that disconnecting a connector leaves ingested and seed rows intact.
-- [ ] 24.5 Update the demo runbook (`docs/demo.md`) with what is live and what is simulated, how to create the GitHub PAT and Jira API token, `PULSE_SECRET_KEY`, the manual live smoke test with real credentials, and that seed and live rows are both counted.
+The original tasks 24.1 to 24.5 are covered there as follows:
+- 24.1 (V190, external accounts, matching) → v2 24.1, 24.7 (unmatched panel)
+- 24.2 (secret storage, outbound guard) → v2 24.2, 24.3
+- 24.3 (connectors, Test connection, Sync now) → v2 24.4 to 24.6, 25.x (GitHub), 27.x (Jira)
+- 24.4 (Phase 1 acceptance with both sources) → v2 26.3, 27.5
+- 24.5 (demo runbook) → v2 26.4, 27.5
 
 ## Workflow follow-up
 

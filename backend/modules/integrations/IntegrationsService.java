@@ -325,9 +325,17 @@ final class IntegrationsService
 
         if (live != null)
         {
-            return liveSync(user, live);
+            // a live tool that never had a live connection keeps the Phase 1 seeded path (demo seed)
+            return ctx.connections(ctx.sql()).view(tool).compose(view -> view != null ? liveSync(user, live)
+                    : seededSync(user, tool));
         }
 
+        return seededSync(user, tool);
+    }
+
+    /** Phase 1 Sync now: the seed connector restricted to the tool. */
+    private Future<JsonObject> seededSync(JsonObject user, String tool)
+    {
         return state().compose(s ->
         {
             JsonObject t = known(s.catalogue(), tool);
@@ -484,8 +492,12 @@ final class IntegrationsService
         JsonObject settings = s.settings().getOrDefault(id, new JsonObject());
         boolean liveTool = ctx.connectors().has(id);
 
-        // a live tool is connected only by a stored secret (task 24.6); seeded tools by their method
-        boolean connected = liveTool ? LiveSyncService.connected(s.live().get(id)) : settings.getString("method") != null;
+        // once a live connection was saved, the tool is connected only by its stored secret (task 24.6);
+        // until then (and for seeded tools) by the Phase 1 method, so the demo seed keeps working
+        boolean liveConnection = liveTool && s.live().containsKey(id);
+
+        boolean connected = liveConnection ? LiveSyncService.connected(s.live().get(id))
+                : settings.getString("method") != null;
 
         JsonObject tile = new JsonObject()
                 .put("id", id)
@@ -495,10 +507,11 @@ final class IntegrationsService
                 .put("feeds", t.getString("feeds"))
                 .put("methods", new JsonArray(t.getJsonArray("methods").stream()
                         .map(m -> ((JsonObject) m).getString("name")).toList()))
-                .put("live", liveTool || connectors.registered(id))
+                .put("live", liveConnection || connectors.registered(id))
+                .put("liveConnector", liveTool)
                 .put("connected", connected);
 
-        if (liveTool)
+        if (liveConnection)
         {
             JsonObject sync = s.syncState().get(id);
 

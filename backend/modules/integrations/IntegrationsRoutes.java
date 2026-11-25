@@ -1,5 +1,6 @@
 package com.pulse.modules.integrations;
 
+import com.pulse.calc.core.CalcService;
 import com.pulse.platform.accounts.ExternalAccountService;
 import com.pulse.platform.http.BodySchema;
 import com.pulse.platform.http.Ids;
@@ -91,12 +92,15 @@ final class IntegrationsRoutes
 
     private final LiveConnectionsService live;
 
+    private final CalcService calc;
+
     IntegrationsRoutes(ModuleContext ctx)
     {
         this.policy = ctx.policy();
         this.integrations = new IntegrationsService(ctx, IntegrationsService.connectors(ctx));
         this.accounts = ctx.accounts();
         this.live = new LiveConnectionsService(ctx);
+        this.calc = ctx.calc();
     }
 
     void mount(Router router)
@@ -264,17 +268,33 @@ final class IntegrationsRoutes
     private void linkAccount(RoutingContext rc)
     {
         accounts.link(PolicyService.user(rc), Ids.path(rc, "id"),
-                Ids.parse(BodySchema.body(rc).getString("personId"))).onSuccess(rc::json).onFailure(rc::fail);
+                Ids.parse(BodySchema.body(rc).getString("personId"))).onSuccess(account -> accountChanged(rc, account))
+                .onFailure(rc::fail);
     }
 
     private void unlinkAccount(RoutingContext rc)
     {
-        accounts.unlink(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(rc::json).onFailure(rc::fail);
+        accounts.unlink(PolicyService.user(rc), Ids.path(rc, "id")).onSuccess(account -> accountChanged(rc, account))
+                .onFailure(rc::fail);
     }
 
     private void setBot(RoutingContext rc)
     {
         accounts.setBot(PolicyService.user(rc), Ids.path(rc, "id"), BodySchema.body(rc).getBoolean("isBot"))
-                .onSuccess(rc::json).onFailure(rc::fail);
+                .onSuccess(account -> accountChanged(rc, account)).onFailure(rc::fail);
+    }
+
+    /**
+     * A link, unlink or bot mark changes whose figures the account's live rows count for (task 25.3 of
+     * pulse-v2-live-connectors): live rows resolve their person at read time, so every cached result is
+     * dropped, here and on other instances, and the next read counts them for the new person with no re-sync.
+     */
+    private void accountChanged(RoutingContext rc, JsonObject account)
+    {
+        calc.invalidate(CalcService.ALL);
+
+        CalcService.publish(rc.vertx(), CalcService.ALL);
+
+        rc.json(account);
     }
 }

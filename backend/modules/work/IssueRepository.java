@@ -17,6 +17,11 @@ import java.util.UUID;
  * Reads of Jira work data (task 7.3): issues, their activity timeline, worklogs and commit days. Every
  * read takes a {@link Scope} from the policy service ({@code person} domain: own, direct reports,
  * all.view), so a peer's work cannot be read. Rows are written only by {@code IngestService} (task 5.4).
+ *
+ * <p>Issues are read through the view {@code issues_with_assignee} (V290, task 25.1 of
+ * pulse-v2-live-connectors): a live issue's assignee is the person linked to its tool account, null
+ * while the account is unmatched, so scopes and filters on {@code i.assignee_id} follow the link. The
+ * timeline reads {@code issue_events_with_actor} (V292), where a live author is matched the same way.
  */
 public class IssueRepository extends ScopedRepository
 {
@@ -27,8 +32,9 @@ public class IssueRepository extends ScopedRepository
                    i.estimate_hours AS "estimateHours", i.spent_hours AS "spentHours",
                    i.remaining_hours AS "remainingHours", i.due_on AS "dueOn", i.started_on AS "startedOn",
                    i.resolved_on AS "resolvedOn", i.carried_over AS "carriedOver", i.reopened,
-                   i.was_stale AS "wasStale", i.source, i.external_id AS "externalId", i.synced_at AS "syncedAt"
-            FROM issues i
+                   i.was_stale AS "wasStale", i.source, i.external_id AS "externalId", i.synced_at AS "syncedAt",
+                   i.html_url AS "htmlUrl"
+            FROM issues_with_assignee i
             """;
 
     public IssueRepository(SqlExecutor sql)
@@ -66,7 +72,7 @@ public class IssueRepository extends ScopedRepository
                 SELECT e.id, e.occurred_at AS "occurredAt", e.kind, e.field, e.from_value AS "fromValue",
                        e.to_value AS "toValue", e.actor_id AS "actorId", e.actor_name AS "actorName",
                        e.is_bot AS "isBot", e.summary
-                FROM issue_events e JOIN issues i ON i.id = e.issue_id
+                FROM issue_events_with_actor e JOIN issues_with_assignee i ON i.id = e.issue_id
                 WHERE e.issue_id = $1 AND {scope}
                 ORDER BY e.occurred_at DESC, e.id""", Tuple.of(issueId));
     }
@@ -100,7 +106,7 @@ public class IssueRepository extends ScopedRepository
 
     /**
      * Issues of every visible person, for team views: filters {@code assigneeId}, {@code sprintId},
-     * {@code status}; search {@code q} on key and summary; sorts {@code key}, {@code due},
+     * {@code status}, {@code source}; search {@code q} on key and summary; sorts {@code key}, {@code due},
      * {@code status}.
      */
     public Future<JsonObject> page(Scope scope, MultiMap params)
@@ -109,6 +115,7 @@ public class IssueRepository extends ScopedRepository
                 .filter("assigneeId", "i.assignee_id")
                 .filter("sprintId", "i.sprint_id")
                 .filter("status", "i.status")
+                .filter("source", "i.source")
                 .search("i.key", "i.summary")
                 .sort("key", "i.key")
                 .sort("due", "i.due_on")

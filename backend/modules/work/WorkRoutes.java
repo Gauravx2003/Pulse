@@ -9,7 +9,7 @@ import io.vertx.ext.web.RoutingContext;
  * Overview, Work items, the issue drawer (task 8.2) and its Nudge action (task 8.3) under
  * {@code /api/v1/work}, written to {@code docs/backend-guide.md}: permission first, visibility from the
  * policy service, failures through {@code rc.fail}. Query parameters: {@code period} (a period key, default the active sprint), and for
- * work items {@code filter}, {@code q} and {@code sort}.
+ * work items {@code filter}, {@code source}, {@code q} and {@code sort}.
  */
 public final class WorkRoutes
 {
@@ -41,7 +41,7 @@ public final class WorkRoutes
         // GET /api/v1/work/people/:personId/overview?period=s:S43
         router.get("/people/:personId/overview").handler(policy.requiresAny(VIEW)).handler(this::overview);
 
-        // GET /api/v1/work/people/:personId/work-items?period=&filter=stale&q=snmp&sort=-signals
+        // GET /api/v1/work/people/:personId/work-items?period=&filter=stale&source=jira&q=snmp&sort=-signals
         router.get("/people/:personId/work-items").handler(policy.requiresAny(VIEW)).handler(this::workItems);
 
         // GET /api/v1/work/issues/:key
@@ -61,7 +61,8 @@ public final class WorkRoutes
     private void workItems(RoutingContext rc)
     {
         work.workItems(PolicyService.user(rc), rc.pathParam("personId"), rc.queryParams().get("period"),
-                        rc.queryParams().get("filter"), rc.queryParams().get("q"), rc.queryParams().get("sort"))
+                        rc.queryParams().get("filter"), rc.queryParams().get("source"), rc.queryParams().get("q"),
+                        rc.queryParams().get("sort"))
                 .onSuccess(rc::json)
                 .onFailure(rc::fail);
     }

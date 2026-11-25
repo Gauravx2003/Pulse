@@ -1,5 +1,6 @@
 package com.pulse.modules.training;
 
+import com.pulse.calc.core.CoreThresholds;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.http.ApiException;
 import com.pulse.platform.module.ModuleContext;
@@ -35,9 +36,6 @@ final class MentoringService
     static final String CHECKPOINT_REQUESTED = "training.checkpoint_requested";
 
     static final int TOPICS_MIN = 10;
-
-    /** Joiners within this many months without a plan are offered onboarding. */
-    static final int ONBOARDING_MONTHS = 3;
 
     private final ModuleContext ctx;
 
@@ -333,12 +331,21 @@ final class MentoringService
         return ctx.policy().scope(user, PolicyService.DOMAIN_TRAINING).compose(scope -> new MentoringRepository(ctx.sql()).mentors(scope));
     }
 
-    /** Joiners under 3 months without a plan, with the onboarding plan to assign (spec "New joiner suggestion"). */
+    /**
+     * Joiners under {@code core.thresholds} {@code newJoinerMonths} (3) without a plan, with the onboarding
+     * plan to assign (spec "New joiner suggestion").
+     */
     Future<JsonArray> onboardingSuggestions(JsonObject user)
     {
-        MentoringRepository repo = new MentoringRepository(ctx.sql());
+        Future<JsonObject> thresholds = ctx.calc() == null ? Future.succeededFuture(CoreThresholds.json())
+                : ctx.calc().getObject("core.thresholds", new JsonObject());
 
-        LocalDate since = assignments.today().minusMonths(ONBOARDING_MONTHS);
+        return thresholds.compose(t -> onboardingSuggestions(user, assignments.today().minusMonths(t.getInteger("newJoinerMonths"))));
+    }
+
+    private Future<JsonArray> onboardingSuggestions(JsonObject user, LocalDate since)
+    {
+        MentoringRepository repo = new MentoringRepository(ctx.sql());
 
         return ctx.policy().scope(user, PolicyService.DOMAIN_TRAINING)
                 .compose(scope -> Future.all(repo.joinersWithoutPlan(scope, since), repo.onboardingPlans()))

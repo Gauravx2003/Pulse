@@ -187,7 +187,8 @@ public final class WorkloadFormulas implements FormulaModule
 
     /**
      * {@code work.liveSprint {person}}: {@link Workload#live} for the active sprint, with the sprint key,
-     * the % of the sprint elapsed and the hours per point used; null when no sprint is active.
+     * the % of the sprint elapsed, the hours per point used, the focus hours and the stale threshold
+     * ({@code staleAfter}, working days) in force; null when no sprint is active.
      */
     private static Future<Object> liveSprint(CalcContext ctx, JsonObject params)
     {
@@ -227,7 +228,8 @@ public final class WorkloadFormulas implements FormulaModule
                         .put("sprint", sprint.getString("key"))
                         .put("elapsedPct", elapsed)
                         .put("hoursPerPoint", hoursPerPoint)
-                        .put("focus", ctx.rules().getDouble("focus", 6.0));
+                        .put("focus", ctx.rules().getDouble("focus", 6.0))
+                        .put("staleAfter", ctx.rules().getInteger("staleDays", 2));
             });
         });
     }

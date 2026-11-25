@@ -1,5 +1,6 @@
 package com.pulse.modules.progress;
 
+import com.pulse.calc.work.WorkFormulas;
 import com.pulse.modules.action_center.ActionItems;
 import com.pulse.modules.work.Reports;
 import com.pulse.platform.module.ActionProvider;
@@ -14,17 +15,14 @@ import java.util.UUID;
 
 /**
  * Action center item from the weekly pulse (task 13.1, spec insight/action-center "Work and people
- * triggers"): a report whose latest answer has mood 2 or lower or workload 5 is High. Answers are read
- * through a scope of the pulse domain, so only the person's manager and {@code all.view} see them.
+ * triggers"): a report whose latest answer is low (mood 2 or lower or workload 5, {@code work.thresholds}
+ * {@code pulse}) is High. Answers are read through a scope of the pulse domain, so only the person's
+ * manager and {@code all.view} see them.
  */
 public final class PulseActionProvider implements ActionProvider
 {
 
     public static final String KEY = "progress.low-pulse";
-
-    static final int LOW_MOOD = 2;
-
-    static final int HIGH_WORKLOAD = 5;
 
     @Override
     public String key()
@@ -47,15 +45,23 @@ public final class PulseActionProvider implements ActionProvider
                         latest.add(repo.latest(scope, UUID.fromString(person.getString("id"))));
                     }
 
-                    return Future.all(latest).map(done ->
+                    Future<Object> thresholds = ctx.calc().get(WorkFormulas.THRESHOLDS, new JsonObject());
+
+                    List<Future<?>> all = new ArrayList<>(latest);
+
+                    all.add(thresholds);
+
+                    return Future.all(all).map(done ->
                     {
                         List<JsonObject> items = new ArrayList<>();
+
+                        JsonObject pulse = ((JsonObject) thresholds.result()).getJsonObject("pulse");
 
                         for (int i = 0; i < people.size(); i++)
                         {
                             JsonObject answer = latest.get(i).result();
 
-                            if (answer == null || (answer.getInteger("mood") > LOW_MOOD && answer.getInteger("workload") < HIGH_WORKLOAD))
+                            if (answer == null || !ProgressService.low(answer.getInteger("mood"), answer.getInteger("workload"), pulse))
                             {
                                 continue;
                             }

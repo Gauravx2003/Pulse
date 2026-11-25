@@ -238,6 +238,7 @@ public class WorkService
                     .put("open", metrics.getJsonArray("open").size())
                     .put("stale", metrics.getJsonArray("stale").size())
                     .put("oldest", metrics.getValue("oldest"))
+                    .put("staleAfter", metrics.getValue("staleAfter"))
                     .put("remainingHours", metrics.getValue("rem"))
                     .put("workDays", metrics.getValue("work"))
                     .put("focus", metrics.getValue("focus"))

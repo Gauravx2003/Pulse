@@ -1,6 +1,8 @@
 package com.pulse.modules.reviews;
 
 import com.pulse.calc.core.WorkingDays;
+import com.pulse.calc.work.WorkFormulas;
+import com.pulse.calc.work.WorkThresholds;
 import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.policy.PolicyService;
@@ -18,17 +20,14 @@ import java.util.Set;
  * The "1:1 overdue" Action Center item (spec culture/one-on-ones-kudos "Past 1:1s and overdue signal";
  * task 20.2), ported from the prototype's action items (app.js ~2097): for a manager (holder of
  * {@code oneonone} with {@code team.view} or {@code all.view}), each person they see whose last 1:1 was
- * more than {@value #OVERDUE_DAYS} working days ago is a Medium item. People with no 1:1 yet and the
- * viewer themselves are left out.
+ * more than {@code work.thresholds} {@code oneOnOneOverdueDays} (10, the "1:1 overdue" signal's) working
+ * days ago is a Medium item. People with no 1:1 yet and the viewer themselves are left out.
  *
  * <p>Item shape: {@code {key, priority, source, personId, personName, text, button, target: {module, id}}}.
  */
 public final class OneOnOneActionProvider implements ActionProvider
 {
     static final String KEY = "oneonone.overdue";
-
-    /** Working days after the last 1:1 before it is overdue. */
-    static final int OVERDUE_DAYS = 10;
 
     @Override
     public String key()
@@ -57,11 +56,16 @@ public final class OneOnOneActionProvider implements ActionProvider
 
         OneOnOneRepository repo = new OneOnOneRepository(ctx.sql());
 
+        Future<JsonObject> thresholds = ctx.calc() == null ? Future.succeededFuture(WorkThresholds.json(new JsonObject()))
+                : ctx.calc().getObject(WorkFormulas.THRESHOLDS, new JsonObject());
+
         return ctx.policy().scope(user, PolicyService.DOMAIN_REVIEWS)
-                .compose(scope -> Future.all(repo.lastHeld(scope, today), repo.holidays()))
+                .compose(scope -> Future.all(repo.lastHeld(scope, today), repo.holidays(), thresholds))
                 .map(all ->
                 {
                     Set<LocalDate> holidays = WorkingDays.holidays(all.resultAt(1), null);
+
+                    int overdueDays = all.<JsonObject>resultAt(2).getInteger("oneOnOneOverdueDays");
 
                     List<JsonObject> items = new ArrayList<>();
 
@@ -76,7 +80,7 @@ public final class OneOnOneActionProvider implements ActionProvider
 
                         int since = daysSince(LocalDate.parse(row.getString("lastOn")), today, holidays);
 
-                        if (since > OVERDUE_DAYS)
+                        if (since > overdueDays)
                         {
                             items.add(new JsonObject()
                                     .put("key", KEY)

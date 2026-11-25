@@ -189,12 +189,6 @@ const training = computed(() =>
   Array.isArray(trends.value.training) ? trends.value.training : [],
 );
 
-function gainTone(g) {
-  const v = val(g);
-
-  return v === null ? "" : v > 0.05 ? "ok" : v < -0.05 ? "danger" : "";
-}
-
 function gainText(g) {
   const v = val(g);
 
@@ -203,20 +197,6 @@ function gainText(g) {
 
 function fill(tone) {
   return tone && tone !== "ok" ? `is-${tone}` : "";
-}
-
-function prTone(comp) {
-  const v = val(comp);
-
-  return v === null ? "" : v >= 85 ? "" : v >= 70 ? "is-accent" : "is-danger";
-}
-
-function moodTone(m) {
-  return m >= 4 ? "ok" : m >= 3 ? "brand" : "danger";
-}
-
-function loadTone(w) {
-  return w >= 5 ? "danger" : w >= 4 ? "warn" : "";
 }
 
 function open(step) {
@@ -423,7 +403,7 @@ function saved() {
               <span class="pl-mono pl-caption"
                 >{{ num(c.before, 1) }} → {{ num(c.now, 1) }}</span
               >
-              <Badge :text="gainText(c.gain)" :tone="gainTone(c.gain)" />
+              <Badge :text="gainText(c.gain)" :tone="c.tone ?? ''" />
             </li>
           </ul>
         </PlCard>
@@ -469,7 +449,7 @@ function saved() {
               >
                 <span
                   class="pl-meter-fill"
-                  :class="prTone(m.comp)"
+                  :class="fill(m.tone)"
                   :style="{ width: `${val(m.comp)}%` }"
                 />
               </span>
@@ -512,10 +492,10 @@ function saved() {
                 >Week of {{ formatDate(a.weekStart) }}</span
               >
               <span class="badges">
-                <Badge :text="`Mood ${a.mood}/5`" :tone="moodTone(a.mood)" />
+                <Badge :text="`Mood ${a.mood}/5`" :tone="a.moodTone ?? ''" />
                 <Badge
                   :text="`Workload ${a.workload}/5`"
-                  :tone="loadTone(a.workload)"
+                  :tone="a.workloadTone ?? ''"
                 />
                 <span v-if="a.note" class="pl-caption note"
                   >“{{ a.note }}”</span

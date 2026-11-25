@@ -1,5 +1,6 @@
 package com.pulse.modules.attendance;
 
+import com.pulse.calc.core.CoreThresholds;
 import com.pulse.platform.module.ActionProvider;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.policy.PolicyService;
@@ -31,6 +32,8 @@ import java.util.Set;
  *       70% or late check-ins over the allowance; Medium with an absence, else Low. Late check-ins count
  *       only where the viewer may see check-in times (the direct manager).</li>
  * </ul>
+ *
+ * <p>The numbers (5 days, 2 days, 70%, 3 late check-ins) are {@code core.thresholds} {@code attendance}.
  *
  * <p>Item shape: {@code {key, priority, source, personId, personName, text, button, target: {module, id}}}.
  */
@@ -73,6 +76,15 @@ public final class AttendanceActionProvider implements ActionProvider
 
     private Future<List<JsonObject>> items(JsonObject user, ModuleContext ctx)
     {
+        Future<JsonObject> thresholds = ctx.calc() == null ? Future.succeededFuture(CoreThresholds.json())
+                : ctx.calc().getObject("core.thresholds", new JsonObject());
+
+        return thresholds.compose(t -> items(user, ctx, t.getJsonObject("attendance")));
+    }
+
+    /** The items under {@code core.thresholds} {@code attendance}: {@code {shortNoticeDays, officePct, lateExcess, uploadDueDays}}. */
+    private Future<List<JsonObject>> items(JsonObject user, ModuleContext ctx, JsonObject limits)
+    {
         AttendanceService service = new AttendanceService(ctx);
 
         AttendanceRepository repo = new AttendanceRepository(ctx.sql());
@@ -92,7 +104,7 @@ public final class AttendanceActionProvider implements ActionProvider
             {
                 Set<String> uploaded = AttendanceService.uploadedMonths(all.resultAt(0));
 
-                return MONTH_MISSING.equals(key) ? missing(today, uploaded) : due(today, uploaded, all.resultAt(1));
+                return MONTH_MISSING.equals(key) ? missing(today, uploaded) : due(today, uploaded, all.resultAt(1), limits);
             });
         }
 
@@ -112,7 +124,7 @@ public final class AttendanceActionProvider implements ActionProvider
 
             return Future.all(ctx.policy().scope(user, PolicyService.DOMAIN_ATTENDANCE).compose(repo::people),
                             ctx.policy().scope(user, PolicyService.DOMAIN_CHECKIN))
-                    .compose(scopes -> people(service, user, scopes.resultAt(0), scopes.resultAt(1), last));
+                    .compose(scopes -> people(service, user, scopes.resultAt(0), scopes.resultAt(1), last, limits));
         });
     }
 
@@ -133,7 +145,7 @@ public final class AttendanceActionProvider implements ActionProvider
         return items;
     }
 
-    private List<JsonObject> due(LocalDate today, Set<String> uploaded, JsonArray holidays)
+    private List<JsonObject> due(LocalDate today, Set<String> uploaded, JsonArray holidays, JsonObject limits)
     {
         YearMonth month = YearMonth.from(today);
 
@@ -151,7 +163,7 @@ public final class AttendanceActionProvider implements ActionProvider
             left += weekend || isHoliday(holidays, d) ? 0 : 1;
         }
 
-        if (left > 5)
+        if (left > limits.getInteger("uploadDueDays"))
         {
             return List.of();
         }
@@ -160,7 +172,8 @@ public final class AttendanceActionProvider implements ActionProvider
                 "Open", month.toString()));
     }
 
-    private Future<List<JsonObject>> people(AttendanceService service, JsonObject user, JsonArray people, Scope checkins, String month)
+    private Future<List<JsonObject>> people(AttendanceService service, JsonObject user, JsonArray people, Scope checkins, String month,
+                                            JsonObject limits)
     {
         List<JsonObject> visible = new ArrayList<>();
 
@@ -204,19 +217,19 @@ public final class AttendanceActionProvider implements ActionProvider
                     bits.add(days(absent) + " absent without leave");
                 }
 
-                if (shortNotice >= 2)
+                if (shortNotice >= limits.getDouble("shortNoticeDays"))
                 {
                     bits.add(days(shortNotice) + " of short-notice leave");
                 }
 
-                if (s.getValue("officePct") != null && s.getLong("officePct") < 70)
+                if (s.getValue("officePct") != null && s.getLong("officePct") < limits.getInteger("officePct"))
                 {
                     bits.add("office policy " + s.getLong("officePct") + "%");
                 }
 
                 long excess = s.getLong("lateExcess", 0L);
 
-                if (excess >= 3 && checkins.allows(p.getString("id")))
+                if (excess >= limits.getInteger("lateExcess") && checkins.allows(p.getString("id")))
                 {
                     bits.add(excess + " late check-ins over the allowance");
                 }

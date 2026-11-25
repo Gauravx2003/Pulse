@@ -36,6 +36,7 @@
       <DisciplinePanel
         v-if="isDiscipline"
         :discipline="page.discipline"
+        :tones="page.tones?.score ?? []"
         :weight="weights?.[index]"
         :can-override="page.canOverride"
         :person-name="page.person?.name ?? ''"

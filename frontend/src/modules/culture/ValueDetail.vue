@@ -52,7 +52,7 @@
           </template>
           <template #cell-score="{ row }">
             <span v-if="row.score == null" class="pl-caption">{{ row.notApplicable ? 'Not applicable · left out' : 'Left out' }}</span>
-            <Badge v-else :text="`${row.score} / 5`" :tone="scoreTone(row.score)" />
+            <Badge v-else :text="`${row.score} / 5`" :tone="scoreTone(row.score, detail.tones?.score)" />
           </template>
         </PlTable>
         <p class="pl-caption">
@@ -74,7 +74,7 @@
 
     <div class="cv-grid">
       <PlCard :title="`${detail.value} · ${weight ?? '—'}%`" :subtitle="anchorCaption">
-        <template #actions><Badge :text="`${fixed(d.score)} / 5`" :tone="scoreTone(d.score)" /></template>
+        <template #actions><Badge :text="`${fixed(d.score)} / 5`" :tone="scoreTone(d.score, detail.tones?.score)" /></template>
         <p v-if="detail.definition?.description" class="cv-note">{{ detail.definition.description }}</p>
         <h3 class="pl-h3 cv-h3">Behaviour anchors</h3>
         <ol class="cv-anchors">

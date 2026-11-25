@@ -1,6 +1,7 @@
 package com.pulse.modules.work;
 
 import com.pulse.calc.core.ResultGuard;
+import com.pulse.calc.work.WorkFormulas;
 import com.pulse.calc.work.WorkViewFormulas;
 import com.pulse.calc.work.WorkloadFormulas;
 import com.pulse.modules.action_center.ActionItems;
@@ -17,7 +18,8 @@ import java.util.Locale;
 /**
  * Action center items from the live sprint (task 13.1, spec insight/action-center "Work and people
  * triggers"): a report over the overload threshold (the Critical band, above rule {@code over}) is High
- * with Rebalance, never an onboarding joiner; 2 or more stale issues is Medium.
+ * with Rebalance, never an onboarding joiner; {@code staleItems} (2) or more stale issues is Medium, the
+ * count read from {@code work.thresholds}.
  */
 public final class WorkloadActionProvider implements ActionProvider
 {
@@ -27,8 +29,6 @@ public final class WorkloadActionProvider implements ActionProvider
     public static final String STALE = "work.stale";
 
     private static final String CRITICAL = "Critical";
-
-    private static final int STALE_ITEMS = 2;
 
     private final String key;
 
@@ -67,13 +67,19 @@ public final class WorkloadActionProvider implements ActionProvider
                         : Future.succeededFuture(null));
             }
 
+            Future<Object> thresholds = ctx.calc().get(WorkFormulas.THRESHOLDS, new JsonObject());
+
             List<Future<?>> all = new ArrayList<>(live);
 
             all.addAll(onboarding);
 
+            all.add(thresholds);
+
             return Future.all(all).map(done ->
             {
                 List<JsonObject> items = new ArrayList<>();
+
+                int staleItems = ((JsonObject) thresholds.result()).getInteger("staleItems");
 
                 for (int i = 0; i < people.size(); i++)
                 {
@@ -105,7 +111,7 @@ public final class WorkloadActionProvider implements ActionProvider
                     {
                         JsonArray stale = m.getJsonArray("stale", new JsonArray());
 
-                        if (stale.size() >= STALE_ITEMS)
+                        if (stale.size() >= staleItems)
                         {
                             items.add(ActionItems.item(key, ActionItems.MEDIUM, "Work items", person.getString("id"),
                                     person.getString("name"), stale.size() + " issues without an update ("

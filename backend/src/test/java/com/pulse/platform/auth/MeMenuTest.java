@@ -66,6 +66,19 @@ class MeMenuTest
     }
 
     @Test
+    void anAccountWithoutAProfileLandsOnItsFirstPage() throws Exception
+    {
+        // sana@ (account manager) has no person profile: no Overview, so she lands on Customer visits
+        JsonObject me = me("sana@pulse.demo");
+
+        assertEquals(null, me.getJsonObject("user").getString("personId"));
+        assertEquals("/visits", me.getString("landing"));
+        assertEquals("/visits", me.getJsonArray("menu").getJsonObject(0).getJsonArray("items").getJsonObject(0).getString("path"));
+
+        assertEquals("/overview", me("priya@pulse.demo").getString("landing"), "an employee with a profile lands on Overview");
+    }
+
+    @Test
     void managerGetsTeamPagesAndTheirAdministrationItems() throws Exception
     {
         JsonObject me = me("rahul@pulse.demo");

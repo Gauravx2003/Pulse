@@ -551,23 +551,25 @@ final class VisitService
 
     // ------------------------------------------------------------------ Team view
 
-    /** Months after joining during which a person is a new joiner and stays out of the team average. */
-    static final int NEW_JOINER_MONTHS = 3;
-
     /** Stats fields averaged across the team. */
     private static final String[] AVERAGED = {"visits", "days", "onsiteHours", "travelHours", "csat", "points"};
 
     /**
      * The Team view (spec "Views"): every person in the viewer's visits scope, with or without visits, with
      * {@code people.visitStats} for the period, and the team average of the people who are not new joiners
-     * ({@value #NEW_JOINER_MONTHS} months): {@code {period, people: [{personId, name, title, newJoiner, stats}], average}}.
+     * ({@code core.thresholds} {@code newJoinerMonths}, 3): {@code {period, people: [{personId, name, title, newJoiner,
+     * stats}], average}}.
      */
     Future<JsonObject> team(JsonObject user, String period)
     {
         LocalDate today = today();
 
-        return policy.scope(user, PolicyService.DOMAIN_VISITS).compose(scope -> new VisitRepository(ctx.sql()).people(scope)).compose(people ->
+        Future<JsonObject> thresholds = ctx.calc().getObject("core.thresholds", new JsonObject());
+
+        return thresholds.compose(t -> policy.scope(user, PolicyService.DOMAIN_VISITS)).compose(scope -> new VisitRepository(ctx.sql()).people(scope)).compose(people ->
         {
+            int newJoinerMonths = thresholds.result().getInteger("newJoinerMonths");
+
             java.util.List<Future<JsonObject>> stats = new java.util.ArrayList<>();
 
             for (Object o : people)
@@ -591,7 +593,7 @@ final class VisitService
                     JsonObject st = stats.get(i).result();
 
                     boolean joiner = p.getString("joinedOn") != null
-                            && LocalDate.parse(p.getString("joinedOn")).plusMonths(NEW_JOINER_MONTHS).isAfter(today);
+                            && LocalDate.parse(p.getString("joinedOn")).plusMonths(newJoinerMonths).isAfter(today);
 
                     if (!joiner)
                     {

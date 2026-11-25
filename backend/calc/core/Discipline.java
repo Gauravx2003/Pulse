@@ -51,6 +51,33 @@ public final class Discipline
     /** Shortest override reason accepted. */
     public static final int MIN_REASON = 10;
 
+    /** Rule b: this many stale tickets cost 0.5. */
+    public static final int STALE_LIMIT = 3;
+
+    /** Rule c: proactive re-planning target, and the share under which it costs 0.5. */
+    public static final int REPLAN_TARGET = 80;
+
+    public static final int REPLAN_LOW = 50;
+
+    /** Rule d: status accuracy target. */
+    public static final int STATUS_TARGET = 90;
+
+    /** Rule e: same-day logging target and the bulk entries that fail it. */
+    public static final int LOG_SAME_TARGET = 70;
+
+    public static final int BULK_LIMIT = 3;
+
+    /** Rule f: early blocker reporting target. */
+    public static final int BLOCK_TARGET = 70;
+
+    /** Rule g: process adherence target. */
+    public static final int PROCESS_TARGET = 85;
+
+    /** Rule h: attendance score target, and the score under which it costs 0.5. */
+    public static final int ATTENDANCE_TARGET = 85;
+
+    public static final int ATTENDANCE_LOW = 70;
+
     private Discipline()
     {
     }
@@ -60,8 +87,8 @@ public final class Discipline
      * person has no Discipline data.
      *
      * @return {@code {days, updated, compliance, weeks, enoughData, stale, replan, replanN, status, statusN,
-     *         logSame, bulk, block, blockN, process, attendance, base, adjustments, auto}}; each adjustment
-     *         is {@code {rule, label, detail, points}}
+     *         logSame, bulk, block, blockN, process, attendance, base, adjustments, auto, targets}}; each
+     *         adjustment is {@code {rule, label, detail, points}}; {@code targets} is {@link #targets}
      */
     public static JsonObject metrics(JsonObject in, JsonObject rules)
     {
@@ -111,7 +138,7 @@ public final class Discipline
 
         JsonArray adj = new JsonArray();
 
-        if (stale >= 3)
+        if (stale >= STALE_LIMIT)
         {
             adj.add(adjustment("b", "Stale tickets", stale + " stale", -0.5));
         }
@@ -120,31 +147,31 @@ public final class Discipline
             adj.add(adjustment("b", "Stale tickets", stale + " stale (5 needs none)", -0.5));
         }
 
-        if (replan < 50)
+        if (replan < REPLAN_LOW)
         {
             adj.add(adjustment("c", "Re-planning", replan + "% proactive", -0.5));
         }
-        else if (replan < 80)
+        else if (replan < REPLAN_TARGET)
         {
             adj.add(adjustment("c", "Re-planning", replan + "% proactive", -0.25));
         }
 
-        if (status < 90)
+        if (status < STATUS_TARGET)
         {
             adj.add(adjustment("d", "Status accuracy", status + "%", -0.25));
         }
 
-        if (logSame < 70 || bulk >= 3)
+        if (logSame < LOG_SAME_TARGET || bulk >= BULK_LIMIT)
         {
             adj.add(adjustment("e", "Time logging", logSame + "% same-day, " + bulk + " bulk entries", -0.25));
         }
 
-        if (block < 70)
+        if (block < BLOCK_TARGET)
         {
             adj.add(adjustment("f", "Early blockers", block + "% within 1 day", -0.25));
         }
 
-        if (process < 85)
+        if (process < PROCESS_TARGET)
         {
             adj.add(adjustment("g", "Process adherence", process + "%", -0.25));
         }
@@ -157,11 +184,11 @@ public final class Discipline
 
             String shown = Num.text(score) + "%";
 
-            if (score < 70)
+            if (score < ATTENDANCE_LOW)
             {
                 adj.add(adjustment("h", "Attendance & leave", shown, -0.5));
             }
-            else if (score < 85)
+            else if (score < ATTENDANCE_TARGET)
             {
                 adj.add(adjustment("h", "Attendance & leave", shown, -0.25));
             }
@@ -204,7 +231,29 @@ public final class Discipline
                 .put("attendance", att == null ? null : att.copy())
                 .put("base", base)
                 .put("adjustments", adj)
-                .put("auto", auto);
+                .put("auto", auto)
+                .put("targets", targets(rules));
+    }
+
+    /**
+     * The target of each rule as the Discipline panel shows it ("≥ 85% (5 at ≥ 95%)"): {@code compliance}
+     * and {@code complianceTop} are the rule set's {@code d4} and {@code d5}; the others are the fixed
+     * targets of rules c–h.
+     *
+     * @return {@code {compliance, complianceTop, replan, status, logSame, bulkBelow, block, process, attendance}}
+     */
+    public static JsonObject targets(JsonObject rules)
+    {
+        return new JsonObject()
+                .put("compliance", rules.getValue("d4", 85))
+                .put("complianceTop", rules.getValue("d5", 95))
+                .put("replan", REPLAN_TARGET)
+                .put("status", STATUS_TARGET)
+                .put("logSame", LOG_SAME_TARGET)
+                .put("bulkBelow", BULK_LIMIT)
+                .put("block", BLOCK_TARGET)
+                .put("process", PROCESS_TARGET)
+                .put("attendance", ATTENDANCE_TARGET);
     }
 
     /**

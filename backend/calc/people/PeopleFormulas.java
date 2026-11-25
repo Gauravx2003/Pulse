@@ -30,6 +30,9 @@ import java.util.UUID;
  */
 public final class PeopleFormulas implements FormulaModule
 {
+    /** {@code people.thresholds {}}: Track 3's fixed thresholds ({@link PeopleThresholds#json}). */
+    public static final String THRESHOLDS = "people.thresholds";
+
     @Override
     public String id()
     {
@@ -40,7 +43,8 @@ public final class PeopleFormulas implements FormulaModule
     public List<Formula> formulas()
     {
         return List.of(
-                Formula.of("people.serviceMonths", Set.of("person"), Set.of(CalcService.PEOPLE), PeopleFormulas::serviceMonths));
+                Formula.of("people.serviceMonths", Set.of("person"), Set.of(CalcService.PEOPLE), PeopleFormulas::serviceMonths),
+                Formula.of(THRESHOLDS, Set.of(), Set.of(), (ctx, params) -> Future.succeededFuture((Object) PeopleThresholds.json())));
     }
 
     private static Future<Object> serviceMonths(CalcContext ctx, JsonObject params)

@@ -140,8 +140,9 @@ parameters come from `culture_signals` and are not inputs.
 
 `core.people`, `core.period {period}`, `core.cultureData {person, period}`, `core.culture {person,
 period}`, `core.discipline {person}`, `core.training {person}`, `core.pillars {person, period}`,
-`core.index {person, period}`, `core.indexHistory {person}`, `core.appraisalPerformance {person}`
-and `core.appraisal {person}`. The examples `work.workingDays {period}` and `people.serviceMonths
+`core.index {person, period}`, `core.indexHistory {person}`, `core.appraisalPerformance {person}`,
+`core.appraisal {person}`, `core.proposed {person, period}` (Exceeds, Meets or Developing for the
+index) and `core.thresholds {}` (§8). The examples `work.workingDays {period}` and `people.serviceMonths
 {person}` show the pattern in each track's folder.
 
 ## 7. Snapshots and closed periods
@@ -153,3 +154,35 @@ per person, with the rule version in force. The closed quarters 2025-Q4 to 2026-
 proposals and published 360° cycles freeze their own results through `SnapshotStore.freeze`. An
 Admin recalculation of a closed period goes through `SnapshotStore.replace` with a reason. See
 [backend-guide.md](backend-guide.md) §6.
+
+## 8. Thresholds and tones
+
+No threshold, cut-off or score band lives in a module or a screen (design.md decision 5; task 23.6).
+Admin-editable values are rules (§2, `ctx.rules()`). Fixed ones are constants in `calc/` that modules
+read through CalcService:
+
+| Formula | Class | Returns |
+|---|---|---|
+| `core.thresholds {}` | `calc/core/CoreThresholds` | `{newJoinerMonths, index: {exceeds, meets}, attendance: {shortNoticeDays, officePct, lateExcess, uploadDueDays}, tones: {score}}` |
+| `work.thresholds {}` | `calc/work/WorkThresholds` | `{staleItems, oneOnOneOverdueDays, pulse: {lowMood, highWorkload}, tones: {mood, workload, teamMood, teamWorkload, forecastFit, coverage, prCompliance}}`; `prCompliance` starts at rule `prTarget` |
+| `people.thresholds {}` | `calc/people/PeopleThresholds` | `{trainingWeeklyHours}` |
+
+A **tone band list** is `[{min, tone}]`, highest `min` first. A value takes the tone of the first band
+whose `min` it reaches. The last band has no `min` and catches the rest: a null would come back from
+`calc.get` as `{"notApplicable": true}`. In Java use `CoreThresholds.tone(value, bands)`, in the UI
+`toneFor(value, bands)` from `@/kit/tones.js`.
+
+Prefer sending the tone with the value from the formula, as `ActionCenter.forecast` (`tone`),
+`ActionCenter.coverage` (`heat`), `ActionCenter.pulseTrend` (`moodTone`, `workloadTone`) and
+`work.progressTrends` (culture `tone`, PR month `tone`) do. Send the band list only when the values do
+not come from a formula: the weekly pulse answers carry `moodTone` and `workloadTone` from
+`work.thresholds`, and the culture payloads carry `tones.score` from `core.thresholds`.
+
+Targets shown next to a value come from the same formula as the value. `core.discipline` metrics carry
+`targets` (`compliance` and `complianceTop` are rules `d4` and `d5`), and `work.liveSprint` carries
+`staleAfter` (rule `staleDays`). Team maths go through formulas too: `work.effortTotals {people,
+period}` gives the Effort team totals and unplanned share, and `Appraisal.newCtc`, `exception` and
+`budget` give the appraisal table's money.
+
+`RuleEditMovesScreensTest` checks that an Admin edit of `staleDays`, `d4`/`d5` and `prTarget` moves
+Overview, the Discipline panel and Progress.

@@ -31,6 +31,9 @@ public final class WorkFormulas implements FormulaModule
     /** Holidays changed. */
     public static final String HOLIDAYS = "work.holidays";
 
+    /** {@code work.thresholds {}}: Track 2's fixed thresholds and tone bands ({@link WorkThresholds#json}). */
+    public static final String THRESHOLDS = "work.thresholds";
+
     @Override
     public String id()
     {
@@ -42,7 +45,8 @@ public final class WorkFormulas implements FormulaModule
     {
         return List.of(
                 Formula.of("work.workingDays", Set.of("period"), Set.of(HOLIDAYS, CalcService.importTopic("holidays")),
-                        WorkFormulas::workingDays));
+                        WorkFormulas::workingDays),
+                Formula.of(THRESHOLDS, Set.of(), Set.of(), (ctx, params) -> Future.succeededFuture((Object) WorkThresholds.json(ctx.rules()))));
     }
 
     private static Future<Object> workingDays(CalcContext ctx, JsonObject params)

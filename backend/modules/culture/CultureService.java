@@ -150,7 +150,8 @@ final class CultureService
 
     /**
      * One person's culture page for a quarter: the 11 values with their parts, the culture pillar, the team
-     * average per value (the viewer's people), the Discipline score with any override, and the evidence log.
+     * average per value (the viewer's people), the Discipline score with any override, the evidence log and
+     * the score badge tones ({@code core.thresholds} {@code tones}).
      */
     Future<JsonObject> person(JsonObject user, String personId, String period)
     {
@@ -181,7 +182,9 @@ final class CultureService
 
             Future<JsonObject> who = repo.person(UUID.fromString(personId));
 
-            return Future.all(List.of(Future.all(details), scores, pillars, discipline, override, team, evidence, who)).map(all ->
+            Future<Object> thresholds = get("core.thresholds", new JsonObject());
+
+            return Future.all(List.of(Future.all(details), scores, pillars, discipline, override, team, evidence, who, thresholds)).map(all ->
             {
                 // Scores from core.culture (a closed quarter answers from its snapshot); the parts explain a live one.
                 JsonArray shown = scores.result() instanceof JsonArray a ? a : null;
@@ -213,12 +216,16 @@ final class CultureService
                         .put("teamAverage", team.result())
                         .put("discipline", disciplineView((JsonObject) discipline.result(), override.result()))
                         .put("evidence", evidence.result())
+                        .put("tones", ((JsonObject) thresholds.result()).getJsonObject("tones"))
                         .put("canOverride", canOverride(user, personId));
             });
         }).recover(this::periodError);
     }
 
-    /** The detail of one value: the formula parts, raters, parameters, bonus items, anchors and evidence. */
+    /**
+     * The detail of one value: the formula parts, raters, parameters, bonus items, anchors, evidence and the
+     * score badge tones ({@code core.thresholds} {@code tones}).
+     */
     Future<JsonObject> value(JsonObject user, String personId, String value, String period)
     {
         if (!CultureParameters.VALUES.contains(value))
@@ -229,7 +236,8 @@ final class CultureService
         JsonObject pp = new JsonObject().put("person", personId).put("period", period).put("value", value);
 
         return policy.requireVisible(user, personId, PolicyService.DOMAIN_PERSON).compose(scope ->
-                Future.all(get("people.cultureDetail", pp), new CultureRepository(ctx.sql()).values(), evidence(personId, period, value)).map(all ->
+                Future.all(get("people.cultureDetail", pp), new CultureRepository(ctx.sql()).values(), evidence(personId, period, value),
+                        get("core.thresholds", new JsonObject())).map(all ->
                 {
                     JsonObject detail = all.resultAt(0) instanceof JsonObject d ? d : null;
 
@@ -244,7 +252,8 @@ final class CultureService
                             .put("detail", detail)
                             .put("definition", def)
                             .put("currentBand", band)
-                            .put("evidence", all.resultAt(2));
+                            .put("evidence", all.resultAt(2))
+                            .put("tones", all.<JsonObject>resultAt(3).getJsonObject("tones"));
                 })).recover(this::periodError);
     }
 

@@ -10,7 +10,12 @@ This change delivers the connectors one tool at a time:
 - **Jira Server comes first**, on a platform layer that has no Jira-specific code.
 - **GitHub follows** as one more connector on that same layer.
 
-The work is small and sequential, so one person owns it; there is no three-track split.
+The work is split into the same three tracks as Phase 1, by directory ownership:
+- **Track 1:** platform and Integrations UI.
+- **Track 2:** work tables and screens.
+- **Track 3:** the connectors module, fixtures and end-to-end flows.
+
+This lets the three tracks build in parallel without conflicts. Jira ships first.
 
 ## What Changes
 

@@ -25,7 +25,6 @@ Ingest tables:
 
 **Non-Goals:**
 - Jira Cloud, webhooks, scheduled polling, OAuth, other live tools, write calls, key rotation, KMS.
-- A three-track split. One owner builds this in order.
 
 ## Decisions
 
@@ -267,13 +266,32 @@ Test connection and Save go through the same generic routes:
   - unmatched accounts land in `external_accounts`
 - **Fixture source.** Jira fixtures are recorded once from the internal instance (`/myself`, `/field`, two `/search` pages with changelog) and sanitized: passwords, emails and names removed.
 
-### 9. Ownership and migrations
+### 9. Parallel build: three tracks, disjoint files
 
-- **Owner.** One person owns this change, and the groups run in order.
-- **Reviews.** Platform and shared files are reviewed by the Track 1 owner. The work-table migrations and the `calc/work` loader changes are reviewed by the Track 2 owner.
-- **Migration numbers.**
-  - V190–V199 for platform tables.
-  - V290 (Jira) and V291 (GitHub) for work-table columns and views.
+The split follows Phase 1 directory ownership, so the tracks never edit the same files:
+
+| Track | Group | Migrations | Owns |
+|---|---|---|---|
+| 1 | 24 | `V190–V199` | `backend/src/` platform (secrets, guarded HTTP, live registry, sync orchestrator, external accounts, mock server and contract test kit), `modules/integrations` (backend and frontend), `modules/users`, `docs/`, CODEOWNERS |
+| 2 | 25 | `V290` (Jira), `V291` (GitHub) | work-table columns and views, `calc/work` loaders, `modules/work`, `pull_requests`, `utilization`, `effort` screens and endpoints |
+| 3 | 26 | none (`V390–V399` reserved) | new module `backend/modules/connectors/` (`jira/`, `github/`), `backend/src/test/resources/live-fixtures/`, Phase 2 Playwright flows |
+
+**Day 1 contract freeze**
+- Track 1 lands the following; the other tracks start against stubs and rebase onto it:
+  - the `ExternalAccountService` interface and a stub
+  - `LiveConnector`, `LiveContext` and the registry hook
+  - the empty connectors module with its CODEOWNERS lines
+  - the mock server and the contract test skeleton
+- Track 2 lands the V290 column names Track 3 writes into.
+
+**Jira first**
+- Each track finishes its Jira tasks before its GitHub tasks.
+- GitHub work merges only after Jira acceptance (27.1, 27.2).
+
+**Cross-track boundaries**
+- Connectors (Track 3) call only `LiveContext` and `IngestService`. They never import Track 2 code.
+- Track 2 reviews Track 3's mappings.
+- Track 1 merges the docs sections the other tracks write.
 
 ## Risks / Trade-offs
 

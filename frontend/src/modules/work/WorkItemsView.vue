@@ -3,7 +3,8 @@
 // four KPIs, the issue list with filter chips and counts, search and sort, Nudge on Slack, and the daily
 // load; a closed sprint, month or release shows the history KPIs, the release card, the sprints of the
 // period and the issue list with its own filters. A row opens the issue drawer. The server filters,
-// searches and sorts (GET /work/people/:id/work-items).
+// searches and sorts (GET /work/people/:id/work-items). Once live Jira rows exist (task 25.2), each row
+// shows its source (Seed / Jira), a Jira row links to the issue in Jira, and a source filter appears.
 import { computed, ref, watch } from 'vue';
 import { api } from '@/api/client.js';
 import { Badge, StatTile } from '@/kit/index.js';
@@ -18,6 +19,7 @@ import {
   HISTORY_SORTS,
   LIVE_FILTERS,
   LIVE_SORTS,
+  SOURCES,
   band,
   flags,
   hours,
@@ -25,6 +27,8 @@ import {
   identityCaption,
   num,
   pct,
+  sourceBadge,
+  toolUrl,
   val,
 } from './presentation.js';
 import { useViewedPerson } from './useViewedPerson.js';
@@ -71,6 +75,7 @@ const data = ref(null);
 const loading = ref(false);
 const error = ref('');
 const filter = ref('all');
+const source = ref('all');
 const sort = ref('');
 const query = ref('');
 const drawerKey = ref(null);
@@ -81,11 +86,12 @@ let typing = null;
 
 watch([personId, periodKey], () => {
   filter.value = 'all';
+  source.value = 'all';
   sort.value = '';
   load();
 }, { immediate: true });
 
-watch([filter, sort], load);
+watch([filter, source, sort], load);
 
 watch(query, () => {
   clearTimeout(typing);
@@ -104,7 +110,13 @@ async function load() {
 
   try {
     const body = await api.get(`/work/people/${personId.value}/work-items`, {
-      query: { period: periodKey.value, filter: filter.value, q: query.value.trim() || null, sort: sort.value || null },
+      query: {
+        period: periodKey.value,
+        filter: filter.value,
+        source: source.value === 'all' ? null : source.value,
+        q: query.value.trim() || null,
+        sort: sort.value || null,
+      },
     });
 
     if (mine === request) {
@@ -133,6 +145,11 @@ const chips = computed(() =>
 
 const sorts = computed(() => (live.value ? LIVE_SORTS : HISTORY_SORTS));
 
+// the source filter and badges appear once the person has live rows; seed-only lists look as before
+const showSource = computed(() => (data.value?.sources?.jira ?? 0) > 0 || source.value !== 'all');
+
+const sourceOptions = computed(() => SOURCES.map((s) => ({ ...s, count: data.value?.sources?.[s.key] ?? 0 })));
+
 const liveRows = computed(() =>
   (data.value?.items ?? []).map((i) => ({
     key: i.key,
@@ -143,6 +160,8 @@ const liveRows = computed(() =>
     due: formatDate(val(i.dueOn)),
     last: idleText(i.idleDays),
     flags: flags(i),
+    source: sourceBadge(i.source),
+    url: toolUrl(i),
   })),
 );
 
@@ -159,6 +178,8 @@ const historyRows = computed(() =>
     cycle: val(i.cycle) !== null ? `${num(i.cycle, 0)} d` : '—',
     resolved: formatDate(val(i.resolvedOn)),
     carried: !!i.carriedOver,
+    source: sourceBadge(i.source),
+    url: toolUrl(i),
   })),
 );
 
@@ -282,6 +303,9 @@ async function nudgeStale() {
           <div class="controls">
             <div class="chips"><PlTabs v-model="filter" :tabs="chips" label="Filter work items" /></div>
             <input v-model="query" class="pl-input is-sm search" type="search" placeholder="Search key or summary" aria-label="Search key or summary" />
+            <select v-if="showSource" v-model="source" class="pl-input is-sm" aria-label="Source">
+              <option v-for="s in sourceOptions" :key="s.key" :value="s.key">{{ s.label }} ({{ s.count }})</option>
+            </select>
             <select v-model="sort" class="pl-input is-sm" aria-label="Sort by">
               <option value="">Sort: default</option>
               <option v-for="s in sorts" :key="s.key" :value="s.key">Sort: {{ s.label }}</option>
@@ -298,7 +322,15 @@ async function nudgeStale() {
             empty-text="No work items match."
             @row-click="drawerKey = $event.key"
           >
-            <template #cell-key="{ row }"><span class="pl-key">{{ row.key }}</span></template>
+            <template #cell-key="{ row }">
+              <span class="key-cell">
+                <span class="pl-key">{{ row.key }}</span>
+                <Badge v-if="showSource" :text="row.source.text" :tone="row.source.tone" />
+                <a v-if="row.url" class="tool-link" :href="row.url" target="_blank" rel="noopener noreferrer" @click.stop @keydown.enter.stop>
+                  Open in Jira<span class="pl-sr-only"> {{ row.key }}, opens in a new tab</span>
+                </a>
+              </span>
+            </template>
             <template #cell-status="{ row }"><Badge :text="row.status" :tone="statusTone(row.status)" /></template>
             <template #cell-signals="{ row }">
               <span class="badges"><Badge v-for="f in row.flags" :key="f.text" :text="f.text" :tone="f.tone" /></span>
@@ -324,7 +356,7 @@ async function nudgeStale() {
       <!-- closed sprint, month or release -->
       <template v-else>
         <PlKpiRow :columns="5" :label="data.period.short">
-          <StatTile eyebrow="Committed" :value="num(metrics.com)" unit="SP" :foot="`${num(data.chips?.all, 0)} issues`" />
+          <StatTile eyebrow="Committed" :value="num(metrics.com)" unit="SP" :foot="`${num(data.sources?.all ?? data.chips?.all, 0)} issues`" />
           <StatTile
             eyebrow="Done"
             :value="num(metrics.dsp)"
@@ -368,6 +400,9 @@ async function nudgeStale() {
           <div class="controls">
             <div class="chips"><PlTabs v-model="filter" :tabs="chips" label="Filter issues" /></div>
             <input v-model="query" class="pl-input is-sm search" type="search" placeholder="Search key or summary" aria-label="Search key or summary" />
+            <select v-if="showSource" v-model="source" class="pl-input is-sm" aria-label="Source">
+              <option v-for="s in sourceOptions" :key="s.key" :value="s.key">{{ s.label }} ({{ s.count }})</option>
+            </select>
             <select v-model="sort" class="pl-input is-sm" aria-label="Sort by">
               <option value="">Sort: default</option>
               <option v-for="s in sorts" :key="s.key" :value="s.key">Sort: {{ s.label }}</option>
@@ -384,7 +419,15 @@ async function nudgeStale() {
             empty-text="No issues match."
             @row-click="drawerKey = $event.key"
           >
-            <template #cell-key="{ row }"><span class="pl-key">{{ row.key }}</span></template>
+            <template #cell-key="{ row }">
+              <span class="key-cell">
+                <span class="pl-key">{{ row.key }}</span>
+                <Badge v-if="showSource" :text="row.source.text" :tone="row.source.tone" />
+                <a v-if="row.url" class="tool-link" :href="row.url" target="_blank" rel="noopener noreferrer" @click.stop @keydown.enter.stop>
+                  Open in Jira<span class="pl-sr-only"> {{ row.key }}, opens in a new tab</span>
+                </a>
+              </span>
+            </template>
             <template #cell-status="{ row }"><Badge :text="row.status" :tone="statusTone(row.status)" /></template>
           </PlTable>
         </PlCard>
@@ -412,6 +455,18 @@ async function nudgeStale() {
 .search {
   width: 220px;
   max-width: 100%;
+}
+
+.key-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.tool-link {
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .badges {

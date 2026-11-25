@@ -27,7 +27,8 @@ import java.util.UUID;
  * never widen that set.
  * <ul>
  *   <li>{@code work.teamLive {people}}: the active sprint's KPIs, rebalance suggestion, heatmap and
- *       people table; null without an active sprint;</li>
+ *       people table, plus {@code unassigned}, the sprint's live issues that count for no person
+ *       ({@link TeamViews#unassigned}, in the team's open issues); null without an active sprint;</li>
  *   <li>{@code work.teamPeriod {people, period}}: a closed sprint, a month or a release: KPIs, people
  *       table, the release card and team utilization by sprint.</li>
  * </ul>
@@ -130,9 +131,23 @@ public final class TeamFormulas implements FormulaModule
 
             everything.addAll(index);
 
+            // live issues of the sprint that count for no person: an unlinked or missing Jira assignee (not a bot)
+            Future<JsonArray> unassigned = WorkSql.rows(ctx, """
+                    SELECT i.key, i.summary, i.status, i.story_points AS "storyPoints", i.estimate_hours AS "estimateHours",
+                           i.spent_hours AS "spentHours", i.remaining_hours AS "remainingHours", i.html_url AS "htmlUrl"
+                    FROM issues_with_assignee i
+                    JOIN sprints s ON s.id = i.sprint_id
+                    LEFT JOIN external_accounts a ON a.tool = i.source AND a.tool_account_id = i.assignee_account_id
+                    WHERE s.key = $1 AND i.source <> 'seed' AND i.assignee_id IS NULL AND NOT coalesce(a.is_bot, false)""",
+                    Tuple.of(sprint.getString("key").substring(2)));
+
+            everything.add(unassigned);
+
             return Future.all(everything).map(done ->
             {
                 JsonObject rules = ctx.rules();
+
+                JsonObject loose = TeamViews.unassigned(WorkloadFormulas.list(unassigned.result()));
 
                 List<JsonObject> rows = new ArrayList<>();
 
@@ -179,7 +194,8 @@ public final class TeamFormulas implements FormulaModule
                             waiting.add(new JsonObject()
                                     .put("key", issue.getString("key"))
                                     .put("summary", issue.getString("summary"))
-                                    .put("remainingHours", issue.getValue("remainingHours")));
+                                    .put("remainingHours", issue.getValue("remainingHours"))
+                                    .put("htmlUrl", issue.getValue("htmlUrl")));
                         }
                     }
 
@@ -248,7 +264,8 @@ public final class TeamFormulas implements FormulaModule
 
                 return (Object) new JsonObject()
                         .put("sprint", sprint.getString("key"))
-                        .put("kpis", TeamViews.liveKpis(rows, rules))
+                        .put("kpis", TeamViews.liveKpis(rows, rules, loose.getInteger("open")))
+                        .put("unassigned", loose)
                         .put("suggestion", TeamViews.rebalance(rows, toDo, TeamViews::skillsMatch, rules))
                         .put("heatmap", new JsonObject()
                                 .put("days", days)

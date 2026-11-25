@@ -355,7 +355,7 @@ public final class EffortFormulas implements FormulaModule
                     SELECT i.key, i.summary, i.status, s.number, s.starts_on AS "sprintStart", e.occurred_at AS "at",
                            e.actor_name AS "actorName",
                            coalesce((SELECT sum(w.hours) FROM worklogs w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
-                    FROM issue_events e JOIN issues_with_assignee i ON i.id = e.issue_id
+                    FROM issue_events_with_actor e JOIN issues_with_assignee i ON i.id = e.issue_id
                     JOIN sprints s ON s.key = e.to_value
                     WHERE i.assignee_id = $1 AND e.kind = 'sprint_change' AND NOT e.is_bot
                       AND (e.occurred_at AT TIME ZONE 'Asia/Kolkata')::date > s.starts_on
@@ -365,7 +365,8 @@ public final class EffortFormulas implements FormulaModule
                     SELECT i.key, i.summary, i.status, e.occurred_at AS "at", e.actor_name AS "actorName",
                            coalesce((SELECT name FROM people WHERE id::text = e.from_value), e.from_value) AS "fromName",
                            coalesce((SELECT sum(w.hours) FROM worklogs w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
-                    FROM issue_events e JOIN issues_with_assignee i ON i.id = e.issue_id LEFT JOIN sprints s ON s.id = i.sprint_id
+                    FROM issue_events_with_actor e JOIN issues_with_assignee i ON i.id = e.issue_id
+                    LEFT JOIN sprints s ON s.id = i.sprint_id
                     WHERE e.kind = 'assignee_change' AND e.to_value = $1::text AND NOT e.is_bot
                       AND (s.starts_on IS NULL OR (e.occurred_at AT TIME ZONE 'Asia/Kolkata')::date > s.starts_on)
                       AND (e.occurred_at AT TIME ZONE 'Asia/Kolkata')::date BETWEEN $2 AND $3""", range);

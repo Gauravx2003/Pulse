@@ -44,6 +44,16 @@ public final class TeamViews
      */
     public static JsonObject liveKpis(List<JsonObject> rows, JsonObject rules)
     {
+        return liveKpis(rows, rules, 0);
+    }
+
+    /**
+     * As {@link #liveKpis(List, JsonObject)}, with {@code unassignedOpen} open live issues that count for no
+     * person (task 25.3 of pulse-v2-live-connectors) added to the team's open issues. They are never
+     * stale, since staleness is about the assignee's activity.
+     */
+    public static JsonObject liveKpis(List<JsonObject> rows, JsonObject rules, int unassignedOpen)
+    {
         double under = rules.getDouble("under", 60.0);
 
         double work = 0;
@@ -52,7 +62,7 @@ public final class TeamViews
 
         int stale = 0;
 
-        int open = 0;
+        int open = unassignedOpen;
 
         int onboarding = 0;
 
@@ -112,7 +122,8 @@ public final class TeamViews
      * nobody fits. Nothing is written anywhere: Reassign happens in Jira.
      *
      * @param rows   {@code {id, name, util, work, cap, onboarding, level, skills}} per person
-     * @param toDo   person id to that person's To Do issues {@code {key, summary, remainingHours}}
+     * @param toDo   person id to that person's To Do issues {@code {key, summary, remainingHours, htmlUrl}};
+     *               the suggestion's issue keeps {@code htmlUrl}, the link to a live issue in its tool
      * @param match  whether the second person may take the first person's work, e.g. {@link #skillsMatch}
      */
     public static JsonObject rebalance(List<JsonObject> rows, Map<String, List<JsonObject>> toDo,
@@ -171,7 +182,8 @@ public final class TeamViews
                         .put("issue", new JsonObject()
                                 .put("key", issue.getString("key"))
                                 .put("summary", issue.getString("summary"))
-                                .put("hours", hours))
+                                .put("hours", hours)
+                                .put("htmlUrl", issue.getValue("htmlUrl") instanceof String url ? url : null))
                         .put("from", side(from, fromNow, fromAfter))
                         .put("to", side(to, toNow, toAfter))
                         .put("text", text);
@@ -359,6 +371,61 @@ public final class TeamViews
     /**
      * Rows by utilization, highest first, then by name (the people table order).
      */
+    /**
+     * The active sprint's live issues that count for no person (task 25.3 of pulse-v2-live-connectors):
+     * their Jira account is not linked yet, or they have no assignee. They stay out of every per-person
+     * figure and are kept here for the team: {@code {open, storyPoints, remainingHours, items}}, where
+     * remaining hours count open issues only (the Jira remaining estimate, else original minus spent, as
+     * {@link Workload#remainingHours} without a points calibration) and items are
+     * {@code {key, summary, status, storyPoints, remainingHours, htmlUrl}} by key.
+     *
+     * @param issues {@code {key, summary, status, storyPoints, estimateHours, spentHours, remainingHours, htmlUrl}}
+     */
+    public static JsonObject unassigned(List<JsonObject> issues)
+    {
+        int open = 0;
+
+        double points = 0;
+
+        double remaining = 0;
+
+        JsonArray items = new JsonArray();
+
+        List<JsonObject> sorted = new ArrayList<>(issues);
+
+        sorted.sort(Comparator.comparing(issue -> issue.getString("key", "")));
+
+        for (JsonObject issue : sorted)
+        {
+            boolean done = "Done".equals(issue.getString("status"));
+
+            double hours = done ? 0 : Workload.remainingHours(issue, 0);
+
+            if (!done)
+            {
+                open++;
+
+                remaining += hours;
+            }
+
+            points += number(issue, "storyPoints");
+
+            items.add(new JsonObject()
+                    .put("key", issue.getString("key"))
+                    .put("summary", issue.getString("summary"))
+                    .put("status", issue.getString("status"))
+                    .put("storyPoints", issue.getValue("storyPoints"))
+                    .put("remainingHours", hours)
+                    .put("htmlUrl", issue.getValue("htmlUrl") instanceof String url ? url : null));
+        }
+
+        return new JsonObject()
+                .put("open", open)
+                .put("storyPoints", points)
+                .put("remainingHours", remaining)
+                .put("items", items);
+    }
+
     public static List<JsonObject> byUtilization(List<JsonObject> rows)
     {
         List<JsonObject> out = new ArrayList<>(rows);

@@ -81,7 +81,10 @@ public final class UtilizationService
                         ? calc.get(TeamFormulas.TEAM_LIVE, params)
                         : calc.get(TeamFormulas.TEAM_PERIOD, params.put("period", p.getString("key")));
 
-                return body.map(result -> (ResultGuard.isNotApplicable(result) ? new JsonObject() : ((JsonObject) result).copy())
+                boolean everyone = PolicyService.permissions(user).contains("all.view");
+
+                return body.map(result -> unassigned((ResultGuard.isNotApplicable(result) ? new JsonObject()
+                                : ((JsonObject) result).copy()), everyone)
                         .put("period", p)
                         .put("live", live)
                         .put("team", new JsonObject()
@@ -89,6 +92,20 @@ public final class UtilizationService
                                 .put("people", members.result().size())));
             });
         });
+    }
+
+    /**
+     * The live issues that count for no person (task 25.3 of pulse-v2-live-connectors) belong to no team, so
+     * a Manager sees only their totals; their keys, summaries and links are for {@code all.view}.
+     */
+    private static JsonObject unassigned(JsonObject body, boolean everyone)
+    {
+        if (!everyone && body.getValue("unassigned") instanceof JsonObject loose)
+        {
+            body.put("unassigned", loose.copy().put("items", new JsonArray()));
+        }
+
+        return body;
     }
 
     private Future<JsonObject> resolve(String key)

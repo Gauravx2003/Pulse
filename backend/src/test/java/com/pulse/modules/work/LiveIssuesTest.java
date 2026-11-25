@@ -86,15 +86,15 @@ class LiveIssuesTest
     }
 
     @Test
-    void onAPhase1DatabaseV290AppliesAfterV190() throws Exception
+    void onAPhase1DatabaseV290AndV292ApplyAfterV190() throws Exception
     {
         ClassLoader loader = getClass().getClassLoader();
 
         ScriptCatalog full = ScriptCatalog.load(loader, ScriptCatalog.sourcesFor(ModuleRegistry.discover(loader).modules()));
 
-        // every Phase 1 migration (V3xx included) already applied, V190 and V290 pulled together
+        // every Phase 1 migration (V3xx included) already applied, the Phase 2 ones (Vx90-Vx99) pulled together
         List<SqlScript> phase1 = full.scripts(SqlScript.Kind.MIGRATION).stream()
-                .filter(s -> s.version() != 190 && s.version() != 290)
+                .filter(s -> s.version() % 100 < 90)
                 .toList();
 
         try (TestDb db = TestDb.open())
@@ -103,12 +103,16 @@ class LiveIssuesTest
 
             List<SqlScript> late = TestApi.await(MigrationRunner.migrate(db.ownerPool(), full));
 
-            assertEquals(List.of(190, 290), late.stream().map(SqlScript::version).toList());
+            List<Integer> applied = late.stream().map(SqlScript::version).toList();
 
-            JsonObject view = TestApi.await(new SqlExecutor(db.ownerPool())
-                    .queryOne("SELECT to_regclass('issues_with_assignee') IS NOT NULL AS present"));
+            assertEquals(190, applied.get(0), "V190 first: " + applied);
+            assertTrue(applied.containsAll(List.of(290, 292)), "V290 and V292 after it: " + applied);
 
-            assertTrue(view.getBoolean("present"));
+            JsonObject views = TestApi.await(new SqlExecutor(db.ownerPool())
+                    .queryOne("SELECT to_regclass('issues_with_assignee') IS NOT NULL AND to_regclass('issue_events_with_actor')"
+                            + " IS NOT NULL AS present"));
+
+            assertTrue(views.getBoolean("present"));
         }
     }
 

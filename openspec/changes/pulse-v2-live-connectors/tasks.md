@@ -199,7 +199,7 @@ Depends on the Track 1 Day 1 freeze (`ExternalAccountService` stub). Suggested o
     - the migration applies after V190
     - all Phase 1 Work, Utilization and Discipline tests pass
     - `FullOracleTest` is unchanged
-- [ ] 25.2 **Work item screens.**
+- [x] 25.2 **Work item screens.**
   - Add a source badge (Seed / Jira), an "Open in Jira" link from `html_url` and a source filter (an allow-listed list filter) on Work items and the issue drawer.
   - Rebalance suggestions link to the Jira issue.
   - Add `source` and `html_url` to responses as new fields only.
@@ -207,7 +207,7 @@ Depends on the Track 1 Day 1 freeze (`ExternalAccountService` stub). Suggested o
   - Verify:
     - UI audit and axe are clean, using rows ingested by a stub batch
     - no write request reaches Jira from any action
-- [ ] 25.3 **Unmatched Jira assignees in per-person figures.**
+- [x] 25.3 **Unmatched Jira assignees in per-person figures.**
   - Work items, Utilization and Discipline count a live issue for a person only when the Jira account is linked.
   - Team totals include unmatched issues.
   - Verify:

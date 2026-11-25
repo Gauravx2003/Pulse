@@ -40,7 +40,7 @@ test.beforeEach(async ({ context }) => {
   await distinctIp(context);
 });
 
-test.describe.serial('Visit lifecycle across rahul@, priya@ and sana@', () => {
+test.describe.serial('Visit lifecycle across rahul@, priya@ and sana@', { tag: '@flow' }, () => {
   // This suite's own notices would change other suites' unread counts; only its kinds, as suites run in parallel.
   let notificationsSince = '';
 

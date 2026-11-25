@@ -95,3 +95,5 @@ cd frontend && npm run test:e2e
 - Sign in as any demo account with `signIn(page, 'priya@pulse.demo')` from `e2e/helpers.js`, or use `signInViaApi` for tests that visit many pages.
 - Run the UI audit (`npm run audit:ui`, docs/ui-audit.md) before you open a pull request that touches a screen.
 - `e2e/db.js` runs SQL against the e2e database, to reset state an earlier run changed. Use it only for set-up.
+- The end-to-end flows of reference section 15 are tagged `@flow`; `npm run test:flows` runs only them, one at a time. The cross-module ones live in `e2e/flows.spec.js`, in the Playwright project `flows`, which runs after the module suites (project `chrome`) and one test at a time, because they write rows other suites read.
+- A SQL reset does not reach the backend's calculation cache, so a backend you keep running between runs (`reuseExistingServer`) can still show the state from the last run. Restart it, or let the run start its own.

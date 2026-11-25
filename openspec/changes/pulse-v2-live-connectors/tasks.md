@@ -108,7 +108,7 @@ Suggested order: 24.3, 24.1, 24.4 (Day 1 freeze), then 24.2, 24.5, 24.6, 24.7, 2
     - unmatched accounts recorded
   - Start `docs/live-connectors.md`, covering the contract, the fixture format and a step-by-step "how to add a connector". Tracks 2 and 3 send their sections to Track 1 for the merge.
   - Verify: a stub connector extending the contract test passes every case.
-- [ ] 24.5 **Generic Test connection, Save and Disconnect routes.** They work for any registered live connector.
+- [x] 24.5 **Generic Test connection, Save and Disconnect routes.** They work for any registered live connector.
   - `POST /api/v1/integrations/{tool}/test`:
     - validates the submitted values against `configSchema` and `secretSpec`, including the base URL rules
     - calls `testConnection`
@@ -121,7 +121,7 @@ Suggested order: 24.3, 24.1, 24.4 (Day 1 freeze), then 24.2, 24.5, 24.6, 24.7, 2
     - 401 fails with the status and the connector's hint, Save stays disabled and stored values are unchanged
     - values changed after the test cannot be saved
     - the secret appears in no response
-- [ ] 24.6 **Generic Sync now orchestrator** (`LiveSyncService`, with `SyncStateRepository extends BaseRepository`). `POST /api/v1/integrations/{tool}/sync` runs these steps:
+- [x] 24.6 **Generic Sync now orchestrator** (`LiveSyncService`, with `SyncStateRepository extends BaseRepository`). `POST /api/v1/integrations/{tool}/sync` runs these steps:
   1. Takes the per-tool lock (a conditional update on `sync_state.status`); a concurrent call gets 409.
   2. Decrypts the secret into `LiveContext` only.
   3. Calls `fetchPages(ctx, cursor, sink)`, where the sink ingests each page through `IngestService` in its own transaction.

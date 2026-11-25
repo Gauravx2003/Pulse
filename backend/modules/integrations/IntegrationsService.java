@@ -9,6 +9,9 @@ import com.pulse.platform.ingest.SeedFiles;
 import com.pulse.platform.ingest.SeedLoader;
 import com.pulse.platform.ingest.SyncLogRepository;
 import com.pulse.platform.ingest.SyncService;
+import com.pulse.platform.live.LiveConnector;
+import com.pulse.platform.live.LiveSyncService;
+import com.pulse.platform.live.SyncStateRepository;
 import com.pulse.platform.module.ModuleContext;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -20,6 +23,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -96,6 +100,15 @@ final class IntegrationsService
             JsonArray tiles = new JsonArray();
 
             s.catalogue().all().forEach(t -> tiles.add(tile(t, s)));
+
+            // a live connector for a tool the catalogue does not list still gets its tile (task 24.6)
+            for (String tool : ctx.connectors().tools())
+            {
+                if (s.catalogue().tool(tool) == null)
+                {
+                    tiles.add(tile(liveEntry(ctx.connectors().get(tool)), s));
+                }
+            }
 
             return new JsonObject().put("tiles", tiles);
         });
@@ -308,6 +321,21 @@ final class IntegrationsService
      */
     Future<JsonObject> syncNow(JsonObject user, String tool)
     {
+        LiveConnector live = ctx.connectors().get(tool);
+
+        if (live != null)
+        {
+            // a live tool that never had a live connection keeps the Phase 1 seeded path (demo seed)
+            return ctx.connections(ctx.sql()).view(tool).compose(view -> view != null ? liveSync(user, live)
+                    : seededSync(user, tool));
+        }
+
+        return seededSync(user, tool);
+    }
+
+    /** Phase 1 Sync now: the seed connector restricted to the tool. */
+    private Future<JsonObject> seededSync(JsonObject user, String tool)
+    {
         return state().compose(s ->
         {
             JsonObject t = known(s.catalogue(), tool);
@@ -330,10 +358,52 @@ final class IntegrationsService
                 .put("tile", tile(s.catalogue().tool(tool), s))));
     }
 
+    /**
+     * {@code POST /:tool/sync}: Sync now for a tool with a registered live connector only (404
+     * otherwise). Resolves to {@code {sync, tile}}.
+     */
+    Future<JsonObject> liveSyncNow(JsonObject user, String tool)
+    {
+        LiveConnector live = ctx.connectors().get(tool);
+
+        if (live == null)
+        {
+            return Future.failedFuture(ApiException.notFound("not_found", "No live connector for this tool."));
+        }
+
+        return liveSync(user, live);
+    }
+
+    /**
+     * Sync now of a live tool (task 24.6): runs {@link LiveSyncService}, and records a failed run in the
+     * credential activity log as "Sync failed · code", which also turns the tile and its action center
+     * item to Fix. 409 when the tool is not connected or a sync of it is running.
+     */
+    private Future<JsonObject> liveSync(JsonObject user, LiveConnector connector)
+    {
+        String tool = connector.tool();
+
+        UUID actor = UUID.fromString(user.getString("id"));
+
+        return new LiveSyncService(ctx).run(connector, actor)
+                .compose(entry -> "failed".equals(entry.getString("outcome"))
+                        ? new IntegrationsRepository(ctx.sql()).log(tool, "sync_failed",
+                        "Sync failed · " + entry.getString("message"), actor).map(entry)
+                        : Future.succeededFuture(entry))
+                .compose(entry -> state().map(s -> new JsonObject()
+                        .put("sync", entry)
+                        .put("tile", tile(entry(s.catalogue(), tool), s))));
+    }
+
     // ------------------------------------------------------------------ tile state
 
+    /**
+     * Everything the tiles derive from. {@code live} holds the stored connection of each registered
+     * live tool, {@code syncState} its {@code sync_state} row (task 24.6).
+     */
     private record State(IntegrationCatalogue catalogue, Map<String, JsonObject> settings,
-                         Map<String, JsonObject> latest, Map<String, JsonObject> success)
+                         Map<String, JsonObject> latest, Map<String, JsonObject> success,
+                         Map<String, JsonObject> live, Map<String, JsonObject> syncState)
     {
     }
 
@@ -341,10 +411,66 @@ final class IntegrationsService
     {
         SyncLogRepository logs = new SyncLogRepository(ctx.sql());
 
-        return Future.all(catalogue(), new IntegrationsRepository(ctx.sql()).settings(), logs.latestPerTool(),
-                        logs.latestSuccessPerTool())
+        return Future.all(List.of(catalogue(), new IntegrationsRepository(ctx.sql()).settings(), logs.latestPerTool(),
+                        logs.latestSuccessPerTool(), liveConnections(), new SyncStateRepository(ctx.sql()).all()))
                 .map(all -> new State(all.resultAt(0), byTool(all.resultAt(1)), byTool(all.resultAt(2)),
-                        byTool(all.resultAt(3))));
+                        byTool(all.resultAt(3)), byTool(all.resultAt(4)), byTool(all.resultAt(5))));
+    }
+
+    /** The stored connection view of every registered live tool that has one. */
+    private Future<JsonArray> liveConnections()
+    {
+        List<Future<JsonObject>> views = new ArrayList<>();
+
+        for (String tool : ctx.connectors().tools())
+        {
+            views.add(ctx.connections(ctx.sql()).view(tool));
+        }
+
+        return Future.all(views).map(all ->
+        {
+            JsonArray out = new JsonArray();
+
+            for (int i = 0; i < views.size(); i++)
+            {
+                JsonObject view = all.resultAt(i);
+
+                if (view != null)
+                {
+                    out.add(view);
+                }
+            }
+
+            return out;
+        });
+    }
+
+    /** The catalogue entry of {@code id}, or a minimal one for a live tool the catalogue does not list. */
+    private JsonObject entry(IntegrationCatalogue c, String id)
+    {
+        JsonObject t = c.tool(id);
+
+        return t != null ? t : liveEntry(ctx.connectors().get(id));
+    }
+
+    /** A catalogue entry built from the connector alone, so a new connector needs no catalogue change. */
+    private static JsonObject liveEntry(LiveConnector connector)
+    {
+        String id = connector.tool();
+
+        JsonObject schema = connector.configSchema() == null ? new JsonObject() : connector.configSchema();
+
+        String name = schema.getString("title", id);
+
+        return new JsonObject()
+                .put("id", id)
+                .put("mark", name.substring(0, Math.min(2, name.length())).toUpperCase(Locale.ROOT))
+                .put("name", name)
+                .put("reads", schema.getString("reads"))
+                .put("feeds", schema.getString("feeds"))
+                .put("seeded", false)
+                .put("methods", new JsonArray())
+                .put("scopes", connector.requiredScopes());
     }
 
     private static Map<String, JsonObject> byTool(JsonArray rows)
@@ -364,7 +490,14 @@ final class IntegrationsService
     {
         String id = t.getString("id");
         JsonObject settings = s.settings().getOrDefault(id, new JsonObject());
-        boolean connected = settings.getString("method") != null;
+        boolean liveTool = ctx.connectors().has(id);
+
+        // once a live connection was saved, the tool is connected only by its stored secret (task 24.6);
+        // until then (and for seeded tools) by the Phase 1 method, so the demo seed keeps working
+        boolean liveConnection = liveTool && s.live().containsKey(id);
+
+        boolean connected = liveConnection ? LiveSyncService.connected(s.live().get(id))
+                : settings.getString("method") != null;
 
         JsonObject tile = new JsonObject()
                 .put("id", id)
@@ -374,12 +507,20 @@ final class IntegrationsService
                 .put("feeds", t.getString("feeds"))
                 .put("methods", new JsonArray(t.getJsonArray("methods").stream()
                         .map(m -> ((JsonObject) m).getString("name")).toList()))
-                .put("live", connectors.registered(id))
+                .put("live", liveConnection || connectors.registered(id))
+                .put("liveConnector", liveTool)
                 .put("connected", connected);
+
+        if (liveConnection)
+        {
+            JsonObject sync = s.syncState().get(id);
+
+            tile.put("syncing", sync != null && "running".equals(sync.getString("status")));
+        }
 
         if (!connected)
         {
-            boolean planned = !t.getBoolean("seeded");
+            boolean planned = !t.getBoolean("seeded") && !liveTool;
 
             return tile.put("state", "not_connected")
                     .put("status", "Not connected")

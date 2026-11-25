@@ -43,6 +43,12 @@ public class WorkService
      */
     public static final List<String> HISTORY_FILTERS = List.of("all", "done", "carried", "bugs", "open");
 
+    /**
+     * Source filter of both lists (task 25.2, pulse-v2-live-connectors): All, Seed (demo data) or Jira
+     * (rows of the live connector). Any other value answers 400.
+     */
+    public static final List<String> SOURCES = List.of("all", "seed", "jira");
+
     public static final List<String> SORTS = List.of("key", "summary", "status", "sp", "remaining", "due", "last", "signals",
             "resolved");
 
@@ -105,8 +111,11 @@ public class WorkService
     /**
      * Work items of a person for a period: KPIs, the list with its filter chips (filtered, searched and
      * sorted), and the daily load of the active sprint or the sprints and release card of a closed period.
+     * The source filter keeps the issues of one source; the chips count within it, the KPIs and
+     * {@code sources} (issues per source) cover every issue.
      */
-    public Future<JsonObject> workItems(JsonObject user, String personId, String periodKey, String filter, String query, String sort)
+    public Future<JsonObject> workItems(JsonObject user, String personId, String periodKey, String filter, String source,
+                                        String query, String sort)
     {
         return visible(user, personId).compose(scope -> resolve(personId, periodKey).compose(period ->
         {
@@ -118,6 +127,14 @@ public class WorkService
             {
                 return Future.failedFuture(ApiException.badRequest("invalid_parameter", "Unknown filter '" + chosen + "'.")
                         .field("filter"));
+            }
+
+            String from = source == null || source.isBlank() ? "all" : source;
+
+            if (!SOURCES.contains(from))
+            {
+                return Future.failedFuture(ApiException.badRequest("invalid_parameter", "Unknown source '" + from + "'.")
+                        .field("source"));
             }
 
             String order = sort == null || sort.isBlank() ? (live ? "-signals" : "-resolved") : sort;
@@ -135,14 +152,15 @@ public class WorkService
             Future<JsonObject> identity = identity(scope, personId);
 
             Future<JsonObject> body = live
-                    ? liveWorkItems(person, withPeriod, chosen, query, order)
-                    : closedWorkItems(withPeriod, chosen, query, order);
+                    ? liveWorkItems(person, withPeriod, chosen, from, query, order)
+                    : closedWorkItems(withPeriod, chosen, from, query, order);
 
             return Future.all(identity, body).map(all -> body.result()
                     .put("person", identity.result())
                     .put("period", period)
                     .put("live", live)
                     .put("filter", chosen)
+                    .put("source", from)
                     .put("sort", order));
         }));
     }
@@ -280,7 +298,8 @@ public class WorkService
 
     // ------------------------------------------------------------------ work items parts
 
-    private Future<JsonObject> liveWorkItems(JsonObject person, JsonObject withPeriod, String filter, String query, String sort)
+    private Future<JsonObject> liveWorkItems(JsonObject person, JsonObject withPeriod, String filter, String source, String query,
+                                             String sort)
     {
         Future<Object> live = calc.get(WorkloadFormulas.LIVE_SPRINT, person);
 
@@ -298,7 +317,9 @@ public class WorkService
 
             JsonObject delivery = (JsonObject) metrics.result();
 
-            List<JsonObject> items = list(list.getJsonArray("items"));
+            List<JsonObject> every = list(list.getJsonArray("items"));
+
+            List<JsonObject> items = fromSource(every, source);
 
             Map<String, Predicate<JsonObject>> filters = Map.of(
                     "all", issue -> true,
@@ -314,7 +335,7 @@ public class WorkService
 
             JsonObject kpis = new JsonObject()
                     .put("committed", delivery.getValue("com"))
-                    .put("issues", items.size())
+                    .put("issues", every.size())
                     .put("done", delivery.getValue("dsp"))
                     .put("commitment", delivery.getValue("commit"))
                     .put("remainingHours", sprint.getValue("rem"))
@@ -326,12 +347,13 @@ public class WorkService
             return new JsonObject()
                     .put("kpis", kpis)
                     .put("chips", chips)
+                    .put("sources", sources(every))
                     .put("items", select(items, filters.get(filter), query, sort))
                     .put("dailyLoad", daily.result());
         });
     }
 
-    private Future<JsonObject> closedWorkItems(JsonObject withPeriod, String filter, String query, String sort)
+    private Future<JsonObject> closedWorkItems(JsonObject withPeriod, String filter, String source, String query, String sort)
     {
         Future<Object> metrics = calc.get(WorkloadFormulas.SPRINT_METRICS, withPeriod);
 
@@ -347,7 +369,9 @@ public class WorkService
 
         return Future.all(List.of(metrics, utilization, sprints, release, issues, band)).map(all ->
         {
-            List<JsonObject> items = list(((JsonObject) issues.result()).getJsonArray("items"));
+            List<JsonObject> every = list(((JsonObject) issues.result()).getJsonArray("items"));
+
+            List<JsonObject> items = fromSource(every, source);
 
             Map<String, Predicate<JsonObject>> filters = Map.of(
                     "all", issue -> true,
@@ -367,6 +391,7 @@ public class WorkService
                     .put("sprints", ((JsonObject) sprints.result()).getJsonArray("sprints"))
                     .put("release", ResultGuard.isNotApplicable(release.result()) ? null : release.result())
                     .put("chips", chips)
+                    .put("sources", sources(every))
                     .put("items", select(items, filters.get(filter), query, sort));
         });
     }
@@ -441,6 +466,26 @@ public class WorkService
     private static boolean hasFlag(JsonObject issue, String label)
     {
         return issue.getJsonArray("flags", new JsonArray()).stream().anyMatch(f -> label.equals(((JsonArray) f).getString(1)));
+    }
+
+    /**
+     * The issues of one source, or all of them for {@code all}.
+     */
+    private static List<JsonObject> fromSource(List<JsonObject> items, String source)
+    {
+        return "all".equals(source) ? items : items.stream().filter(issue -> source.equals(issue.getString("source"))).toList();
+    }
+
+    /**
+     * Issues per source, {@code {all, seed, jira}}, for the source filter.
+     */
+    private static JsonObject sources(List<JsonObject> items)
+    {
+        JsonObject counts = new JsonObject();
+
+        SOURCES.forEach(s -> counts.put(s, fromSource(items, s).size()));
+
+        return counts;
     }
 
     private static JsonArray select(List<JsonObject> items, Predicate<JsonObject> filter, String query, String sort)

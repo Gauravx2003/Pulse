@@ -112,7 +112,8 @@ public final class TeamViews
      * nobody fits. Nothing is written anywhere: Reassign happens in Jira.
      *
      * @param rows   {@code {id, name, util, work, cap, onboarding, level, skills}} per person
-     * @param toDo   person id to that person's To Do issues {@code {key, summary, remainingHours}}
+     * @param toDo   person id to that person's To Do issues {@code {key, summary, remainingHours, htmlUrl}};
+     *               the suggestion's issue keeps {@code htmlUrl}, the link to a live issue in its tool
      * @param match  whether the second person may take the first person's work, e.g. {@link #skillsMatch}
      */
     public static JsonObject rebalance(List<JsonObject> rows, Map<String, List<JsonObject>> toDo,
@@ -171,7 +172,8 @@ public final class TeamViews
                         .put("issue", new JsonObject()
                                 .put("key", issue.getString("key"))
                                 .put("summary", issue.getString("summary"))
-                                .put("hours", hours))
+                                .put("hours", hours)
+                                .put("htmlUrl", issue.getValue("htmlUrl") instanceof String url ? url : null))
                         .put("from", side(from, fromNow, fromAfter))
                         .put("to", side(to, toNow, toAfter))
                         .put("text", text);

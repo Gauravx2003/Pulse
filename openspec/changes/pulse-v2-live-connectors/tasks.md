@@ -199,7 +199,7 @@ Depends on the Track 1 Day 1 freeze (`ExternalAccountService` stub). Suggested o
     - the migration applies after V190
     - all Phase 1 Work, Utilization and Discipline tests pass
     - `FullOracleTest` is unchanged
-- [ ] 25.2 **Work item screens.**
+- [x] 25.2 **Work item screens.**
   - Add a source badge (Seed / Jira), an "Open in Jira" link from `html_url` and a source filter (an allow-listed list filter) on Work items and the issue drawer.
   - Rebalance suggestions link to the Jira issue.
   - Add `source` and `html_url` to responses as new fields only.

@@ -110,3 +110,33 @@ export const HISTORY_SORTS = [
   { key: 'status', label: 'Status' },
   { key: '-sp', label: 'Story points' },
 ];
+
+/** Source filter of the work item lists (task 25.2): the server accepts only these keys. */
+export const SOURCES = [
+  { key: 'all', label: 'All sources' },
+  { key: 'seed', label: 'Seed' },
+  { key: 'jira', label: 'Jira' },
+];
+
+/** Badge of an issue's source: `{ text, tone }`; a source the list does not know shows its own name. */
+export function sourceBadge(source) {
+  if (source === 'jira') {
+    return { text: 'Jira', tone: 'info' };
+  }
+
+  if (!source || source === 'seed') {
+    return { text: 'Seed', tone: '' };
+  }
+
+  return { text: source, tone: '' };
+}
+
+/**
+ * The issue's link in its tool, or null. Only http(s) links are used, so a stored value can never run
+ * script when clicked.
+ */
+export function toolUrl(issue) {
+  const url = val(issue?.htmlUrl);
+
+  return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : null;
+}

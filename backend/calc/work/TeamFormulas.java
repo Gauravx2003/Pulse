@@ -179,7 +179,8 @@ public final class TeamFormulas implements FormulaModule
                             waiting.add(new JsonObject()
                                     .put("key", issue.getString("key"))
                                     .put("summary", issue.getString("summary"))
-                                    .put("remainingHours", issue.getValue("remainingHours")));
+                                    .put("remainingHours", issue.getValue("remainingHours"))
+                                    .put("htmlUrl", issue.getValue("htmlUrl")));
                         }
                     }
 

@@ -31,7 +31,8 @@ public class IssueRepository extends ScopedRepository
                    i.estimate_hours AS "estimateHours", i.spent_hours AS "spentHours",
                    i.remaining_hours AS "remainingHours", i.due_on AS "dueOn", i.started_on AS "startedOn",
                    i.resolved_on AS "resolvedOn", i.carried_over AS "carriedOver", i.reopened,
-                   i.was_stale AS "wasStale", i.source, i.external_id AS "externalId", i.synced_at AS "syncedAt"
+                   i.was_stale AS "wasStale", i.source, i.external_id AS "externalId", i.synced_at AS "syncedAt",
+                   i.html_url AS "htmlUrl"
             FROM issues_with_assignee i
             """;
 
@@ -104,7 +105,7 @@ public class IssueRepository extends ScopedRepository
 
     /**
      * Issues of every visible person, for team views: filters {@code assigneeId}, {@code sprintId},
-     * {@code status}; search {@code q} on key and summary; sorts {@code key}, {@code due},
+     * {@code status}, {@code source}; search {@code q} on key and summary; sorts {@code key}, {@code due},
      * {@code status}.
      */
     public Future<JsonObject> page(Scope scope, MultiMap params)
@@ -113,6 +114,7 @@ public class IssueRepository extends ScopedRepository
                 .filter("assigneeId", "i.assignee_id")
                 .filter("sprintId", "i.sprint_id")
                 .filter("status", "i.status")
+                .filter("source", "i.source")
                 .search("i.key", "i.summary")
                 .sort("key", "i.key")
                 .sort("due", "i.due_on")

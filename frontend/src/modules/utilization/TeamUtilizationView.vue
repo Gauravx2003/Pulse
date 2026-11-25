@@ -12,7 +12,7 @@ import { setPerson } from '@/shell/person.js';
 import { useSharedPeriod } from '@/shell/period.js';
 import { formatDate } from '@/ui/format.js';
 import { PlAlert, PlCard, PlKpiRow, PlLoading, PlPageHeader, PlPeriodControl, PlTable, showToast } from '@/ui/index.js';
-import { band, hours, initials, num, pct, val } from '../work/presentation.js';
+import { band, hours, initials, num, pct, toolUrl, val } from '../work/presentation.js';
 
 const LIVE_COLUMNS = [
   { key: 'person', label: 'Person' },
@@ -82,6 +82,10 @@ const live = computed(() => !!data.value?.live);
 const kpis = computed(() => data.value?.kpis ?? {});
 const teamBand = computed(() => band(kpis.value.band));
 const suggestion = computed(() => val(data.value?.suggestion));
+
+// a live Jira issue opens in Jira to be reassigned there (task 25.2); Pulse never writes to Jira
+const suggestionUrl = computed(() => toolUrl(suggestion.value?.issue));
+
 const release = computed(() => val(data.value?.release));
 
 const title = computed(() => `${data.value?.team?.name ? `${data.value.team.name} team` : 'Team'} · ${data.value?.period?.short ?? ''}`);
@@ -201,7 +205,16 @@ function reassign() {
         <PlAlert v-if="suggestion" badge="Suggestion" tone="accent">
           {{ suggestion.text }}
           <template #action>
-            <button type="button" class="pl-btn pl-btn-sm" @click="reassign">Reassign in Jira</button>
+            <a
+              v-if="suggestionUrl"
+              class="pl-btn pl-btn-sm"
+              :href="suggestionUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Reassign in Jira<span class="pl-sr-only"> (opens {{ suggestion.issue.key }} in a new tab)</span>
+            </a>
+            <button v-else type="button" class="pl-btn pl-btn-sm" @click="reassign">Reassign in Jira</button>
           </template>
         </PlAlert>
 

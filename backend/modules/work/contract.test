@@ -3,6 +3,8 @@
 # Writes send a body that fails validation where the route lets the role in, so no data changes.
 GET /api/v1/work/people/{person:priya@pulse.demo}/overview => 200 200 200 403 403 403
 GET /api/v1/work/people/{person:priya@pulse.demo}/work-items?period=s:S42 => 200 200 200 403 403 403
+# the source filter of task 25.2 keeps the same visibility
+GET /api/v1/work/people/{person:priya@pulse.demo}/work-items?source=jira => 200 200 200 403 403 403
 # a peer gets the same answer as for a missing issue
 GET /api/v1/work/issues/PLAT-2231 => 200 200 200 404 404 404
 # Nudge is for managers; it is sent once per sender, so both managers get 201

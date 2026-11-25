@@ -153,6 +153,23 @@ class TeamViewsTest
         assertEquals("X-2", suggestion.getJsonObject("issue").getString("key"));
         assertEquals("Chen", suggestion.getJsonObject("to").getString("name"), "Bala is a level below Asha");
         assertTrue(suggestion.getString("text").startsWith("Move X-2 (12.3 h) from Asha (150%) to Chen (40%)."), suggestion.getString("text"));
+        assertNull(suggestion.getJsonObject("issue").getValue("htmlUrl"), "a seed issue has no tool link");
+    }
+
+    @Test
+    void aLiveIssueSuggestionKeepsItsJiraLink()
+    {
+        List<JsonObject> team = List.of(
+                row("a", "Asha", 150, 9, 6, false).put("level", "L3"),
+                row("c", "Chen", 40, 3.6, 9, false).put("level", "L4"));
+
+        Map<String, List<JsonObject>> work = Map.of("a",
+                List.of(issue("JIRA-7", 12).put("htmlUrl", "http://jira.test/browse/JIRA-7"), issue("X-1", 6)));
+
+        JsonObject suggestion = TeamViews.rebalance(team, work, TeamViews::skillsMatch, rules);
+
+        assertEquals("JIRA-7", suggestion.getJsonObject("issue").getString("key"));
+        assertEquals("http://jira.test/browse/JIRA-7", suggestion.getJsonObject("issue").getString("htmlUrl"));
     }
 
     @Test

@@ -98,7 +98,8 @@ public final class WorkloadFormulas implements FormulaModule
     /**
      * One issue row with its sprint, release and last activity. Issues are read through the view
      * {@code issues_with_assignee} (V290): seed rows keep their stored assignee, live rows take the person
-     * linked to their tool account, or none while it is unmatched. No formula changes with it.
+     * linked to their tool account, or none while it is unmatched. No formula changes with it. Each row
+     * carries its {@code source} (seed, jira) and the tool link {@code htmlUrl} (null for seed rows).
      */
     static final String ISSUE_ROW = """
             SELECT i.id, i.key, i.summary, i.status, i.issue_type AS "issueType", i.assignee_id AS "assigneeId",
@@ -106,6 +107,7 @@ public final class WorkloadFormulas implements FormulaModule
                    i.remaining_hours AS "remainingHours", i.due_on AS "dueOn", i.started_on AS "startedOn",
                    i.resolved_on AS "resolvedOn", i.carried_over AS "carriedOver", i.was_stale AS "wasStale",
                    i.reopened, s.key AS "sprintKey", s.work_ends_on AS "sprintWorkEnd", r.key AS "releaseKey",
+                   i.source, i.html_url AS "htmlUrl",
                    to_char(coalesce(
                        (SELECT max(e.occurred_at) FROM issue_events e
                         WHERE e.issue_id = i.id AND e.actor_id = i.assignee_id AND NOT e.is_bot

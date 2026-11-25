@@ -3,6 +3,7 @@
 // "Nudge"): status, type and SP, assignee and due date, signal badges, Original / Logged / Remaining,
 // the date and time checks, and the activity timeline in which bot and planning events are greyed and
 // not counted. Nudge on Slack is for managers on a stale or not-started issue; the server rate-limits it.
+// The issue's source shows as a badge, and a live Jira issue links to Jira in a new tab (task 25.2).
 import { computed, ref, watch } from 'vue';
 import { api } from '@/api/client.js';
 import { Badge } from '@/kit/index.js';
@@ -10,7 +11,7 @@ import { statusTone } from '@/kit/tones.js';
 import { can } from '@/shell/session.js';
 import { formatDate, formatDateTime } from '@/ui/format.js';
 import { PlAlert, PlDrawer, PlLoading, showToast } from '@/ui/index.js';
-import { flags, hours, idleText, num, val } from './presentation.js';
+import { flags, hours, idleText, num, sourceBadge, toolUrl, val } from './presentation.js';
 
 const props = defineProps({
   issueKey: { type: String, default: null },
@@ -51,6 +52,8 @@ async function load(key) {
 const issue = computed(() => data.value?.issue ?? null);
 const checks = computed(() => data.value?.checks ?? {});
 const nudge = computed(() => data.value?.nudge ?? null);
+const source = computed(() => sourceBadge(issue.value?.source));
+const url = computed(() => toolUrl(issue.value));
 
 const checkRows = computed(() => {
   const c = checks.value;
@@ -170,6 +173,10 @@ async function sendNudge() {
       <div class="row">
         <Badge :text="issue.status" :tone="statusTone(issue.status)" />
         <span class="pl-caption">{{ issue.issueType }} · {{ num(issue.storyPoints) }} SP</span>
+        <Badge :text="source.text" :tone="source.tone" />
+        <a v-if="url" class="pl-btn pl-btn-sm" :href="url" target="_blank" rel="noopener noreferrer">
+          Open in Jira<span class="pl-sr-only"> (opens in a new tab)</span>
+        </a>
       </div>
       <div class="pl-caption">
         Assignee {{ data.assignee?.name ?? '—' }} · Due {{ formatDate(val(issue.dueOn)) }} · Last activity

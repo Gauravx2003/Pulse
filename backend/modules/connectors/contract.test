@@ -1,0 +1,4 @@
+# Role matrix (task 23.1, spec platform/rbac-visibility "Contract test matrix"), run by ContractMatrixTest.
+# METHOD /path [json body] [fresh] => ADMIN (hr@) MANAGER (rahul@) EMPLOYEE (priya@) PEER (arjun@) MENTOR (sara@) OWNER (sana@)
+# The connectors module (change pulse-v2-live-connectors) mounts no routes: connectors are reached only through
+# the generic /api/v1/integrations routes, whose lines are in modules/integrations/contract.test.

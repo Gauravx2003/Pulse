@@ -6,6 +6,7 @@ import com.pulse.platform.db.SqlExecutor;
 import com.pulse.platform.http.BodySchema;
 import com.pulse.platform.http.ExpectedVersion;
 import com.pulse.platform.http.Ids;
+import com.pulse.platform.live.StubLiveConnector;
 import com.pulse.platform.module.BadgeProvider;
 import com.pulse.platform.module.JobSpec;
 import com.pulse.platform.module.ModuleContext;
@@ -47,6 +48,13 @@ public class ProbeModule implements PulseModule
     public String id()
     {
         return "probe";
+    }
+
+    /** Registers the stub live connector from a module descriptor, as the connectors module does (task 24.3). */
+    @Override
+    public void start(ModuleContext ctx)
+    {
+        ctx.connectors().register(new StubLiveConnector());
     }
 
     /**

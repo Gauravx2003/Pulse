@@ -78,7 +78,7 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web-client</artifactId>
-            <scope>test</scope>
+            <!-- compile scope since task 24.3: GuardedHttp wraps it for live connectors -->
         </dependency>
     </dependencies>
 

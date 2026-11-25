@@ -4,6 +4,7 @@ import com.pulse.calc.core.CalcService;
 import com.pulse.platform.accounts.ExternalAccountService;
 import com.pulse.platform.accounts.SqlExternalAccountService;
 import com.pulse.platform.db.SqlExecutor;
+import com.pulse.platform.live.LiveConnectorRegistry;
 import com.pulse.platform.notify.NotificationService;
 import com.pulse.platform.policy.PolicyService;
 import io.vertx.core.Vertx;
@@ -20,10 +21,19 @@ import io.vertx.pgclient.PgPool;
  * {@code registry} lists the discovered modules; the shared admin modules (task 5.1) read the
  * permission catalogue, the menu and the personal-data erasure hooks from it. {@link #notifications()}
  * sends in-app notifications (task 5.3) with the privacy and visibility rules applied.
+ * {@code connectors} holds the live connectors that modules register from {@link PulseModule#start}
+ * (task 24.3, change pulse-v2-live-connectors); one registry per context, filled before routes mount.
  */
 public record ModuleContext(Vertx vertx, JsonObject config, PgPool pool, PolicyService policy, CalcService calc,
-                            ModuleRegistry registry)
+                            ModuleRegistry registry, LiveConnectorRegistry connectors)
 {
+    /** A context with an empty live connector registry (the Phase 1 constructor). */
+    public ModuleContext(Vertx vertx, JsonObject config, PgPool pool, PolicyService policy, CalcService calc,
+                         ModuleRegistry registry)
+    {
+        this(vertx, config, pool, policy, calc, registry, new LiveConnectorRegistry());
+    }
+
     /** The shared data access entry point (task 1.6). */
     public SqlExecutor sql()
     {

@@ -38,6 +38,15 @@ public interface PulseModule {
         return List.of();
     }
 
+    /**
+     * Called once for every {@link ModuleContext} (each HTTP verticle instance and the scheduler),
+     * for all modules, before any routes are mounted. Register live connectors here with
+     * {@code ctx.connectors().register(...)} (task 24.3). Keep it cheap and free of I/O.
+     */
+    default void start(ModuleContext ctx)
+    {
+    }
+
     /** Mount this module's handlers on its own sub-router (already scoped to {@code /api/v1/<id>}). */
     default void routes(Router router, ModuleContext ctx) {
     }

@@ -181,6 +181,12 @@ public class HttpServerVerticle extends AbstractVerticle
         // scheduled jobs (task 5.5): the Admin trigger and run records; the ticks run in SchedulerVerticle
         JobRoutes.mount(router, API_PREFIX, policy, new JobRunner(moduleContext));
 
+        // live connectors (task 24.3) register before any module mounts routes that look them up
+        for (PulseModule module : registry.modules())
+        {
+            module.start(moduleContext);
+        }
+
         for (PulseModule module : registry.modules())
         {
             Router sub = Router.router(vertx);

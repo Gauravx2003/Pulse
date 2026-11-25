@@ -96,6 +96,52 @@ Connectors never store or decrypt anything themselves; the platform does it.
   every `password`, `token` and `secret` member. Audit summaries replace the same names, plus
   `authorization` and `ciphertext`, with `[redacted]`.
 
+### Test connection, Save and Disconnect (task 24.5)
+
+The same routes work for every registered live connector. All of them are Admin only
+(`integrations.manage`). A tool without a live connector answers 404 on these routes; seeded tools
+keep the Phase 1 `/tools/{tool}/...` routes.
+
+| Route | Body | Answer |
+|---|---|---|
+| `GET /api/v1/integrations/{tool}/connection` | | `{tool, source, configSchema, secretSpec, requiredScopes, connection}`, where `connection` is the view above or null |
+| `POST /api/v1/integrations/{tool}/test` | `{config, secret, expiresAt?}` | `{ok, status, code, account, scopes, scopeNote, fields, expiresAt, hint, warnings, proof, proofExpiresAt}` |
+| `PUT /api/v1/integrations/{tool}/connection` | `{config, secret, expiresAt?, proof}` | as `GET` |
+| `DELETE /api/v1/integrations/{tool}/connection` | | as `GET`; 409 `not_connected` when no secret is stored |
+
+- **Validation.** `LiveConfig` checks `config` against `configSchema()` and the secret against
+  `secretSpec()` before any request leaves the process. Errors are 400 `validation_failed`, naming
+  `config.<field>` or `secret`.
+  - Field types: `text`, `url`, `list`, `date`, `boolean`, `choice`.
+  - `url` follows the base URL rules: it is stored normalized, and `http` adds an `insecure_http`
+    warning.
+  - `list` takes an array or a comma-separated string.
+  - `choice` takes one of `options`, given as strings or `{value, label}`.
+  - `pattern` applies to text values and to each list item.
+  - `dependsOn: {field, values: [...]}` makes a field count only while that other field holds one
+    of the values, for example a username needed only for `basic` auth. Otherwise its value is
+    dropped.
+  - Unknown fields are refused.
+- **Expiry.** `expiresAt` is an optional ISO date, entered by the Admin (for example for a Jira
+  PAT). When it is empty, Save stores the `expiresAt` that the test reported (for example a GitHub
+  header).
+- **Pass.** A test passes only when the connector says `ok` **and** the status is 200. Errors from
+  the guarded client are reported with `ok: false`, a `code` (`401`, `redirect`, `timeout`, ...) and
+  a `hint`; they are not HTTP errors. A 401 without the connector's own hint gets "401 Unauthorized,
+  check the username and password or token". Nothing is stored by a test.
+- **Proof.** Only a passing test carries a `proof`. Save accepts it once, within 10 minutes, for the
+  same tool and the same normalized config, secret and expiry. Otherwise Save answers 422
+  `test_required` and the stored values are unchanged. Proofs are kept in memory in
+  `vertx.sharedData()` as an HMAC, never the secret, so a restart forgets them.
+- **Save** encrypts the secret, then writes the credential activity log ("Credentials added" or
+  "Credentials changed") and a `credential.changed` audit entry with the config field names, all in
+  one transaction. Without `PULSE_SECRET_KEY` it answers 422 `secret_key_missing` before the proof is
+  used.
+- **Disconnect** deletes the secret and keeps the config and every ingested row. It writes the
+  credential activity log and the audit entry.
+- **No secret out.** Responses carry only the fields listed above. Any string that contains the
+  submitted secret is masked as a last guard.
+
 ## 2. Fixtures and the mock server
 
 Automated tests never call a real tool. `LiveMockServer` serves recorded answers on

@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  * ({@link RequestId}); the actor role defaults to the actor's current role.
  *
  * <p><b>No secrets or free text.</b> Summary values under secret-looking names (password, token,
- * secret, api key, cookie, session id) and free-text names (comment, notes, text, feedback ...) are replaced
+ * secret, api key, cookie, session id, authorization, ciphertext) and free-text names (comment, notes, text, feedback ...) are replaced
  * by {@value #REDACTED}, and other long strings are cut to {@value #MAX_TEXT} characters. Name the
  * fields that changed instead of their values.
  */
@@ -44,7 +44,7 @@ public final class AuditService
     public static final int MAX_TEXT = 200;
 
     private static final Pattern SECRET_KEY = Pattern.compile(
-            "(?i).*(password|passwd|token|secret|api_?key|cookie|session_?id|credential_value|private_key).*");
+            "(?i).*(password|passwd|token|secret|api_?key|cookie|session_?id|credential_value|private_key|authorization|ciphertext).*");
 
     private static final Set<String> FREE_TEXT_KEYS = Set.of("comment", "comments", "note", "notes", "text",
             "feedback", "body", "answer", "answers", "reflection", "message");

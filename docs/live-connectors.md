@@ -75,6 +75,27 @@ public void start(ModuleContext ctx)
 
 Platform code never imports a connector.
 
+### Secrets at rest (task 24.2)
+
+Connectors never store or decrypt anything themselves; the platform does it.
+
+- **Key.** `PULSE_SECRET_KEY` is 32 random bytes in base64. Generate one with
+  `openssl rand -base64 32`. Without it, saving a live credential fails with 422
+  `secret_key_missing` and nothing is stored. Seeded tools don't need it.
+- **Storage.** `ConnectionStore` (`ctx.connections(sql)`) encrypts the secret with `SecretBox`
+  (AES-256-GCM, a random 96-bit IV per save, bound to the tool id) and writes one row per tool in
+  `integration_connections`. Only registered live connectors are stored there.
+- **What goes out.** `ConnectionStore.view(tool)` is the only shape a response may carry:
+  `{tool, config, last4, hasSecret, expiresAt, state, rotatedAt, updatedAt, version}`. `last4` is
+  null for secrets shorter than 12 characters. Ciphertext and IV never leave the database.
+- **Unreadable secret.** If the key is missing or changed, or the row was altered,
+  `ConnectionStore.secret(tool)` fails with `SecretKeyException` (`secret_unreadable`). The test or
+  sync sends no request and records `SecretKeyException.SYNC_ERROR` (`key`), so the tile shows
+  "Sync failed · key" and the Admin enters the credentials again. Key rotation is not supported yet.
+- **Redaction.** Logs mask `Authorization` header values (any scheme), `Basic` credentials and
+  every `password`, `token` and `secret` member. Audit summaries replace the same names, plus
+  `authorization` and `ciphertext`, with `[redacted]`.
+
 ## 2. Fixtures and the mock server
 
 Automated tests never call a real tool. `LiveMockServer` serves recorded answers on

@@ -62,7 +62,7 @@ Suggested order: 24.3, 24.1, 24.4 (Day 1 freeze), then 24.2, 24.5, 24.6, 24.7, 2
     - a second link of the same account returns 409
     - forbidden and nonexistent records get the same response
     - Admin-only role matrix
-- [ ] 24.2 **Secret storage.**
+- [x] 24.2 **Secret storage.**
   - Implement `SecretBox`:
     - AES-256-GCM with a random 96-bit IV
     - key from `PULSE_SECRET_KEY` (32 bytes, base64)

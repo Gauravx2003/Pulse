@@ -37,6 +37,7 @@ import java.util.function.Supplier;
  * POST   /:tool/test                  {config, secret, expiresAt?}: real Test connection; a pass carries a proof
  * PUT    /:tool/connection            {config, secret, expiresAt?, proof}: save, only with a passing test's proof
  * DELETE /:tool/connection            disconnect: delete the secret, keep every ingested row
+ * POST   /:tool/sync                  live Sync now: {sync, tile}; 409 while a sync of the tool runs (task 24.6)
  * </pre>
  * The {@code /:tool/...} routes answer only for tools with a registered live connector (404 otherwise);
  * seeded tools keep the {@code /tools/:tool/...} routes.
@@ -146,6 +147,9 @@ final class IntegrationsRoutes
                 .handler(this::liveSave);
 
         router.delete("/:tool/connection").handler(policy.requires(PERMISSION)).handler(this::liveDisconnect);
+
+        // live Sync now (task 24.6); /tools/:tool/sync also runs the live sync for a live tool
+        router.post("/:tool/sync").handler(policy.requires(PERMISSION)).handler(this::liveSyncNow);
     }
 
     private void liveConnection(RoutingContext rc)
@@ -225,6 +229,11 @@ final class IntegrationsRoutes
     private void syncNow(RoutingContext rc)
     {
         integrations.syncNow(PolicyService.user(rc), rc.pathParam("tool")).onSuccess(rc::json).onFailure(rc::fail);
+    }
+
+    private void liveSyncNow(RoutingContext rc)
+    {
+        integrations.liveSyncNow(PolicyService.user(rc), rc.pathParam("tool")).onSuccess(rc::json).onFailure(rc::fail);
     }
 
     private void jiraConfig(RoutingContext rc)

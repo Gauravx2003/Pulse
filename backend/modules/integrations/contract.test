@@ -23,3 +23,5 @@ GET /api/v1/integrations/stub/connection => 200 403 403 403 403 403
 POST /api/v1/integrations/stub/test {} => 400 403 403 403 403 403
 PUT /api/v1/integrations/stub/connection {} => 400 403 403 403 403 403
 DELETE /api/v1/integrations/stub/connection => 409 403 403 403 403 403
+# Live Sync now (task 24.6): Admin only; the stub is not connected here, so the Admin gets 409 not_connected
+POST /api/v1/integrations/stub/sync => 409 403 403 403 403 403

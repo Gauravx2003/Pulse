@@ -207,7 +207,7 @@ Depends on the Track 1 Day 1 freeze (`ExternalAccountService` stub). Suggested o
   - Verify:
     - UI audit and axe are clean, using rows ingested by a stub batch
     - no write request reaches Jira from any action
-- [ ] 25.3 **Unmatched Jira assignees in per-person figures.**
+- [x] 25.3 **Unmatched Jira assignees in per-person figures.**
   - Work items, Utilization and Discipline count a live issue for a person only when the Jira account is linked.
   - Team totals include unmatched issues.
   - Verify:

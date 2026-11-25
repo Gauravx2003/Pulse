@@ -20,7 +20,8 @@ import java.util.UUID;
  *
  * <p>Issues are read through the view {@code issues_with_assignee} (V290, task 25.1 of
  * pulse-v2-live-connectors): a live issue's assignee is the person linked to its tool account, null
- * while the account is unmatched, so scopes and filters on {@code i.assignee_id} follow the link.
+ * while the account is unmatched, so scopes and filters on {@code i.assignee_id} follow the link. The
+ * timeline reads {@code issue_events_with_actor} (V292), where a live author is matched the same way.
  */
 public class IssueRepository extends ScopedRepository
 {
@@ -71,7 +72,7 @@ public class IssueRepository extends ScopedRepository
                 SELECT e.id, e.occurred_at AS "occurredAt", e.kind, e.field, e.from_value AS "fromValue",
                        e.to_value AS "toValue", e.actor_id AS "actorId", e.actor_name AS "actorName",
                        e.is_bot AS "isBot", e.summary
-                FROM issue_events e JOIN issues_with_assignee i ON i.id = e.issue_id
+                FROM issue_events_with_actor e JOIN issues_with_assignee i ON i.id = e.issue_id
                 WHERE e.issue_id = $1 AND {scope}
                 ORDER BY e.occurred_at DESC, e.id""", Tuple.of(issueId));
     }

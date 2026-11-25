@@ -4,10 +4,12 @@
 // rebalance suggestion, four KPIs, the daily heatmap and the people table; a closed sprint, month or
 // release shows the history KPIs, the people of the period, team utilization by sprint and the release
 // card. Every number and band comes from GET /utilization/team; a row opens that person's Overview.
+// The live sprint also lists the live Jira issues that count for no person (task 25.3).
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { api } from '@/api/client.js';
 import { Badge, StatTile, TeamHeatmap, UtilizationMeter } from '@/kit/index.js';
+import { statusTone } from '@/kit/tones.js';
 import { setPerson } from '@/shell/person.js';
 import { useSharedPeriod } from '@/shell/period.js';
 import { formatDate } from '@/ui/format.js';
@@ -85,6 +87,33 @@ const suggestion = computed(() => val(data.value?.suggestion));
 
 // a live Jira issue opens in Jira to be reassigned there (task 25.2); Pulse never writes to Jira
 const suggestionUrl = computed(() => toolUrl(suggestion.value?.issue));
+
+// live Jira issues of the sprint that count for no person (task 25.3): in the team's open count, listed
+// by key only for all.view (the server leaves the list empty for a Manager)
+const unassigned = computed(() => {
+  const u = val(data.value?.unassigned);
+
+  return u && (u.open > 0 || (u.items ?? []).length) ? u : null;
+});
+
+const unassignedRows = computed(() =>
+  (unassigned.value?.items ?? []).map((i) => ({
+    key: i.key,
+    summary: i.summary,
+    status: i.status,
+    sp: num(i.storyPoints),
+    remaining: hours(i.remainingHours),
+    url: toolUrl(i),
+  })),
+);
+
+const UNASSIGNED_COLUMNS = [
+  { key: 'key', label: 'Key' },
+  { key: 'summary', label: 'Summary' },
+  { key: 'status', label: 'Status' },
+  { key: 'sp', label: 'SP', num: true },
+  { key: 'remaining', label: 'Remaining', num: true },
+];
 
 const release = computed(() => val(data.value?.release));
 
@@ -287,6 +316,34 @@ function reassign() {
             </template>
           </PlTable>
         </PlCard>
+
+        <PlCard
+          v-if="unassigned"
+          title="Not counted for anyone"
+          subtitle="Live Jira issues of the sprint whose assignee is not linked to a person · part of the team's open issues"
+        >
+          <p class="pl-caption">
+            {{ num(unassigned.open, 0) }} open · {{ num(unassigned.storyPoints) }} SP · {{ hours(unassigned.remainingHours) }}
+            remaining. They count for a person once an Admin links the Jira account in Integrations.
+          </p>
+          <PlTable
+            v-if="unassignedRows.length"
+            :columns="UNASSIGNED_COLUMNS"
+            :rows="unassignedRows"
+            row-key="key"
+            label="Live issues not counted for anyone"
+          >
+            <template #cell-key="{ row }">
+              <span class="key-cell">
+                <span class="pl-key">{{ row.key }}</span>
+                <a v-if="row.url" :href="row.url" target="_blank" rel="noopener noreferrer">
+                  Open in Jira<span class="pl-sr-only"> {{ row.key }}, opens in a new tab</span>
+                </a>
+              </span>
+            </template>
+            <template #cell-status="{ row }"><Badge :text="row.status" :tone="statusTone(row.status)" /></template>
+          </PlTable>
+        </PlCard>
       </template>
 
       <!-- closed sprint, month or release -->
@@ -365,6 +422,13 @@ function reassign() {
 </template>
 
 <style scoped>
+.key-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 .heat-scroll {
   max-width: 100%;
   overflow-x: auto;

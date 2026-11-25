@@ -95,6 +95,11 @@ public final class WorkloadFormulas implements FormulaModule
      */
     public static final Set<String> COUNTED_ACTIVITY = Set.of("transition", "worklog", "comment", "commit", "pull_request");
 
+    /**
+     * One issue row with its sprint, release and last activity. Issues are read through the view
+     * {@code issues_with_assignee} (V290): seed rows keep their stored assignee, live rows take the person
+     * linked to their tool account, or none while it is unmatched. No formula changes with it.
+     */
     static final String ISSUE_ROW = """
             SELECT i.id, i.key, i.summary, i.status, i.issue_type AS "issueType", i.assignee_id AS "assigneeId",
                    i.story_points AS "storyPoints", i.estimate_hours AS "estimateHours", i.spent_hours AS "spentHours",
@@ -109,7 +114,7 @@ public final class WorkloadFormulas implements FormulaModule
                         WHERE e.issue_id = i.id AND e.kind IN ('created', 'assignee_change')) AT TIME ZONE 'Asia/Kolkata',
                        coalesce(i.started_on, s.starts_on, i.created_at::date)::timestamp),
                        'YYYY-MM-DD"T"HH24:MI') AS "lastActivity"
-            FROM issues i
+            FROM issues_with_assignee i
             LEFT JOIN sprints s ON s.id = i.sprint_id
             LEFT JOIN releases r ON r.id = i.release_id
             """;
@@ -173,7 +178,7 @@ public final class WorkloadFormulas implements FormulaModule
 
         return WorkSql.row(ctx, """
                 SELECT sum(i.spent_hours) AS spent, sum(i.story_points) AS points
-                FROM issues i JOIN sprints s ON s.id = i.sprint_id
+                FROM issues_with_assignee i JOIN sprints s ON s.id = i.sprint_id
                 WHERE i.assignee_id = $1 AND i.status = 'Done' AND i.story_points > 0
                   AND s.id IN (SELECT id FROM sprints WHERE ends_on < $2 ORDER BY ends_on DESC LIMIT $3)""",
                         Tuple.of(person, ctx.today(), CALIBRATION_SPRINTS))

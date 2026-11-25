@@ -190,7 +190,7 @@ Depends on the Track 1 Day 1 freeze (`ExternalAccountService` stub). Suggested o
 
 ## 25. Live rows in work data and screens
 
-- [ ] 25.1 **Migration V290 for Jira (additive).** *(Day 1: column names)*
+- [x] 25.1 **Migration V290 for Jira (additive).** *(Day 1: column names)*
   - Add `html_url` and `assignee_account_id` to `issues`.
   - Add an index on (source, synced_at).
   - Add a read view that resolves the person of live issues through `external_accounts`; seed rows keep their stored person.

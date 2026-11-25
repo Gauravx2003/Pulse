@@ -92,8 +92,9 @@ class ExternalAccountsTest
         ScriptCatalog full = ScriptCatalog.load(loader,
                 ScriptCatalog.sourcesFor(ModuleRegistry.discover(loader).modules()));
 
+        // a Phase 1 database: V290 (Track 2, task 25.1) reads external_accounts, so it is pending with V190
         List<SqlScript> withoutV190 = full.scripts(SqlScript.Kind.MIGRATION).stream()
-                .filter(s -> s.version() != 190)
+                .filter(s -> s.version() != 190 && s.version() != 290)
                 .toList();
 
         assertTrue(withoutV190.stream().anyMatch(s -> s.version() >= 300), "the catalogue has V300+");
@@ -104,7 +105,7 @@ class ExternalAccountsTest
 
             List<SqlScript> late = TestApi.await(MigrationRunner.migrate(db.ownerPool(), full));
 
-            assertEquals(List.of(190), late.stream().map(SqlScript::version).toList());
+            assertEquals(List.of(190, 290), late.stream().map(SqlScript::version).toList());
 
             SqlExecutor sql = new SqlExecutor(db.ownerPool());
 

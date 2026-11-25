@@ -44,7 +44,7 @@ Suggested order: 24.3, 24.1, 24.4 (Day 1 freeze), then 24.2, 24.5, 24.6, 24.7, 2
 
 ## 24. Generic live connector platform
 
-- [ ] 24.1 **Migration V190 and external accounts.** *(Day 1: interface and stub)*
+- [x] 24.1 **Migration V190 and external accounts.** *(Day 1: interface and stub)*
   - Create three tables:
     - `external_accounts`: id, person_id nullable, tool, tool_account_id, login, display_name, email nullable, is_bot, first_seen_at, timestamps; unique on (tool, tool_account_id)
     - `sync_state`: tool primary key, cursor, last_run_at, status, last_error_code

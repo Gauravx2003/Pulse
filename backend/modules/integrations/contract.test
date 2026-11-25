@@ -13,3 +13,8 @@ GET /api/v1/integrations/jira/config => 200 403 403 403 403 403
 PUT /api/v1/integrations/jira/config {} => 400 403 403 403 403 403
 GET /api/v1/integrations/sync-log => 200 403 403 403 403 403
 GET /api/v1/integrations/credential-log => 200 403 403 403 403 403
+# Live tool accounts (task 24.1): Admin only; an unknown account id is 404 for the Admin, 403 for everyone else
+GET /api/v1/integrations/accounts => 200 403 403 403 403 403
+PUT /api/v1/integrations/accounts/00000000-0000-4000-8000-0000000024a1/link {} => 400 403 403 403 403 403
+DELETE /api/v1/integrations/accounts/00000000-0000-4000-8000-0000000024a1/link => 404 403 403 403 403 403
+PUT /api/v1/integrations/accounts/00000000-0000-4000-8000-0000000024a1/bot {} => 400 403 403 403 403 403

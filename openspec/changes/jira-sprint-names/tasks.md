@@ -59,12 +59,19 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 4. Docs and the live database (Track 1)
 
-- [ ] 4.1 Update the sprints row of "Jira Server → Pulse" in `docs/live-connectors.md` (`name` = the sprint's Jira name; the screens show it, else "Sprint <number>"). Add to `docs/demo.md` ("The real team on live Jira") that sprint names arrive on the next full read.
+- [x] 4.1 Update the sprints row of "Jira Server → Pulse" in `docs/live-connectors.md` (`name` = the sprint's Jira name; the screens show it, else "Sprint <number>"). Add to `docs/demo.md` ("The real team on live Jira") that sprint names arrive on the next full read.
 
   Verify: the rows match 1.2 and 3.1.
-- [ ] 4.2 On `pulse_live`, after deploying groups 1–3:
+- [x] 4.2 On `pulse_live`, after deploying groups 1–3:
   - clear the Jira cursor once (design decision 5) and run Sync now
   - check that every stored Jira sprint has a name
   - check that the period picker lists sprints by their Jira names, and that the overlapping sprints of different boards are told apart
 
   Verify: the counts (sprints, sprints with a name, duplicate names) are recorded in the PR description, with no real names.
+
+  **Results (2026-11-26):**
+  - After V296 the Jira cursor was cleared once. Two full reads then timed out at a 100-issue page (6-17 s per page against the 15 s read timeout); the connector now reads 50 issues per page with a 1.5 s pause between pages (`JiraConnector.PAGE_SIZE`, `PAGE_PAUSE_MS`).
+  - Sync now then succeeded in 21 min: 214 search requests, no timeout, 10,669 issues.
+  - Jira sprints stored: 126; with a name: 126; empty names: 0; seed sprints with a name: 0.
+  - Duplicate names: 0, so no label needs its key. Of 434 pairs of sprints whose dates overlap (several boards), none share a name, and no name looks like the old "Sprint <id>" fallback.
+

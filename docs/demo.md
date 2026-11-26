@@ -261,6 +261,12 @@ Then:
    field ids (see "Hours from the Start/End fields" below) before you save.
 3. **Unmatched accounts.** Link anyone whose Jira email is hidden or different.
 
+**Sprint names.** Sprints show their Jira names (for example "Atlas 2.4.1 · 8 Sep – 2 Oct" in the
+period picker); a sprint without a name shows "Sprint <Jira id>", and two sprints with the same name
+add their key, as "Sprint 12 (J140)". Names arrive with the sprint records, so sprints stored before
+names were synced get them on the next **full** read. A connection that synced before that upgrade
+needs its Jira cursor cleared once, then **Sync now** (it takes as long as the first sync).
+
 #### Hours from the Start/End fields
 
 This team does not log work in Jira: worklogs and time spent are empty. It records time in the

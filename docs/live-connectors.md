@@ -325,8 +325,14 @@ task 25.4.
 - The sprint field is read in both forms Jira Server returns: the string
   `com.atlassian.greenhopper.service.sprint.Sprint@…[id=…,name=…,state=…,startDate=…,endDate=…,…]`
   (`<null>` read as null) and the object `{id, name, state, startDate, endDate, …}`.
-- `key` = `J<id>` (apart from the seed's `S<n>`, 25.4 review), `number` = the Jira id (the screens show "Sprint <number>"), `starts_on` = `startDate`'s date, `work_ends_on` =
+- `key` = `J<id>` (apart from the seed's `S<n>`, 25.4 review), `number` = the Jira id, `starts_on` = `startDate`'s date, `work_ends_on` =
   `endDate`'s date, `ends_on` = the Sunday on or after `work_ends_on` (as seeded sprints end).
+- `name` = the sprint's Jira name, trimmed; null when Jira gives none (change jira-sprint-names). A
+  rename in Jira updates the same row on the next sync of an issue in that sprint.
+- **Labels.** Every screen names a sprint by `name`, else "Sprint <number>" (seed sprints have no name,
+  so they stay "Sprint 43"). When two sprints share a name, as on two boards, each label adds its key:
+  "Sprint 12 (J140)". Keys never change with the name, so saved period choices and snapshots keep
+  working.
 - A sprint without both dates (a future sprint) is not stored, and an issue in it gets no `sprint_id`.
 
 **`issue_events`** (`source = 'jira'`, `external_id` = `<key>|<event id>`)

@@ -2,6 +2,11 @@
 # Starts the backend for the e2e run: its own port and database (created on first use), demo seed on
 # and "today" pinned to 28 Sep 2026 so Sprint 43 is active and Sprint 42 is closed, as in the prototype.
 # Usage: start-backend.sh <port> <app origin>
+#
+# The live-connector flows (playwright.live.config.js) run on their own backend and set:
+#   PULSE_TODAY               another pinned "today" (inside the live sprint of their fixtures)
+#   PULSE_E2E_FRESH_DB=true   drop and recreate the database first, so the run starts from the demo seed
+#   PULSE_SECRET_KEY, PULSE_LIVE_ALLOW_LOOPBACK   passed through from the environment as they are
 set -euo pipefail
 
 PORT="${1:-8089}"
@@ -12,6 +17,14 @@ export DB_PORT="${DB_PORT:-5432}"
 export DB_USER="${DB_USER:-pulse}"
 export DB_PASSWORD="${DB_PASSWORD:-pulse_secret_dev}"
 export DB_NAME="${PULSE_E2E_DB:-pulse_e2e}"
+
+if [ "${PULSE_E2E_FRESH_DB:-false}" = "true" ]; then
+  case "$DB_NAME" in
+    pulse_e2e_*) ;;
+    *) echo "PULSE_E2E_FRESH_DB only drops a database named pulse_e2e_*, not $DB_NAME" >&2; exit 1 ;;
+  esac
+  PGPASSWORD="$DB_PASSWORD" dropdb -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" --if-exists --force "$DB_NAME"
+fi
 
 if ! PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -tAc \
     "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1; then
@@ -29,7 +42,7 @@ fi
 export PORT
 export PULSE_PROFILE=development
 export PULSE_DEMO_SEED=true
-export PULSE_TODAY=2026-09-28
+export PULSE_TODAY="${PULSE_TODAY:-2026-09-28}"
 export PULSE_APP_URL="$APP_URL"
 # Each test context sends its own X-Real-IP (e2e/helpers.js), so the per-IP sign-in throttle does
 # not trip across repeated runs; the Vite proxy forwards the header.

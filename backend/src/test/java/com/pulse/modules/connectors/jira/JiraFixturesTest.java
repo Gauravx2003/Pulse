@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,6 +42,13 @@ class JiraFixturesTest
 
     /** The recorded 100-issue page pair, kept apart because its startAt 0 route would shadow search-page1.json. */
     private static final String RECORDED = "jira-recorded";
+
+    /** The end-to-end flow's fixtures (task 26.3): assignees carry demo seed emails so they match people. */
+    private static final String E2E = "jira-e2e";
+
+    private static final String SANITIZED_DOMAIN = "@example.com";
+
+    private static final String DEMO_DOMAIN = "@pulse.demo";
 
     private static final String SPRINT_STRING = "com.atlassian.greenhopper.service.sprint.Sprint@";
 
@@ -331,19 +339,33 @@ class JiraFixturesTest
     @Test
     void holdsNoSecretOrRealIdentity() throws Exception
     {
-        List<String> files = scan(FIXTURES);
+        List<String> files = scan(FIXTURES, List.of(SANITIZED_DOMAIN));
 
         assertTrue(files.containsAll(List.of("routes.json", "myself.json", "field.json", "search-page1.json",
                 "search-page2.json", "error-401.xml", "error-429.json", "error-500.json")), "scanned " + files);
 
-        List<String> recorded = scan(LiveMockServer.FIXTURES_ROOT + RECORDED + "/");
+        List<String> recorded = scan(LiveMockServer.FIXTURES_ROOT + RECORDED + "/", List.of(SANITIZED_DOMAIN));
 
         assertTrue(recorded.containsAll(List.of("routes.json", "myself.json", "field.json", "search-100-page1.json",
                 "search-100-page2.json")), "scanned " + recorded);
     }
 
-    /** Fails on a real email, a credential, the internal host or the company name in any file of the folder. */
-    private static List<String> scan(String folder) throws Exception
+    @Test
+    void endToEndFixturesLoadAndHoldNoSecret() throws Exception
+    {
+        assertEquals(E2E, LiveMockServer.load(E2E).tool());
+
+        List<String> files = scan(LiveMockServer.FIXTURES_ROOT + E2E + "/", List.of(SANITIZED_DOMAIN, DEMO_DOMAIN));
+
+        assertTrue(files.containsAll(List.of("routes.json", "myself.json", "field.json", "search.json", "error-401.xml",
+                "error-429.json", "error-500.json")), "scanned " + files);
+    }
+
+    /**
+     * Fails on an email outside {@code domains} (compared in lower case), a credential, the internal host or the
+     * company name in any file of the folder.
+     */
+    private static List<String> scan(String folder, List<String> domains) throws Exception
     {
         URL routes = Thread.currentThread().getContextClassLoader().getResource(folder + "routes.json");
 
@@ -367,7 +389,9 @@ class JiraFixturesTest
 
                 while (found.find())
                 {
-                    assertTrue(found.group().endsWith("@example.com"), file.getFileName() + " holds a real email: " + found.group());
+                    String address = found.group().toLowerCase(Locale.ROOT);
+
+                    assertTrue(domains.stream().anyMatch(address::endsWith), file.getFileName() + " holds a real email: " + found.group());
                 }
 
                 assertFalse(secret.matcher(text).find(), file.getFileName() + " holds a credential");

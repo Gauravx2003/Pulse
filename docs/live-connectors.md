@@ -270,3 +270,116 @@ The smallest example is `StubLiveConnectorContractTest` with `live-fixtures/stub
 ## 5. Mappings
 
 <!-- Track 3 sends the "Jira Server → Pulse" (26.3) and "GitHub → Pulse" (26.6) sections; Track 1 merges them here. -->
+
+### Jira Server → Pulse (task 26.3)
+
+Code: `backend/modules/connectors/jira/JiraConnector.java` (requests, paging, batches) and
+`JiraMapper.java` (pure mapping). Track 2 reviews this record against the Phase 1 seed semantics in
+task 25.4.
+
+**Requests** (REST API v2, GET only, to the base URL's origin and context path)
+
+| When | Request | Used for |
+|---|---|---|
+| Test connection | `/rest/api/2/myself` | account shown on the form: `name`, `displayName`, `emailAddress` |
+| Test connection | `/rest/api/2/field` | proposals: custom fields named "Story Points" / "Story point estimate" (story points), schema `com.pyxis.greenhopper.jira:gh-sprint` (sprint) |
+| Sync now | `/rest/api/2/search?jql=…&maxResults=100&expand=changelog&fields=…&startAt=N` | issues, sprints, events; pages until `startAt + issues >= total` |
+
+- **JQL.** `project in ("PUL", "OPS") ORDER BY updated ASC` on the first run, then
+  `project in (…) AND updated >= "<cursor − 1 min, yyyy-MM-dd HH:mm>" ORDER BY updated ASC`. Keys are
+  upper-cased and must match `[A-Z][A-Z0-9_]{0,49}`, so nothing else reaches the JQL.
+- **`fields=`** summary, issuetype, status, assignee, creator, reporter, created, updated, duedate,
+  resolutiondate, timeoriginalestimate, timeestimate, timespent, description, comment, plus the
+  confirmed story points and sprint field ids.
+- **Cursor.** The greatest `fields.updated` seen, stored as ISO-8601 with its offset. JQL has minute
+  precision, so the next run overlaps by one minute, and the upsert by (source, external_id) absorbs
+  the repeats.
+- **Auth.** Basic `base64(username:password)` or Bearer `<personal access token>`. Jira Server
+  reports no scopes; the form says to use a read-only user.
+
+**`issues`** (`source = 'jira'`, `external_id` = issue key)
+
+| Pulse column | Jira | Rule |
+|---|---|---|
+| `key`, `external_id` | `key` | e.g. `PUL-201` |
+| `summary` | `fields.summary` | the key when empty |
+| `issue_type` | `fields.issuetype.name` | `Story` when missing |
+| `status` | `fields.status.statusCategory.key` | `new` → To Do, `indeterminate` → In Progress, `done` → Done; an in-progress status whose name contains "review" → In Review; an unknown category → In Progress |
+| `assignee_id` | | always null for live rows; the person is resolved at read time (V290 view `issues_with_assignee`) |
+| `assignee_account_id` | `fields.assignee.name` | the Jira username; null when unassigned |
+| `story_points` | `fields.<story points field>` | a number, else null (unknown or unset field: null, never guessed) |
+| `estimate_hours` | `fields.timeoriginalestimate` | seconds ÷ 3600, two decimals; null stays null |
+| `remaining_hours` | `fields.timeestimate` | seconds ÷ 3600; null stays null |
+| `spent_hours` | `fields.timespent` | seconds ÷ 3600; null → 0 |
+| `due_on` | `fields.duedate` | date |
+| `started_on` | changelog | date of the first `status` change; null while To Do; never after `resolved_on` |
+| `resolved_on` | `fields.resolutiondate` | the date in Jira's own offset |
+| `sprint_id` | sprint field | `$ref` to the issue's last dated sprint; null when it has none (see sprints) |
+| `carried_over` | sprint field | true when the issue lists more than one sprint |
+| `reopened`, `was_stale` | | false (not derived from Jira yet) |
+| `html_url` | | `<baseUrl>/browse/<key>` |
+| `description` | `fields.description` | the v2 plain text / wiki markup string as is (V293); not a string → null; no ADF parsing |
+
+**`sprints`** (`source = 'jira'`, `external_id` = Jira sprint id)
+
+- The sprint field is read in both forms Jira Server returns: the string
+  `com.atlassian.greenhopper.service.sprint.Sprint@…[id=…,name=…,state=…,startDate=…,endDate=…,…]`
+  (`<null>` read as null) and the object `{id, name, state, startDate, endDate, …}`.
+- `key` = `S<id>`, `number` = the Jira id, `starts_on` = `startDate`'s date, `work_ends_on` =
+  `endDate`'s date, `ends_on` = the Sunday on or after `work_ends_on` (as seeded sprints end).
+- A sprint without both dates (a future sprint) is not stored, and an issue in it gets no `sprint_id`.
+
+**`issue_events`** (`source = 'jira'`, `external_id` = `<key>|<event id>`)
+
+| Event | From | `kind` |
+|---|---|---|
+| creation | `fields.created`, author `creator` (else `reporter`) | `created` |
+| each changelog item | `changelog.histories[].items[]`, author `histories[].author` | `status` → `transition`, `assignee` → `assignee_change`, `Sprint` → `sprint_change`, `timespent` / `WorklogId` → `worklog`, any other field → `field_change` |
+| each comment | `fields.comment.comments[]`; the body goes to `to_value` | `comment` |
+| Jira's `updated` | only with "Ignore edits by bots and non-assignees" **off**: a `transition` by the assignee | `transition` |
+
+- `actor_account_id` is the author's Jira username, and `actor_id` stays null: the person is resolved
+  at read time (V292 view `issue_events_with_actor`). An account marked as a bot makes its events
+  bot events.
+- **Last activity** (`work` loaders) counts only the assignee's own non-bot `transition`, `worklog`
+  and `comment` events, so bot edits and other people's edits never refresh it. With the switch on (the
+  default), a bot-only edit leaves last activity unchanged. With it off, Jira's `updated` counts as
+  the assignee's activity whoever made the change.
+
+**People** (`external_accounts`, tool `jira`)
+
+- Every assignee, changelog author and comment author on a page is resolved once with
+  `{accountId: name, login: name, displayName, email: emailAddress}`.
+- Matching: an existing link first, then `emailAddress` against users' work emails, ignoring case.
+  A user whose email the instance hides stays unmatched under their username until an Admin links them.
+- Rows keep the username. Linking or unlinking changes per-person figures from the next read, with no
+  re-sync. Unmatched and bot accounts count for no person; team totals include unmatched issues.
+
+**Points for the 25.4 review**
+
+1. **One sprint calendar.** Jira sprints go into the same `sprints` table as the seed sprints, and the
+   active sprint is the first row by `starts_on` whose dates contain today. A Jira sprint that
+   overlaps a seed sprint makes the active sprint depend on start dates. Workload counts only issues
+   of the active sprint's `key`.
+2. **Sprint key collisions.** `sprints.key` is not unique, so Jira sprint 43 gets key `S43`, the same as
+   seed Sprint 43, and both would count as one sprint wherever `s.key` is compared. A distinct
+   namespace (for example `J43`) avoids it. That needs Track 2's agreement on how keys are shown.
+3. **Future sprints** are not stored, so their issues have no sprint until the sprint starts and
+   the next sync picks up the dates.
+4. **Seeded index inputs.** The performance index needs the seeded pillars and culture ratings of the
+   quarter, which the demo seed holds up to 2026-Q3. In a quarter without them there is no index,
+   whatever Jira holds. Jira moves the index only through Discipline (the live sprint's stale
+   count).
+
+**End-to-end flow.** `npm run test:live-flows` (in `frontend/`) runs `e2e/live-flows/jira.spec.js` with
+`playwright.live.config.js`, on its own backend and database:
+
+- `pulse_e2e_live` is dropped and recreated with the demo seed.
+- "Today" is 26 Nov 2026, inside Jira sprint 147 of `live-fixtures/jira-e2e/`.
+- `PULSE_LIVE_ALLOW_LOOPBACK=true` is set, with a fresh `PULSE_SECRET_KEY` for each run.
+
+The mock Jira (`e2e/live-flows/mockTool.js`) serves those fixtures with the `routes.json` rules of
+section 2, and scripts the 401 and the held search for the 409. Its fixtures match two demo people:
+`priya.shah` by email (in another letter case), and `arjun.m` (no email), whom the flow links by
+hand. The flow copies each person's 2026-Q3 pillars and culture ratings to 2026-Q4 so the index
+exists (review point 4). Build the backend jar first.

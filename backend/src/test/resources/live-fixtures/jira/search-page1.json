@@ -926,7 +926,8 @@
         "customfield_10701": null,
         "customfield_10305": null,
         "customfield_10108": [
-          "com.atlassian.greenhopper.service.sprint.Sprint@500eaaba[id=147,rapidViewId=1,state=FUTURE,name=SprintRelease 10.0.3,startDate=<null>,endDate=<null>,completeDate=<null>,activatedDate=<null>,sequence=147,goal=SprintRelease 10.0.3,autoStartStop=false,synced=false]"
+          "com.atlassian.greenhopper.service.sprint.Sprint@500eaaba[id=147,rapidViewId=1,state=FUTURE,name=SprintRelease 10.0.3,startDate=<null>,endDate=<null>,completeDate=<null>,activatedDate=<null>,sequence=147,goal=SprintRelease 10.0.3,autoStartStop=false,synced=false]",
+          "com.atlassian.greenhopper.service.sprint.Sprint@3c9e1f04[id=149,rapidViewId=2,state=CLOSED,name=,startDate=2026-11-09T10:00:00.000+05:30,endDate=2026-11-20T19:00:00.000+05:30,completeDate=2026-11-20T19:10:00.000+05:30,activatedDate=2026-11-09T10:02:00.000+05:30,sequence=149,goal=<null>,autoStartStop=false,synced=false]"
         ],
         "customfield_10306": null,
         "customfield_10900": null,

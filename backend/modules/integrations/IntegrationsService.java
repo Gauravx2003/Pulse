@@ -1,5 +1,6 @@
 package com.pulse.modules.integrations;
 
+import com.pulse.calc.core.PulseClock;
 import com.pulse.platform.audit.AuditEvents;
 import com.pulse.platform.audit.AuditService;
 import com.pulse.platform.http.ApiException;
@@ -14,6 +15,7 @@ import com.pulse.platform.live.LiveSyncService;
 import com.pulse.platform.live.SyncStateRepository;
 import com.pulse.platform.module.ModuleContext;
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -119,9 +121,10 @@ final class IntegrationsService
     {
         return state().compose(s ->
         {
-            JsonObject t = known(s.catalogue(), id);
+            // a live connector the catalogue does not list still has its detail, as it has its tile (task 24.7)
+            JsonObject t = ctx.connectors().has(id) ? entry(s.catalogue(), id) : known(s.catalogue(), id);
             JsonObject settings = s.settings().getOrDefault(id, new JsonObject());
-            JsonArray scopes = t.getJsonArray("scopes");
+            JsonArray scopes = t.getJsonArray("scopes", new JsonArray());
 
             // Phase 1: the connection test is simulated, so the reported scopes are the catalogued ones
             JsonArray broad = new JsonArray(scopes.stream().map(String::valueOf)
@@ -395,6 +398,12 @@ final class IntegrationsService
                         .put("tile", tile(entry(s.catalogue(), tool), s))));
     }
 
+    /** {@code GET /people}: the people a live account may be linked to (task 24.7). */
+    Future<JsonObject> linkablePeople(MultiMap params)
+    {
+        return new IntegrationsRepository(ctx.sql()).linkablePeople(params);
+    }
+
     // ------------------------------------------------------------------ tile state
 
     /**
@@ -542,7 +551,13 @@ final class IntegrationsService
                     .put("action", "fix");
         }
 
-        Long days = expiresInDays(settings);
+        // a live connection's expiry is the one saved with it (task 24.7); seeded tools keep the Phase 1 setting
+        Long days = liveConnection ? liveExpiresInDays(s.live().get(id)) : expiresInDays(settings);
+
+        if (liveConnection)
+        {
+            tile.put("expiresAt", s.live().get(id).getValue("expiresAt"));
+        }
 
         if (days != null && days <= EXPIRY_WARNING_DAYS)
         {
@@ -563,6 +578,21 @@ final class IntegrationsService
         String expires = settings.getString("token_expires_on");
 
         return expires == null ? null : ChronoUnit.DAYS.between(ctx.calc().clock().today(), LocalDate.parse(expires));
+    }
+
+    /** Days until a live connection's {@code expiresAt} (timestamptz), in the Pulse zone, or null when none is known. */
+    private Long liveExpiresInDays(JsonObject view)
+    {
+        Object expires = view.getValue("expiresAt");
+
+        if (expires == null)
+        {
+            return null;
+        }
+
+        LocalDate on = OffsetDateTime.parse(String.valueOf(expires)).atZoneSameInstant(PulseClock.ZONE).toLocalDate();
+
+        return ChronoUnit.DAYS.between(ctx.calc().clock().today(), on);
     }
 
     static String ago(Instant at)

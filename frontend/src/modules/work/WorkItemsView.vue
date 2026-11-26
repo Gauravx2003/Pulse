@@ -138,6 +138,7 @@ const kpis = computed(() => data.value?.kpis ?? {});
 const metrics = computed(() => data.value?.metrics ?? {});
 const release = computed(() => val(data.value?.release));
 const closedBand = computed(() => band(data.value?.utilizationBand));
+const onboarding = computed(() => !!data.value?.onboarding);
 
 const chips = computed(() =>
   (live.value ? LIVE_FILTERS : HISTORY_FILTERS).map((f) => ({ ...f, count: data.value?.chips?.[f.key] ?? 0 })),
@@ -186,14 +187,15 @@ const historyRows = computed(() =>
 const sprintRows = computed(() =>
   (data.value?.sprints ?? []).map((s) => ({
     period: s.period,
-    sprint: s.short,
+    // The live sprint's utilization is planned work vs capacity, not hours logged: say so.
+    sprint: s.live ? `${s.short} · live` : s.short,
     issues: num(s.issues, 0),
     committed: num(s.committed),
     done: num(s.done),
     commitment: pct(s.commitment),
     carried: num(s.carried, 0),
     hours: hours(s.logged),
-    utilization: pct(s.util),
+    utilization: s.live ? `${pct(s.util)} forecast` : pct(s.util),
   })),
 );
 
@@ -251,6 +253,7 @@ async function nudgeStale() {
   <div class="pl-page">
     <PlPageHeader eyebrow="Work items" :title="data?.person?.name ?? 'Work items'" :caption="identityCaption(data?.person)">
       <template #actions>
+        <Badge v-if="onboarding" text="Onboarding" tone="info" />
         <PlPeriodControl v-model="periodKey" :kinds="kinds" :periods="periods" />
       </template>
     </PlPageHeader>
@@ -366,6 +369,15 @@ async function nudgeStale() {
           <StatTile eyebrow="Carried over" :value="num((val(metrics.carry) ?? []).length, 0)" unit="issues" foot="To the next sprint" />
           <StatTile eyebrow="Median cycle time" :value="num(metrics.cyc)" unit="d" foot="Issues done" />
           <StatTile
+            v-if="onboarding"
+            eyebrow="Utilization"
+            value="Training"
+            :foot="`${hours(metrics.logged)} logged · not judged while onboarding`"
+            badge="Onboarding"
+            badge-tone="info"
+          />
+          <StatTile
+            v-else
             eyebrow="Utilization"
             :value="num(data.utilization, 0)"
             unit="%"

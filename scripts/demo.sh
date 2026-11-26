@@ -11,7 +11,8 @@
 # Needs Java 21, Maven, Node 20+ and a PostgreSQL 16 the DB_* settings reach (docker compose up -d
 # postgres gives one). Settings (environment, defaults in brackets): DB_HOST [localhost], DB_PORT
 # [5432], DB_USER [pulse], DB_PASSWORD [pulse_secret_dev], PULSE_DEMO_DB [pulse_demo], API_PORT [8088],
-# WEB_PORT [5173], PULSE_TODAY [2026-09-28].
+# WEB_PORT [5173], PULSE_TODAY [2026-09-28], PULSE_SECRET_KEY [generated once into .pulse/demo-secret-key,
+# which git ignores; it encrypts live Jira and GitHub credentials].
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -36,6 +37,17 @@ export DB_NAME="${PULSE_DEMO_DB:-pulse_demo}"
 
 API_PORT="${API_PORT:-8088}"
 WEB_PORT="${WEB_PORT:-5173}"
+
+# the key that encrypts live credentials (Phase 2): kept across runs, so saved credentials stay readable
+if [ -z "${PULSE_SECRET_KEY:-}" ]; then
+  key_file="$root/.pulse/demo-secret-key"
+  if [ ! -s "$key_file" ]; then
+    mkdir -p "$(dirname "$key_file")"
+    (umask 077 && head -c 32 /dev/urandom | base64 > "$key_file")
+  fi
+  PULSE_SECRET_KEY="$(cat "$key_file")"
+fi
+export PULSE_SECRET_KEY
 
 for tool in java mvn node npm psql; do
   command -v "$tool" >/dev/null || { echo "Missing '$tool': see docs/demo.md, Requirements" >&2; exit 1; }

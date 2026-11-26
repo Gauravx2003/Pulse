@@ -143,7 +143,7 @@ Suggested order: 24.3, 24.1, 24.4 (Day 1 freeze), then 24.2, 24.5, 24.6, 24.7, 2
   - seed rows are identical before and after a failed and a successful sync
   - a concurrent call gets 409
   - the calculation cache is invalidated
-- [ ] 24.7 **Integrations frontend** (`frontend/src/modules/integrations/`), generic for any live connector:
+- [x] 24.7 **Integrations frontend** (`frontend/src/modules/integrations/`), generic for any live connector:
   - `CredentialsModal.vue` renders its fields from `configSchema` and `secretSpec`, with no tool-specific code. Supported types:
     - text, secret, URL, list of strings, date, boolean
     - a choice field, for example an auth mode, that shows or hides dependent fields
@@ -165,7 +165,7 @@ Suggested order: 24.3, 24.1, 24.4 (Day 1 freeze), then 24.2, 24.5, 24.6, 24.7, 2
     - the shared UI audit and axe are clean at 390, 1024 and 1440 px
     - keyboard-only runs of the modal and the panel pass
     - a Manager sees the "You don't have access" card
-- [ ] 24.8 **Privacy on deletion and runbook.**
+- [x] 24.8 **Privacy on deletion and runbook.**
   - User deletion (`modules/users`):
     - unlinks and pseudonymizes that person's `external_accounts` (login, display name and email cleared)
     - leaves live rows with a null person, so team aggregates stay

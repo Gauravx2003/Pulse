@@ -96,10 +96,15 @@ public class WorkService
 
             Future<JsonObject> index = index(personId);
 
+            Future<Object> onboarding = calc.get(WorkViewFormulas.ONBOARDING, person);
+
             Future<JsonObject> body = live ? liveOverview(person) : closedOverview(withPeriod);
 
-            return Future.all(identity, trend, bugs, index, body).map(all -> body.result()
+            // On an active onboarding plan utilization is not judged in any period, not only the live sprint
+            // (spec work/work-items "New joiners on onboarding").
+            return Future.all(List.of(identity, trend, bugs, index, onboarding, body)).map(all -> body.result()
                     .put("person", identity.result())
+                    .put("onboarding", onPlan(onboarding.result()))
                     .put("period", period)
                     .put("live", live)
                     .put("utilizationTrend", trend.result())
@@ -151,12 +156,15 @@ public class WorkService
 
             Future<JsonObject> identity = identity(scope, personId);
 
+            Future<Object> onboarding = calc.get(WorkViewFormulas.ONBOARDING, person);
+
             Future<JsonObject> body = live
                     ? liveWorkItems(person, withPeriod, chosen, from, query, order)
                     : closedWorkItems(withPeriod, chosen, from, query, order);
 
-            return Future.all(identity, body).map(all -> body.result()
+            return Future.all(identity, onboarding, body).map(all -> body.result()
                     .put("person", identity.result())
+                    .put("onboarding", onPlan(onboarding.result()))
                     .put("period", period)
                     .put("live", live)
                     .put("filter", chosen)
@@ -247,7 +255,7 @@ public class WorkService
 
             JsonArray items = ((JsonObject) issues.result()).getJsonArray("items");
 
-            boolean onPlan = !ResultGuard.isNotApplicable(onboarding.result()) && onboarding.result() != null;
+            boolean onPlan = onPlan(onboarding.result());
 
             JsonObject kpis = new JsonObject()
                     .put("tasks", items.size())
@@ -276,6 +284,11 @@ public class WorkService
         });
     }
 
+    private static boolean onPlan(Object onboarding)
+    {
+        return onboarding != null && !ResultGuard.isNotApplicable(onboarding);
+    }
+
     private Future<JsonObject> closedOverview(JsonObject withPeriod)
     {
         Future<Object> metrics = calc.get(WorkloadFormulas.SPRINT_METRICS, withPeriod);
@@ -288,7 +301,12 @@ public class WorkService
 
         Future<Object> band = calc.get(WorkViewFormulas.UTILIZATION_BAND, withPeriod);
 
-        return Future.all(List.of(metrics, utilization, sprints, release, band)).map(all -> new JsonObject()
+        // The issues of the period, as Work items lists them: a sprint that only overlaps a month or release
+        // must not bring in its issues resolved outside it.
+        Future<Object> issues = calc.get(WorkViewFormulas.PERIOD_ISSUES, withPeriod);
+
+        return Future.all(List.of(metrics, utilization, sprints, release, band, issues)).map(all -> new JsonObject()
+                .put("issueCount", ((JsonObject) issues.result()).getJsonArray("items").size())
                 .put("metrics", metrics.result())
                 .put("utilization", utilization.result())
                 .put("utilizationBand", band.result())

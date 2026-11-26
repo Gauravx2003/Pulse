@@ -18,6 +18,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -356,7 +357,8 @@ public final class EffortFormulas implements FormulaModule
             Future<JsonArray> midSprint = WorkSql.rows(ctx, """
                     SELECT i.key, i.summary, i.status, s.number, s.starts_on AS "sprintStart", e.occurred_at AS "at",
                            e.actor_name AS "actorName",
-                           coalesce((SELECT sum(w.hours) FROM worklogs_with_person w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
+                           coalesce((SELECT sum(w.hours) FROM worklogs_with_person w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours,
+                           i.id::text AS "issueId", EXISTS (SELECT 1 FROM worklogs w WHERE w.issue_id = i.id) AS tracked
                     FROM issue_events_with_actor e JOIN issues_with_assignee i ON i.id = e.issue_id
                     JOIN sprints s ON s.key = e.to_value
                     WHERE i.assignee_id = $1 AND e.kind = 'sprint_change' AND NOT e.is_bot
@@ -366,7 +368,8 @@ public final class EffortFormulas implements FormulaModule
             Future<JsonArray> takeovers = WorkSql.rows(ctx, """
                     SELECT i.key, i.summary, i.status, e.occurred_at AS "at", e.actor_name AS "actorName",
                            coalesce((SELECT name FROM people WHERE id::text = e.from_person), e.from_value) AS "fromName",
-                           coalesce((SELECT sum(w.hours) FROM worklogs_with_person w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
+                           coalesce((SELECT sum(w.hours) FROM worklogs_with_person w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours,
+                           i.id::text AS "issueId", EXISTS (SELECT 1 FROM worklogs w WHERE w.issue_id = i.id) AS tracked
                     FROM issue_events_with_actor e JOIN issues_with_assignee i ON i.id = e.issue_id
                     LEFT JOIN sprints s ON s.id = i.sprint_id
                     WHERE e.kind = 'assignee_change' AND e.to_person = $1::text AND NOT e.is_bot
@@ -375,7 +378,8 @@ public final class EffortFormulas implements FormulaModule
 
             Future<JsonArray> help = WorkSql.rows(ctx, """
                     SELECT i.key, i.summary, a.name AS assignee, sum(c.commit_count) AS commits, max(c.commit_date) AS day,
-                           coalesce((SELECT sum(w.hours) FROM worklogs_with_person w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
+                           coalesce((SELECT sum(w.hours) FROM worklogs_with_person w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours,
+                           i.id::text AS "issueId", EXISTS (SELECT 1 FROM worklogs w WHERE w.issue_id = i.id) AS tracked
                     FROM commit_days c CROSS JOIN LATERAL unnest(c.issue_keys) AS k(key)
                     JOIN issues_with_assignee i ON i.key = k.key JOIN people a ON a.id = i.assignee_id
                     WHERE c.person_id = $1 AND c.commit_date BETWEEN $2 AND $3 AND i.assignee_id <> $1
@@ -417,9 +421,17 @@ public final class EffortFormulas implements FormulaModule
             Future<JsonArray> known = WorkSql.rows(ctx, "SELECT detection_key AS key FROM extra_items WHERE person_id = $1",
                     Tuple.of(person));
 
-            return Future.all(List.of(who, midSprint, takeovers, help, untracked, reviews, support, proactive, incidents, known))
+            // an issue without Jira time tracking takes its own hours from the person's work intervals
+            Future<Map<String, Double>> intervalHours = Future.all(midSprint, takeovers, help)
+                    .compose(x -> WorkloadFormulas.intervalHoursByIssue(ctx, person,
+                            untrackedIssues(midSprint.result(), takeovers.result(), help.result())));
+
+            return Future.all(List.of(who, midSprint, takeovers, help, untracked, reviews, support, proactive, incidents, known,
+                            intervalHours))
                     .map(all ->
                     {
+                        withIntervalHours(intervalHours.result(), midSprint.result(), takeovers.result(), help.result());
+
                         String name = who.result() == null ? "" : who.result().getString("name", "");
 
                         String manager = who.result() == null ? null : who.result().getString("manager");
@@ -521,6 +533,40 @@ public final class EffortFormulas implements FormulaModule
         }
 
         return name.strip().split("\\s+")[0];
+    }
+
+    /** The ids of the item issues without any worklog. */
+    private static Set<String> untrackedIssues(JsonArray... rows)
+    {
+        Set<String> out = new HashSet<>();
+
+        for (JsonArray group : rows)
+        {
+            for (JsonObject r : list(group))
+            {
+                if (!r.getBoolean("tracked", false))
+                {
+                    out.add(r.getString("issueId"));
+                }
+            }
+        }
+
+        return out;
+    }
+
+    /** Puts the interval hours of each item issue without any worklog as its hours (design.md decision 2). */
+    private static void withIntervalHours(Map<String, Double> hours, JsonArray... rows)
+    {
+        for (JsonArray group : rows)
+        {
+            for (JsonObject r : list(group))
+            {
+                if (!r.getBoolean("tracked", false))
+                {
+                    r.put("hours", hours.getOrDefault(r.getString("issueId"), 0.0));
+                }
+            }
+        }
     }
 
     private static Instant instant(String timestamp)

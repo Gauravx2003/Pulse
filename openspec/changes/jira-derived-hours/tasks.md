@@ -45,7 +45,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   - never after today
 
   Verify: `WorkIntervalsTest` covers every scenario of `specs/work/effort-extra-mile` (two days, weekend and holiday, open, resolved-open, Dev/QA overlap, end before start) plus a window change.
-- [ ] 3.2 Feed interval hours into the same per-person, per-day hours as worklogs.
+- [x] 3.2 Feed interval hours into the same per-person, per-day hours as worklogs.
   - Feed them into `PeriodWork` inputs, the `WORKLOGS` loader and the work-view day hours.
   - For Effort items, use the issue's own clipped hours.
   - Each issue takes one source: worklogs when it has any, else its intervals.

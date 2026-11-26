@@ -557,6 +557,16 @@ public final class WorkloadFormulas implements FormulaModule
     }
 
     /**
+     * The work intervals credited to a person ({@code $1}) that count: with a start, on an issue without any
+     * worklog (Jira time tracking takes precedence, design.md decision 2).
+     */
+    private static final String INTERVAL_ROW = """
+            SELECT iv.issue_id::text AS "issueId", iv.starts_at AS "startsAt", iv.ends_at AS "endsAt"
+            FROM issue_work_intervals_with_person iv
+            WHERE iv.person_id = $1 AND iv.starts_at IS NOT NULL
+              AND NOT EXISTS (SELECT 1 FROM worklogs w WHERE w.issue_id = iv.issue_id)""";
+
+    /**
      * One fact per day of the period, as {@link PeriodWork} reads them.
      */
     static Future<JsonArray> dayFacts(CalcContext ctx, UUID person, JsonObject period)
@@ -575,7 +585,9 @@ public final class WorkloadFormulas implements FormulaModule
                 SELECT commit_date AS day FROM commit_days
                 WHERE person_id = $1 AND commit_date BETWEEN $2 AND $3 AND commit_count > 0""", Tuple.of(person, from, to));
 
-        return Future.all(days, worklogs, commits).map(all ->
+        Future<JsonObject> intervals = days.compose(d -> intervalHours(ctx, person, from, to, d));
+
+        return Future.all(days, worklogs, commits, intervals).map(all ->
         {
             Map<String, Double> hours = new HashMap<>();
 
@@ -583,6 +595,8 @@ public final class WorkloadFormulas implements FormulaModule
             {
                 hours.put(w.getString("day"), Workload.orZero(Workload.number(w, "hours")));
             }
+
+            addIntervalHours(hours, intervals.result());
 
             Set<String> committed = new HashSet<>();
 
@@ -623,6 +637,65 @@ public final class WorkloadFormulas implements FormulaModule
 
             return out;
         });
+    }
+
+    /**
+     * The person's hours per day from {@code from} to {@code to} from Jira work intervals (change
+     * jira-derived-hours, design.md decisions 2 and 5): {@link WorkIntervals#hours} over the intervals credited to
+     * the person through {@code issue_work_intervals_with_person}, on the person's working days. Each issue takes
+     * one source: an issue with any worklog counts its worklogs only, so its intervals are left out here.
+     */
+    static Future<JsonObject> intervalHours(CalcContext ctx, UUID person, LocalDate from, LocalDate to, Days days)
+    {
+        return WorkSql.rows(ctx, INTERVAL_ROW + """
+                  AND iv.starts_at < (($3::date + 1)::timestamp AT TIME ZONE 'Asia/Kolkata')
+                  AND (iv.ends_at IS NULL OR iv.ends_at > ($2::date::timestamp AT TIME ZONE 'Asia/Kolkata'))""",
+                        Tuple.of(person, from, to))
+                .map(rows -> WorkIntervals.hours(rows, from, to, days.person(), ctx.rules(), ctx.today(), ctx.now()));
+    }
+
+    /**
+     * Each issue's own hours from the person's work intervals, all time up to today, for Effort item hours
+     * (design.md decision 5: the issue's clipped hours before the merge with the person's other issues).
+     * Issue id -> hours; issues with any worklog are left out, as in {@link #intervalHours}.
+     */
+    static Future<Map<String, Double>> intervalHoursByIssue(CalcContext ctx, UUID person, Set<String> issueIds)
+    {
+        if (issueIds.isEmpty())
+        {
+            return Future.succeededFuture(Map.of());
+        }
+
+        Future<Days> days = days(ctx, person);
+
+        Future<JsonArray> rows = WorkSql.rows(ctx, INTERVAL_ROW + " AND iv.issue_id = ANY($2::uuid[])",
+                Tuple.of(person, (Object) issueIds.stream().map(UUID::fromString).toArray(UUID[]::new)));
+
+        return Future.all(days, rows).map(all ->
+        {
+            Map<String, JsonArray> byIssue = new HashMap<>();
+
+            for (JsonObject row : list(rows.result()))
+            {
+                byIssue.computeIfAbsent(row.getString("issueId"), k -> new JsonArray()).add(row);
+            }
+
+            Map<String, Double> out = new HashMap<>();
+
+            byIssue.forEach((issue, intervals) -> out.put(issue, WorkIntervals.total(WorkIntervals.hours(intervals,
+                    LocalDate.MIN, ctx.today(), days.result().person(), ctx.rules(), ctx.today(), ctx.now()))));
+
+            return out;
+        });
+    }
+
+    /** Adds interval hours ({@code {date: hours}}) to worklog hours per day. */
+    static void addIntervalHours(Map<String, Double> hours, JsonObject intervals)
+    {
+        for (String day : intervals.fieldNames())
+        {
+            hours.merge(day, intervals.getDouble(day), Double::sum);
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ import com.pulse.platform.db.SqlExecutor;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
+import java.time.Instant;
 import java.time.LocalDate;
 
 /**
@@ -18,6 +19,16 @@ public interface CalcContext
 
     /** Today in the company time zone ({@link PulseClock}, pinned by {@code PULSE_TODAY} outside production). */
     LocalDate today();
+
+    /**
+     * Now ({@link PulseClock#now()}): on a pinned clock, the pinned today at the current company time of day. A
+     * context without a clock answers the end of today. Work intervals still open count up to it (change
+     * jira-derived-hours).
+     */
+    default Instant now()
+    {
+        return today().plusDays(1).atStartOfDay(PulseClock.ZONE).toInstant();
+    }
 
     /** The rule set in force (a copy), as stored in {@code rule_versions}. */
     JsonObject rules();

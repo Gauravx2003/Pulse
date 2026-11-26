@@ -235,7 +235,9 @@ public final class WorkViewFormulas implements FormulaModule
 
             Future<Object> live = ctx.get(WorkloadFormulas.LIVE_SPRINT, params);
 
-            return Future.all(days, logged, live).map(all ->
+            Future<JsonObject> intervals = days.compose(d -> WorkloadFormulas.intervalHours(ctx, person, from, workEnd, d));
+
+            return Future.all(days, logged, live, intervals).map(all ->
             {
                 Map<String, Double> hours = new HashMap<>();
 
@@ -243,6 +245,8 @@ public final class WorkViewFormulas implements FormulaModule
                 {
                     hours.put(row.getString("day"), Workload.orZero(Workload.number(row, "hours")));
                 }
+
+                WorkloadFormulas.addIntervalHours(hours, intervals.result());
 
                 List<LocalDate> sprintDays = new ArrayList<>();
 

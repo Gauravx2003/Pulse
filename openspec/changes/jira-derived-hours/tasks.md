@@ -99,7 +99,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   - an interval of `arjun.m` counts only after he is linked
 
   Verify: `npm run test:live-flows` passes on a fresh database.
-- [ ] 5.2 Update `docs/demo.md` ("The real team on live Jira"):
+- [x] 5.2 Update `docs/demo.md` ("The real team on live Jira"):
   - confirm the four field ids at Test connection
   - what derived hours mean: time on the issue in office hours, capped per day
   - where to change the working-day window

@@ -11,7 +11,7 @@ import { Badge, StatTile, UtilizationMeter } from '@/kit/index.js';
 import { statusTone } from '@/kit/tones.js';
 import { useSharedPeriod } from '@/shell/period.js';
 import { formatDate } from '@/ui/format.js';
-import { PlAlert, PlCard, PlKpiRow, PlLoading, PlPageHeader, PlPeriodControl, PlTable } from '@/ui/index.js';
+import { PlAlert, PlCard, PlKpiRow, PlLoading, PlPageHeader, PlPeriodControl, PlTable, releaseSprints } from '@/ui/index.js';
 import IssueDrawer from './IssueDrawer.vue';
 import { band, flags, hours, idleText, identityCaption, num, pct, val } from './presentation.js';
 import { useViewedPerson } from './useViewedPerson.js';
@@ -276,7 +276,7 @@ function openWorkItems() {
             />
           </template>
           <div class="facts">
-            <div><span class="pl-eyebrow">Sprints</span><b>{{ (release.sprints ?? []).map((s) => s.replace('s:', '')).join(', ') || '—' }}</b></div>
+            <div><span class="pl-eyebrow">Sprints</span><b>{{ releaseSprints(release) }}</b></div>
             <div><span class="pl-eyebrow">{{ person?.name }} SP done</span><b class="pl-mono">{{ num(release.personDone) }}</b></div>
             <div><span class="pl-eyebrow">Team SP done</span><b class="pl-mono">{{ num(release.teamDone) }}</b></div>
             <div><span class="pl-eyebrow">Share of release</span><b class="pl-mono">{{ pct(release.share) }}</b></div>

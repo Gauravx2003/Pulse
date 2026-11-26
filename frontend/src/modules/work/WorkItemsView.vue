@@ -12,7 +12,7 @@ import { statusTone } from '@/kit/tones.js';
 import { can } from '@/shell/session.js';
 import { useSharedPeriod } from '@/shell/period.js';
 import { formatDate } from '@/ui/format.js';
-import { PlAlert, PlCard, PlKpiRow, PlLoading, PlPageHeader, PlPeriodControl, PlTable, PlTabs, showToast } from '@/ui/index.js';
+import { PlAlert, PlCard, PlKpiRow, PlLoading, PlPageHeader, PlPeriodControl, PlTable, PlTabs, releaseSprints, showToast } from '@/ui/index.js';
 import IssueDrawer from './IssueDrawer.vue';
 import {
   HISTORY_FILTERS,
@@ -171,7 +171,7 @@ const historyRows = computed(() =>
     key: i.key,
     summary: i.summary,
     type: i.issueType,
-    sprint: val(i.sprintKey) ?? '—',
+    sprint: val(i.sprintName) ?? val(i.sprintKey) ?? '—',
     release: val(i.releaseKey) ?? '—',
     status: i.status,
     sp: num(i.storyPoints),
@@ -389,7 +389,7 @@ async function nudgeStale() {
 
         <PlCard v-if="release" :title="`${release.name} · release ${release.key}`" :subtitle="`${formatDate(release.from)} – ${formatDate(release.releaseDate ?? release.to)}`">
           <div class="facts">
-            <div><span class="pl-eyebrow">Sprints</span><b>{{ (release.sprints ?? []).map((s) => s.replace('s:', '')).join(', ') || '—' }}</b></div>
+            <div><span class="pl-eyebrow">Sprints</span><b>{{ releaseSprints(release) }}</b></div>
             <div><span class="pl-eyebrow">{{ data.person?.name }} SP done</span><b class="pl-mono">{{ num(release.personDone) }}</b></div>
             <div><span class="pl-eyebrow">Team SP done</span><b class="pl-mono">{{ num(release.teamDone) }}</b></div>
             <div><span class="pl-eyebrow">Share of release</span><b class="pl-mono">{{ pct(release.share) }}</b></div>

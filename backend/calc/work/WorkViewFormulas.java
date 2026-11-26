@@ -199,7 +199,8 @@ public final class WorkViewFormulas implements FormulaModule
                                     .anyMatch(f -> "Stale".equals(((JsonArray) f).getString(1)))
                             : row.getBoolean("wasStale", false);
 
-                    items.add(row.copy().put("cycle", cycle).put("live", live).put("wasStale", stale));
+                    items.add(row.copy().put("sprintName", calendar.sprintName(row.getString("sprintKey"))).put("cycle", cycle)
+                            .put("live", live).put("wasStale", stale));
                 }
 
                 return (Object) new JsonObject().put("period", period.getString("key")).put("items", items);
@@ -482,9 +483,13 @@ public final class WorkViewFormulas implements FormulaModule
 
                     JsonArray sprints = new JsonArray();
 
+                    JsonArray names = new JsonArray();
+
                     for (JsonObject sprint : sprintsOf(period, calendar.result().sprints(), new JsonArray().add(r)))
                     {
                         sprints.add(sprint.getString("key"));
+
+                        names.add(new JsonObject().put("key", sprint.getString("key")).put("name", sprint.getString("short")));
                     }
 
                     boolean released = "Released".equals(r.getString("status"));
@@ -495,6 +500,7 @@ public final class WorkViewFormulas implements FormulaModule
                     return (Object) r.copy()
                             .put("workingDaysLeft", released ? 0 : Workload.count(ctx.today(), releaseDate, days.result().company()))
                             .put("sprints", new JsonArray(sprints.getList().reversed()))
+                            .put("sprintNames", new JsonArray(names.getList().reversed()))
                             .put("personDone", mine)
                             .put("teamDone", teamDone)
                             .put("share", WorkViews.releaseShare(mine, teamDone));

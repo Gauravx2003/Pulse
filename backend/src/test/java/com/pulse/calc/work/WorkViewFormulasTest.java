@@ -166,7 +166,12 @@ class WorkViewFormulasTest
                         + "personDone:m.dsp,teamDone:tsp,share:tsp?Math.round(m.dsp/tsp*100):0}})"
                         + "(person('" + id + "'),perOf('r:" + release + "'))");
 
-                assertSame(id + " r:" + release, prototype, get(WorkViewFormulas.RELEASE_CARD, person(id).put("period", "r:" + release)));
+                // sprintNames (change jira-sprint-names) is Pulse's own: the prototype names no sprint
+                JsonObject card = ((JsonObject) get(WorkViewFormulas.RELEASE_CARD, person(id).put("period", "r:" + release))).copy();
+
+                card.remove("sprintNames");
+
+                assertSame(id + " r:" + release, prototype, card);
             }
         }
     }

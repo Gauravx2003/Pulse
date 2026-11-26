@@ -61,3 +61,17 @@ export function isKnown(periods, key, kinds) {
 
   return (periods[`${kind}s`] ?? []).some((p) => p.key === key);
 }
+
+/**
+ * A release card's sprints as one line, by name (change jira-sprint-names): the server's `sprintNames`
+ * ({key, name}, the calendar's label: the Jira name, else "Sprint N"), each falling back to its key without
+ * `s:` when the name is missing, and to the plain `sprints` keys for a card without names. '—' for none.
+ */
+export function releaseSprints(release) {
+  const named = Array.isArray(release?.sprintNames) ? release.sprintNames : null;
+  const shown = named
+    ? named.map((s) => s.name || String(s.key ?? '').replace(/^s:/, ''))
+    : (release?.sprints ?? []).map((k) => String(k).replace(/^s:/, ''));
+
+  return shown.filter(Boolean).join(', ') || '—';
+}

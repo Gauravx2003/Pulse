@@ -25,7 +25,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 2. Every other place a sprint is named (Track 2)
 
-- [ ] 2.1 Backend: take the sprint label from the calendar instead of formatting it locally:
+- [x] 2.1 Backend: take the sprint label from the calendar instead of formatting it locally:
   - the `EffortFormulas` mid-sprint item
   - the `WorkloadActionProvider` action text (which today gives "Sprint s:J142" for a live key)
   - `sprintName` beside `sprintKey` on Work items rows (`WorkloadFormulas`)
@@ -33,7 +33,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   - the Action Center forecast's sprint name
 
   Verify: the existing Effort, Work items, release and Action Center tests pass unchanged on seed data, and a new test with one named live sprint shows its name in each payload.
-- [ ] 2.2 Frontend: show those names:
+- [x] 2.2 Frontend: show those names:
   - Work items' sprint column
   - the release cards' sprint lists (Overview, Work items, Team utilization)
   - the Action Center forecast title

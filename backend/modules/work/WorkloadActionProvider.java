@@ -90,7 +90,7 @@ public final class WorkloadActionProvider implements ActionProvider
                         continue;
                     }
 
-                    String sprint = "Sprint " + m.getString("sprint", "").replace("s:S", "");
+                    String sprint = m.getString("sprintName", m.getString("sprint", ""));
 
                     if (OVERLOAD.equals(key))
                     {

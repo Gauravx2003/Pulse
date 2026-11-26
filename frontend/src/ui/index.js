@@ -20,4 +20,4 @@ export { default as PlField } from './PlField.vue';
 export { default as PlFormError } from './PlFormError.vue';
 export { showToast, TOAST_MS } from './toast.js';
 export { useDialog } from './dialog.js';
-export { KIND_LABELS, kindOf, defaultKey, isKnown } from './periods.js';
+export { KIND_LABELS, kindOf, defaultKey, isKnown, releaseSprints } from './periods.js';

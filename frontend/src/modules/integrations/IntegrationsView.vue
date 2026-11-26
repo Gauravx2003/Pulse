@@ -205,6 +205,7 @@
 // lists the accounts its syncs saw. While a live sync runs the tiles are re-read every few seconds.
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { api } from '@/api/client.js';
+import { reloadPeriods } from '@/shell/period.js';
 import { Badge, IntegrationTile } from '@/kit/index.js';
 import { formatDateTime, formatDateWithYear } from '@/ui/format.js';
 import { PlAlert, PlCard, PlField, PlPageHeader, PlTable, showToast } from '@/ui/index.js';
@@ -469,6 +470,8 @@ async function liveSync(t) {
 
   await load();
   accountsPanel.value?.load();
+  // a sync may add sprints: the period choices of every screen must include them
+  reloadPeriods().catch((e) => console.error('GET /periods failed', e));
 }
 
 async function saveJira() {

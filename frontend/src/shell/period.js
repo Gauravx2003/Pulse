@@ -1,6 +1,6 @@
 import { computed, reactive, ref } from 'vue';
 import { api } from '../api/client.js';
-import { defaultKey, isKnown } from '../ui/periods.js';
+import { defaultKeyOf, isKnown } from '../ui/periods.js';
 import { onViewReset, readView, writeView } from './viewState.js';
 
 /**
@@ -42,6 +42,16 @@ export function loadPeriods() {
   return loading;
 }
 
+/**
+ * Reads GET /periods again, e.g. after a live sync added sprints, so every screen sees them without a page
+ * reload. The previous list stays until the new one arrives.
+ */
+export function reloadPeriods() {
+  loading = null;
+
+  return loadPeriods();
+}
+
 function use(slot, kinds, fallback) {
   loadPeriods().catch((e) => console.error('GET /periods failed', e));
 
@@ -53,7 +63,7 @@ function use(slot, kinds, fallback) {
         return chosen;
       }
 
-      return fallback?.() ?? defaultKey(periods.value, kinds[0]);
+      return fallback?.() ?? defaultKeyOf(periods.value, kinds);
     },
     set(value) {
       setSlot(slot, value);

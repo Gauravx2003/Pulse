@@ -127,8 +127,12 @@ test('Jira Server: connect, sync, figures, link, 409, 401 and disconnect', async
   const before = { discipline: await disciplineScore(page), index: await reviewsIndex(page) };
 
   await test.step('1 · Admin enters the base URL, username and password; the http warning shows', async () => {
+    // Team utilization first, then Integrations from the menu: steps 1 to 3 stay in one page view, so
+    // step 3 shows that Sync now refreshes the period choices without a reload (task 24.10)
     await as(page, DEMO.admin);
-    await page.goto('/integrations');
+    await page.goto('/team-utilization');
+    await expect(page.getByRole('combobox', { name: 'Period' })).not.toContainText('Sprint 147');
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Integrations' }).click();
     await tile(page).getByRole('button', { name: `Settings ${TOOL}` }).click();
     await page.getByRole('dialog', { name: TOOL }).getByRole('button', { name: 'Change credentials' }).click();
 
@@ -193,6 +197,11 @@ test('Jira Server: connect, sync, figures, link, 409, 401 and disconnect', async
 
     expect(search.query.jql).toBe('project in ("PUL") ORDER BY updated ASC');
     expect(search.query.expand).toBe('changelog');
+
+    // the synced sprint is a period choice at once, in the same page view
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Team utilization' }).click();
+    await expect(page.getByRole('combobox', { name: 'Period' })).toContainText('Sprint 147');
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Integrations' }).click();
 
     // the bot and the hidden-email user are unmatched; Priya matched by email
     const panel = card(page, 'Unmatched accounts');

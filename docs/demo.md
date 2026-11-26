@@ -228,6 +228,42 @@ A link applies from the next read, with no re-sync: the person's Work items, Ove
 utilization then count those issues. **Unlink** reverses it. Live issues of unmatched accounts count
 for the team ("Unassigned"), not for a person.
 
+### The real team on live Jira (`scripts/live.sh`)
+
+To see a real team's Jira work rather than the demo's, run `scripts/live.sh`. It runs beside the demo:
+
+- its own database `pulse_live`, API on :8090, web on :5175, and key file `.pulse/live-secret-key`
+- the real date as "today", so Jira's running sprint is the live sprint
+- **no demo company**: the demo seed is off, so the database holds only the people you import
+
+**First Admin.** On the first start (no Admin in the database yet) the script asks for your work email,
+name and password, the password hidden and asked twice. It hands them to the backend as
+`PULSE_ADMIN_EMAIL`, `PULSE_ADMIN_NAME` and `PULSE_ADMIN_PASSWORD`, and the backend creates that Active
+Admin once:
+
+- The password follows the password rules. It is stored hashed and never logged or audited.
+- Once an Admin exists, the settings are ignored: they never reset a password or promote an account.
+- Under the production profile a `@pulse.demo` address is refused.
+
+The same variables work for any deployment started without the demo seed. A `pulse_live` created by an
+earlier version of the script still holds the demo accounts: run `scripts/live.sh --reset` once. It asks
+for the database name before it drops anything.
+
+Then:
+
+1. **Imports → Users.** Import the team (`name, email, role, manager_email, title, department, level`).
+   - Each work email must be the one in the person's Jira profile (letter case does not matter), so the
+     first sync matches them.
+   - Give the team lead your Admin email as `manager_email`, and everyone else the lead's, so Team
+     utilization shows the team.
+2. **Connect and sync** as above, with **Personal access token** and a small project first. The first
+   sync reads the project's whole history.
+3. **Unmatched accounts.** Link anyone whose Jira email is hidden or different.
+
+Performance index, appraisal score and most of Discipline stay empty or at their default for these
+people, because those come from seeded inputs that real people don't have. The database holds real
+employee data: keep it on this machine.
+
 ### Seed and live rows are both counted
 
 Live rows are added next to the seed rows; neither replaces the other. After a live sync, team

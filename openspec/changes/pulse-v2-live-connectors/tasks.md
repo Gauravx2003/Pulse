@@ -181,6 +181,22 @@ Suggested order: 24.3, 24.1, 24.4 (Day 1 freeze), then 24.2, 24.5, 24.6, 24.7, 2
     - no username or email remains for the deleted person
     - team totals are unchanged
     - a fresh clone starts with one command
+- [x] 24.9 **First Admin without the demo seed, and the live-team runbook** (added 2026-11-26).
+  - **Why.** Without the demo seed a database has only roles and rules, so nobody can sign in. With the seed on, the demo company mixes with the real team imported for live Jira.
+  - **`AdminBootstrap`** (`platform/auth`) runs at start-up after the seeds. With `PULSE_ADMIN_EMAIL` and `PULSE_ADMIN_PASSWORD` set (optional `PULSE_ADMIN_NAME`), it creates that account as an Active Admin, only while no active Admin exists:
+    - it never resets a password, changes a role or promotes an existing account
+    - the password follows `PasswordPolicy` and is hashed off the event loop; it is never logged or audited
+    - under production, a `@pulse.demo` address is refused
+    - the creation is audited as `user.created` with no actor
+  - **`scripts/live.sh`** runs Pulse on live Jira beside the demo:
+    - database `pulse_live`, ports 8090 and 5175, key file `.pulse/live-secret-key`
+    - the real date, and the demo seed off
+    - on the first start it asks for the Admin's email, name and password (hidden, asked twice) and passes them only to the backend
+    - it refuses a `pulse_live` that still holds demo accounts, and `--reset` asks for the database name
+  - Update `docs/demo.md` ("The real team on live Jira").
+  - Verify:
+    - `AdminBootstrapTest`: created once and hashed; ignored once an Admin exists; refused without a password, with a weak password or an invalid email, for an existing account, and for a demo address under production
+    - `DemoSeedFlagTest` is unchanged
 
 ---
 

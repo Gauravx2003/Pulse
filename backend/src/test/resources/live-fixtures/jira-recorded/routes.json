@@ -1,0 +1,31 @@
+{
+  "notes": [
+    "Task 26.1. Recorded on 2026-11-26 from the internal Jira Server (REST v2) with a personal access token, GET only: /myself, /field and two /search pages with the connector's own query (project in (<key>) ORDER BY updated ASC, maxResults=100, expand=changelog, its fields= list). The project holds 10,656 issues, so total is kept as recorded and page 2 starts at startAt 100.",
+    "Sanitized: every user (assignee, creator, reporter, comment and changelog authors) is renamed dev.userN / Dev User N with an @example.com address, the host is {{baseUrl}}, the project key is PROJ, sprint names are 'Sprint <id>', and summaries, descriptions, comments and free-text changelog values are replaced.",
+    "These are the oldest issues of the project: string-form sprints only, no story points or time tracking, every assignee has an email. The case coverage (object sprints, story points, hidden email, unassigned, bot edit) lives in ../jira/search-page1.json and search-page2.json."
+  ],
+  "routes": [
+    {
+      "path": "/rest/api/2/myself",
+      "file": "myself.json"
+    },
+    {
+      "path": "/rest/api/2/field",
+      "file": "field.json"
+    },
+    {
+      "path": "/rest/api/2/search",
+      "query": {
+        "startAt": "0"
+      },
+      "file": "search-100-page1.json"
+    },
+    {
+      "path": "/rest/api/2/search",
+      "query": {
+        "startAt": "100"
+      },
+      "file": "search-100-page2.json"
+    }
+  ]
+}

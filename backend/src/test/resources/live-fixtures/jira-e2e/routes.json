@@ -1,0 +1,42 @@
+{
+  "notes": [
+    "Task 26.3: the Jira end-to-end flow (frontend/e2e/live-flows/jira.spec.js), served by the Playwright mock (frontend/e2e/live-flows/mockTool.js) to a backend whose today is 2026-11-26.",
+    "myself.json, field.json and the error answers are copies of ../jira/ (recorded, sanitized). search.json is written in the recorded shape for the demo seed: Jira sprint 147 (23 Nov to 4 Dec 2026) is the live sprint; story points are customfield_10111 and the sprint is customfield_10108, as in field.json.",
+    "Assignees: priya.shah has the work email Priya@Pulse.Demo, so she is matched by email in another letter case; arjun.m has no emailAddress, so he stays unmatched until the Admin links him; PUL-207 (Priya) has had no update since 23 Nov, so it is stale on 26 Nov; jira.automation is a bot whose only edit is a label; PUL-206 is unassigned. PUL-202 has the sprint in the object form, the rest in the string form."
+  ],
+  "routes": [
+    {
+      "path": "/rest/api/2/myself",
+      "file": "myself.json"
+    },
+    {
+      "path": "/rest/api/2/field",
+      "file": "field.json"
+    },
+    {
+      "path": "/rest/api/2/search",
+      "query": {
+        "startAt": "0"
+      },
+      "file": "search.json"
+    }
+  ],
+  "errors": {
+    "401": {
+      "file": "error-401.xml",
+      "headers": {
+        "Content-Type": "application/xml;charset=UTF-8",
+        "WWW-Authenticate": "OAuth realm=\"http%3A%2F%2Fjira.example.local%3A8080\""
+      }
+    },
+    "429": {
+      "file": "error-429.json",
+      "headers": {
+        "Retry-After": "60"
+      }
+    },
+    "500": {
+      "file": "error-500.json"
+    }
+  }
+}

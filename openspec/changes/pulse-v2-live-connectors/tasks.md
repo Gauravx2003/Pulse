@@ -290,7 +290,7 @@ Depends on the Track 1 Day 1 freeze (`LiveConnector`, `LiveContext`, mock server
     - a base URL with user info, or `http://169.254.169.254`, is rejected on save
 
   **Status (2026-11-26), done:** `JiraConnector` and `JiraMapper` are built and registered; `JiraConnectorContractTest` (13) and `JiraConnectorTest` (15) pass, and the full backend suite (1185) is green. The two items left open on 2026-11-25 are closed: (1) migration V293 (Track 2's range, additive) adds `issues.description text`, appended to the `issues_with_assignee` view, and the mapper stores `fields.description` as the v2 plain text / wiki markup string (non-strings become null; seed rows stay null); comment bodies go to `issue_events.to_value` with kind `comment`. (2) "Rejected on save" is checked with Jira's own schema through `LiveConfig.validate`, the check the 24.5 Test connection and Save routes run (400 on `config.baseUrl` for user info and `http://169.254.169.254`). Mapping choices for the 25.4 review: sprint key `S<jira sprint id>` and number = the Jira id; sprints without dates (future) are not stored and the issue's `sprint_id` is null; `ends_on` is the Sunday on or after `endDate`; an in-progress status whose name contains "review" maps to In Review; more than one sprint sets `carried_over`; `started_on` is the first status change; with the bot switch off, Jira's `updated` is written as a `transition` event of the assignee so it counts as last activity.
-- [ ] 26.3 **Jira mapping record and end-to-end flow.**
+- [x] 26.3 **Jira mapping record and end-to-end flow.**
   - Write the Jira Server → Pulse mapping section of `docs/live-connectors.md` (sent to Track 1 for the merge, reviewed by Track 2 in 25.4).
   - Add a Playwright flow against the mock server:
     1. Admin enters the base URL, username and password; the `http` warning shows.
@@ -303,6 +303,27 @@ Depends on the Track 1 Day 1 freeze (`LiveConnector`, `LiveContext`, mock server
     8. Disconnect keeps the rows.
 
   Verify: the flow passes on a fresh database with `PULSE_DEMO_SEED=true`.
+
+  **Status (2026-11-26), done:**
+  - **Mapping record.** "Jira Server → Pulse" is in `docs/live-connectors.md` section 5, with four points for the 25.4 review:
+    - seed and Jira sprints share one calendar
+    - `sprints.key` can collide (`S43`)
+    - future sprints are not stored
+    - the index needs the quarter's seeded pillars and culture ratings
+  - **Flow and how it runs.** `frontend/e2e/live-flows/jira.spec.js` (`npm run test:live-flows`, `playwright.live.config.js`) runs on its own backend:
+    - database `pulse_e2e_live`, dropped and recreated by `start-backend.sh` (`PULSE_E2E_FRESH_DB`)
+    - demo seed on, `PULSE_TODAY=2026-11-26` (inside Jira sprint 147)
+    - loopback allowed, a fresh `PULSE_SECRET_KEY` per run
+  - **Mock and fixtures.** A Node mock (`e2e/live-flows/mockTool.js`) serves the new `live-fixtures/jira-e2e/` with the `routes.json` rules. `JiraFixturesTest` checks that they load and hold no secret. In the fixtures:
+    - Priya matches by email in another letter case
+    - `arjun.m` has no email and is linked in step 5
+    - PUL-207 is stale, so Discipline, index and the appraisal score move
+    - a bot makes a label edit, and one issue is unassigned
+  - **Changes to the steps.**
+    - Set-up copies the seed's 2026-Q3 pillars and culture ratings to Q4, so the Q4 index exists.
+    - Step 7 (409, with the search held at the mock) runs before step 6 (401), while the connection is healthy.
+    - The `http` warning shows in the Test connection result, as the backend reports it.
+  - **Result.** The flow passed twice in a row on a fresh database, and the Jira backend tests (37) pass.
 - [ ] 26.4 **GitHub fixtures** from a sandbox repo, sanitized. Include:
   - `/user`
   - `/repos/{o}/{r}` with classic-token and fine-grained-token headers

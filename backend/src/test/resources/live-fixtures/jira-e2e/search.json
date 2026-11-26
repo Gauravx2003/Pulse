@@ -1,0 +1,902 @@
+{
+  "expand": "schema,names",
+  "startAt": 0,
+  "maxResults": 100,
+  "total": 7,
+  "issues": [
+    {
+      "expand": "operations,versionedRepresentations,editmeta,changelog,renderedFields",
+      "id": "91001",
+      "self": "{{baseUrl}}/rest/api/2/issue/91001",
+      "key": "PUL-201",
+      "changelog": {
+        "startAt": 0,
+        "maxResults": 1,
+        "total": 1,
+        "histories": [
+          {
+            "id": "310001",
+            "author": {
+              "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+              "name": "priya.shah",
+              "key": "JIRAUSER2101",
+              "avatarUrls": {
+                "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+              },
+              "displayName": "Priya Shah",
+              "active": true,
+              "timeZone": "Asia/Kolkata",
+              "emailAddress": "Priya@Pulse.Demo"
+            },
+            "created": "2026-11-24T10:15:00.000+0530",
+            "items": [
+              {
+                "field": "status",
+                "fieldtype": "jira",
+                "from": null,
+                "fromString": "To Do",
+                "to": null,
+                "toString": "In Progress"
+              }
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "summary": "Alarm router: retry on broker failover",
+        "issuetype": {
+          "self": "{{baseUrl}}/rest/api/2/issuetype/1",
+          "id": "1",
+          "name": "Story",
+          "subtask": false
+        },
+        "project": {
+          "self": "{{baseUrl}}/rest/api/2/project/10200",
+          "id": "10200",
+          "key": "PUL",
+          "name": "Pulse Demo"
+        },
+        "status": {
+          "self": "{{baseUrl}}/rest/api/2/status/1",
+          "description": "",
+          "name": "In Progress",
+          "id": "1",
+          "statusCategory": {
+            "self": "{{baseUrl}}/rest/api/2/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "inprogress",
+            "name": "In Progress"
+          }
+        },
+        "assignee": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "creator": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "reporter": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "created": "2026-11-23T10:20:00.000+0530",
+        "updated": "2026-11-25T17:05:00.000+0530",
+        "duedate": null,
+        "resolutiondate": null,
+        "timeoriginalestimate": 57600,
+        "timeestimate": 28800,
+        "timespent": 28800,
+        "description": "h3. Goal\nRetry alarm delivery when the broker fails over.\n\n* backoff\n* failover test",
+        "comment": {
+          "comments": [
+            {
+              "self": "{{baseUrl}}/rest/api/2/issue/comment/410001",
+              "id": "410001",
+              "author": {
+                "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+                "name": "priya.shah",
+                "key": "JIRAUSER2101",
+                "avatarUrls": {
+                  "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+                },
+                "displayName": "Priya Shah",
+                "active": true,
+                "timeZone": "Asia/Kolkata",
+                "emailAddress": "Priya@Pulse.Demo"
+              },
+              "body": "Retry with backoff is in; failover test next.",
+              "updateAuthor": {
+                "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+                "name": "priya.shah",
+                "key": "JIRAUSER2101",
+                "avatarUrls": {
+                  "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+                },
+                "displayName": "Priya Shah",
+                "active": true,
+                "timeZone": "Asia/Kolkata",
+                "emailAddress": "Priya@Pulse.Demo"
+              },
+              "created": "2026-11-25T17:05:00.000+0530",
+              "updated": "2026-11-25T17:05:00.000+0530"
+            }
+          ],
+          "maxResults": 1,
+          "total": 1,
+          "startAt": 0
+        },
+        "customfield_10111": 5.0,
+        "customfield_10108": [
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+        ]
+      }
+    },
+    {
+      "expand": "operations,versionedRepresentations,editmeta,changelog,renderedFields",
+      "id": "91002",
+      "self": "{{baseUrl}}/rest/api/2/issue/91002",
+      "key": "PUL-202",
+      "changelog": {
+        "startAt": 0,
+        "maxResults": 0,
+        "total": 0,
+        "histories": []
+      },
+      "fields": {
+        "summary": "Topology import: map service groups",
+        "issuetype": {
+          "self": "{{baseUrl}}/rest/api/2/issuetype/1",
+          "id": "1",
+          "name": "Story",
+          "subtask": false
+        },
+        "project": {
+          "self": "{{baseUrl}}/rest/api/2/project/10200",
+          "id": "10200",
+          "key": "PUL",
+          "name": "Pulse Demo"
+        },
+        "status": {
+          "self": "{{baseUrl}}/rest/api/2/status/1",
+          "description": "",
+          "name": "To Do",
+          "id": "1",
+          "statusCategory": {
+            "self": "{{baseUrl}}/rest/api/2/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "assignee": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "creator": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "reporter": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "created": "2026-11-23T10:25:00.000+0530",
+        "updated": "2026-11-23T10:25:00.000+0530",
+        "duedate": null,
+        "resolutiondate": null,
+        "timeoriginalestimate": 28800,
+        "timeestimate": 28800,
+        "timespent": null,
+        "description": null,
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "customfield_10111": 3.0,
+        "customfield_10108": [
+          {
+            "id": 147,
+            "rapidViewId": 1,
+            "state": "ACTIVE",
+            "name": "Sprint 147",
+            "startDate": "2026-11-23T10:00:00.000+05:30",
+            "endDate": "2026-12-04T19:00:00.000+05:30",
+            "completeDate": null,
+            "activatedDate": "2026-11-23T10:05:00.000+05:30",
+            "sequence": 147,
+            "goal": null
+          }
+        ]
+      }
+    },
+    {
+      "expand": "operations,versionedRepresentations,editmeta,changelog,renderedFields",
+      "id": "91003",
+      "self": "{{baseUrl}}/rest/api/2/issue/91003",
+      "key": "PUL-203",
+      "changelog": {
+        "startAt": 0,
+        "maxResults": 2,
+        "total": 2,
+        "histories": [
+          {
+            "id": "310002",
+            "author": {
+              "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+              "name": "priya.shah",
+              "key": "JIRAUSER2101",
+              "avatarUrls": {
+                "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+              },
+              "displayName": "Priya Shah",
+              "active": true,
+              "timeZone": "Asia/Kolkata",
+              "emailAddress": "Priya@Pulse.Demo"
+            },
+            "created": "2026-11-23T14:00:00.000+0530",
+            "items": [
+              {
+                "field": "status",
+                "fieldtype": "jira",
+                "from": null,
+                "fromString": "To Do",
+                "to": null,
+                "toString": "In Progress"
+              }
+            ]
+          },
+          {
+            "id": "310003",
+            "author": {
+              "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+              "name": "priya.shah",
+              "key": "JIRAUSER2101",
+              "avatarUrls": {
+                "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+              },
+              "displayName": "Priya Shah",
+              "active": true,
+              "timeZone": "Asia/Kolkata",
+              "emailAddress": "Priya@Pulse.Demo"
+            },
+            "created": "2026-11-25T12:40:00.000+0530",
+            "items": [
+              {
+                "field": "status",
+                "fieldtype": "jira",
+                "from": null,
+                "fromString": "In Progress",
+                "to": null,
+                "toString": "Done"
+              }
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "summary": "Fix flaky alert digest test",
+        "issuetype": {
+          "self": "{{baseUrl}}/rest/api/2/issuetype/1",
+          "id": "1",
+          "name": "Bug",
+          "subtask": false
+        },
+        "project": {
+          "self": "{{baseUrl}}/rest/api/2/project/10200",
+          "id": "10200",
+          "key": "PUL",
+          "name": "Pulse Demo"
+        },
+        "status": {
+          "self": "{{baseUrl}}/rest/api/2/status/1",
+          "description": "",
+          "name": "Done",
+          "id": "1",
+          "statusCategory": {
+            "self": "{{baseUrl}}/rest/api/2/statuscategory/3",
+            "id": 3,
+            "key": "done",
+            "colorName": "green",
+            "name": "Done"
+          }
+        },
+        "assignee": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "creator": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "reporter": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "created": "2026-11-23T11:00:00.000+0530",
+        "updated": "2026-11-25T12:40:00.000+0530",
+        "duedate": null,
+        "resolutiondate": "2026-11-25T12:40:00.000+0530",
+        "timeoriginalestimate": 14400,
+        "timeestimate": 0,
+        "timespent": 14400,
+        "description": null,
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "customfield_10111": 2.0,
+        "customfield_10108": [
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+        ]
+      }
+    },
+    {
+      "expand": "operations,versionedRepresentations,editmeta,changelog,renderedFields",
+      "id": "91004",
+      "self": "{{baseUrl}}/rest/api/2/issue/91004",
+      "key": "PUL-204",
+      "changelog": {
+        "startAt": 0,
+        "maxResults": 2,
+        "total": 2,
+        "histories": [
+          {
+            "id": "310004",
+            "author": {
+              "self": "{{baseUrl}}/rest/api/2/user?username=arjun.m",
+              "name": "arjun.m",
+              "key": "JIRAUSER2102",
+              "avatarUrls": {
+                "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+              },
+              "displayName": "Arjun M",
+              "active": true,
+              "timeZone": "Asia/Kolkata"
+            },
+            "created": "2026-11-24T09:45:00.000+0530",
+            "items": [
+              {
+                "field": "status",
+                "fieldtype": "jira",
+                "from": null,
+                "fromString": "To Do",
+                "to": null,
+                "toString": "In Progress"
+              }
+            ]
+          },
+          {
+            "id": "310005",
+            "author": {
+              "self": "{{baseUrl}}/rest/api/2/user?username=arjun.m",
+              "name": "arjun.m",
+              "key": "JIRAUSER2102",
+              "avatarUrls": {
+                "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+              },
+              "displayName": "Arjun M",
+              "active": true,
+              "timeZone": "Asia/Kolkata"
+            },
+            "created": "2026-11-25T15:10:00.000+0530",
+            "items": [
+              {
+                "field": "status",
+                "fieldtype": "jira",
+                "from": null,
+                "fromString": "In Progress",
+                "to": null,
+                "toString": "Code Review"
+              }
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "summary": "Metric explorer: saved views",
+        "issuetype": {
+          "self": "{{baseUrl}}/rest/api/2/issuetype/1",
+          "id": "1",
+          "name": "Story",
+          "subtask": false
+        },
+        "project": {
+          "self": "{{baseUrl}}/rest/api/2/project/10200",
+          "id": "10200",
+          "key": "PUL",
+          "name": "Pulse Demo"
+        },
+        "status": {
+          "self": "{{baseUrl}}/rest/api/2/status/1",
+          "description": "",
+          "name": "Code Review",
+          "id": "1",
+          "statusCategory": {
+            "self": "{{baseUrl}}/rest/api/2/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "inprogress",
+            "name": "In Progress"
+          }
+        },
+        "assignee": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=arjun.m",
+          "name": "arjun.m",
+          "key": "JIRAUSER2102",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Arjun M",
+          "active": true,
+          "timeZone": "Asia/Kolkata"
+        },
+        "creator": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=arjun.m",
+          "name": "arjun.m",
+          "key": "JIRAUSER2102",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Arjun M",
+          "active": true,
+          "timeZone": "Asia/Kolkata"
+        },
+        "reporter": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=arjun.m",
+          "name": "arjun.m",
+          "key": "JIRAUSER2102",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Arjun M",
+          "active": true,
+          "timeZone": "Asia/Kolkata"
+        },
+        "created": "2026-11-23T11:30:00.000+0530",
+        "updated": "2026-11-25T15:10:00.000+0530",
+        "duedate": null,
+        "resolutiondate": null,
+        "timeoriginalestimate": 43200,
+        "timeestimate": 21600,
+        "timespent": 21600,
+        "description": null,
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "customfield_10111": 3.0,
+        "customfield_10108": [
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+        ]
+      }
+    },
+    {
+      "expand": "operations,versionedRepresentations,editmeta,changelog,renderedFields",
+      "id": "91005",
+      "self": "{{baseUrl}}/rest/api/2/issue/91005",
+      "key": "PUL-205",
+      "changelog": {
+        "startAt": 0,
+        "maxResults": 2,
+        "total": 2,
+        "histories": [
+          {
+            "id": "310006",
+            "author": {
+              "self": "{{baseUrl}}/rest/api/2/user?username=arjun.m",
+              "name": "arjun.m",
+              "key": "JIRAUSER2102",
+              "avatarUrls": {
+                "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+              },
+              "displayName": "Arjun M",
+              "active": true,
+              "timeZone": "Asia/Kolkata"
+            },
+            "created": "2026-11-23T12:00:00.000+0530",
+            "items": [
+              {
+                "field": "status",
+                "fieldtype": "jira",
+                "from": null,
+                "fromString": "To Do",
+                "to": null,
+                "toString": "In Progress"
+              }
+            ]
+          },
+          {
+            "id": "310007",
+            "author": {
+              "self": "{{baseUrl}}/rest/api/2/user?username=jira.automation",
+              "name": "jira.automation",
+              "key": "JIRAUSER2199",
+              "avatarUrls": {
+                "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+              },
+              "displayName": "Automation for Jira",
+              "active": true,
+              "timeZone": "Asia/Kolkata",
+              "emailAddress": "automation@example.com"
+            },
+            "created": "2026-11-25T18:00:00.000+0530",
+            "items": [
+              {
+                "field": "labels",
+                "fieldtype": "jira",
+                "from": null,
+                "fromString": "",
+                "to": null,
+                "toString": "triaged"
+              }
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "summary": "Dashboard export to PDF",
+        "issuetype": {
+          "self": "{{baseUrl}}/rest/api/2/issuetype/1",
+          "id": "1",
+          "name": "Story",
+          "subtask": false
+        },
+        "project": {
+          "self": "{{baseUrl}}/rest/api/2/project/10200",
+          "id": "10200",
+          "key": "PUL",
+          "name": "Pulse Demo"
+        },
+        "status": {
+          "self": "{{baseUrl}}/rest/api/2/status/1",
+          "description": "",
+          "name": "In Progress",
+          "id": "1",
+          "statusCategory": {
+            "self": "{{baseUrl}}/rest/api/2/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "inprogress",
+            "name": "In Progress"
+          }
+        },
+        "assignee": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=arjun.m",
+          "name": "arjun.m",
+          "key": "JIRAUSER2102",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Arjun M",
+          "active": true,
+          "timeZone": "Asia/Kolkata"
+        },
+        "creator": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=arjun.m",
+          "name": "arjun.m",
+          "key": "JIRAUSER2102",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Arjun M",
+          "active": true,
+          "timeZone": "Asia/Kolkata"
+        },
+        "reporter": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=arjun.m",
+          "name": "arjun.m",
+          "key": "JIRAUSER2102",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Arjun M",
+          "active": true,
+          "timeZone": "Asia/Kolkata"
+        },
+        "created": "2026-11-23T11:40:00.000+0530",
+        "updated": "2026-11-25T18:00:00.000+0530",
+        "duedate": null,
+        "resolutiondate": null,
+        "timeoriginalestimate": 28800,
+        "timeestimate": 28800,
+        "timespent": null,
+        "description": null,
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "customfield_10111": 2.0,
+        "customfield_10108": [
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+        ]
+      }
+    },
+    {
+      "expand": "operations,versionedRepresentations,editmeta,changelog,renderedFields",
+      "id": "91007",
+      "self": "{{baseUrl}}/rest/api/2/issue/91007",
+      "key": "PUL-207",
+      "changelog": {
+        "startAt": 0,
+        "maxResults": 1,
+        "total": 1,
+        "histories": [
+          {
+            "id": "310008",
+            "author": {
+              "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+              "name": "priya.shah",
+              "key": "JIRAUSER2101",
+              "avatarUrls": {
+                "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+              },
+              "displayName": "Priya Shah",
+              "active": true,
+              "timeZone": "Asia/Kolkata",
+              "emailAddress": "Priya@Pulse.Demo"
+            },
+            "created": "2026-11-23T11:00:00.000+0530",
+            "items": [
+              {
+                "field": "status",
+                "fieldtype": "jira",
+                "from": null,
+                "fromString": "To Do",
+                "to": null,
+                "toString": "In Progress"
+              }
+            ]
+          }
+        ]
+      },
+      "fields": {
+        "summary": "Retention job: purge closed alarms",
+        "issuetype": {
+          "self": "{{baseUrl}}/rest/api/2/issuetype/1",
+          "id": "1",
+          "name": "Story",
+          "subtask": false
+        },
+        "project": {
+          "self": "{{baseUrl}}/rest/api/2/project/10200",
+          "id": "10200",
+          "key": "PUL",
+          "name": "Pulse Demo"
+        },
+        "status": {
+          "self": "{{baseUrl}}/rest/api/2/status/1",
+          "description": "",
+          "name": "In Progress",
+          "id": "1",
+          "statusCategory": {
+            "self": "{{baseUrl}}/rest/api/2/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "inprogress",
+            "name": "In Progress"
+          }
+        },
+        "assignee": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "creator": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "reporter": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "created": "2026-11-23T10:30:00.000+0530",
+        "updated": "2026-11-23T11:00:00.000+0530",
+        "duedate": null,
+        "resolutiondate": null,
+        "timeoriginalestimate": 21600,
+        "timeestimate": 21600,
+        "timespent": null,
+        "description": null,
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "customfield_10111": 1.0,
+        "customfield_10108": [
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+        ]
+      }
+    },
+    {
+      "expand": "operations,versionedRepresentations,editmeta,changelog,renderedFields",
+      "id": "91006",
+      "self": "{{baseUrl}}/rest/api/2/issue/91006",
+      "key": "PUL-206",
+      "changelog": {
+        "startAt": 0,
+        "maxResults": 0,
+        "total": 0,
+        "histories": []
+      },
+      "fields": {
+        "summary": "Spike: alert grouping rules",
+        "issuetype": {
+          "self": "{{baseUrl}}/rest/api/2/issuetype/1",
+          "id": "1",
+          "name": "Task",
+          "subtask": false
+        },
+        "project": {
+          "self": "{{baseUrl}}/rest/api/2/project/10200",
+          "id": "10200",
+          "key": "PUL",
+          "name": "Pulse Demo"
+        },
+        "status": {
+          "self": "{{baseUrl}}/rest/api/2/status/1",
+          "description": "",
+          "name": "To Do",
+          "id": "1",
+          "statusCategory": {
+            "self": "{{baseUrl}}/rest/api/2/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "assignee": null,
+        "creator": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "reporter": {
+          "self": "{{baseUrl}}/rest/api/2/user?username=priya.shah",
+          "name": "priya.shah",
+          "key": "JIRAUSER2101",
+          "avatarUrls": {
+            "48x48": "{{baseUrl}}/secure/useravatar?avatarId=10122"
+          },
+          "displayName": "Priya Shah",
+          "active": true,
+          "timeZone": "Asia/Kolkata",
+          "emailAddress": "Priya@Pulse.Demo"
+        },
+        "created": "2026-11-24T09:00:00.000+0530",
+        "updated": "2026-11-24T09:00:00.000+0530",
+        "duedate": null,
+        "resolutiondate": null,
+        "timeoriginalestimate": null,
+        "timeestimate": null,
+        "timespent": null,
+        "description": null,
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "customfield_10111": null,
+        "customfield_10108": [
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+        ]
+      }
+    }
+  ]
+}

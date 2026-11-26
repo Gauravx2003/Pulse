@@ -13,6 +13,8 @@ const API_PORT = Number(process.env.E2E_API_PORT ?? 8089);
 
 export default defineConfig({
   testDir: './e2e',
+  // the live-connector flows run on their own servers and database: playwright.live.config.js
+  testIgnore: /live-flows\//,
   fullyParallel: true,
   workers: 2,
   retries: 0,
@@ -23,7 +25,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
-    { name: 'chrome', testIgnore: /flows\.spec\.js/, use: { ...devices['Desktop Chrome'], channel: 'chrome' } },
+    { name: 'chrome', testIgnore: [/flows\.spec\.js/, /live-flows\//], use: { ...devices['Desktop Chrome'], channel: 'chrome' } },
     // Task 23.3: the cross-module flows write rows the module suites read, so they run after them.
     { name: 'flows', testMatch: /flows\.spec\.js/, dependencies: ['chrome'], use: { ...devices['Desktop Chrome'], channel: 'chrome' } },
   ],

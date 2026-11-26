@@ -13,7 +13,7 @@ import { statusTone } from '@/kit/tones.js';
 import { setPerson } from '@/shell/person.js';
 import { useSharedPeriod } from '@/shell/period.js';
 import { formatDate } from '@/ui/format.js';
-import { PlAlert, PlCard, PlKpiRow, PlLoading, PlPageHeader, PlPeriodControl, PlTable, showToast } from '@/ui/index.js';
+import { PlAlert, PlCard, PlKpiRow, PlLoading, PlPageHeader, PlPeriodControl, PlTable, releaseSprints, showToast } from '@/ui/index.js';
 import { band, hours, initials, num, pct, toolUrl, val } from '../work/presentation.js';
 
 const LIVE_COLUMNS = [
@@ -376,7 +376,7 @@ function reassign() {
         <PlCard
           v-if="release"
           :title="`${release.name} · release ${release.key}`"
-          :subtitle="`Sprints ${(release.sprints ?? []).map((s) => s.replace('s:', '')).join(', ') || '—'} · team delivered ${num(release.teamDone)} of ${num(release.committed)} SP`"
+          :subtitle="`Sprints ${releaseSprints(release)} · team delivered ${num(release.teamDone)} of ${num(release.committed)} SP`"
         >
           <template #actions>
             <Badge

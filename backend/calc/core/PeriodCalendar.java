@@ -157,6 +157,21 @@ public final class PeriodCalendar
         return row == null ? null : sprint(row);
     }
 
+    /**
+     * A sprint's {@code short}, the one label used wherever a sprint is named: its name, else
+     * {@code "Sprint N"}, with its key when the name clashes. Takes the stored key ({@code J142}) or the
+     * period key ({@code s:J142}); null for an unknown sprint.
+     */
+    public String sprintName(String key)
+    {
+        if (key == null)
+        {
+            return null;
+        }
+
+        return sprintShorts.get(key.startsWith("s:") ? key.substring(2) : key);
+    }
+
     /** Every sprint as a period, newest first (the "sprint by sprint" table). */
     public JsonArray sprints()
     {

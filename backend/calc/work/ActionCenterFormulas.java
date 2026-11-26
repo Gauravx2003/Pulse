@@ -172,7 +172,8 @@ public final class ActionCenterFormulas implements FormulaModule
     {
         return ctx.get(WorkloadFormulas.LIVE_SPRINT, new JsonObject().put("person", params.getString("person"))).map(live ->
                 live instanceof JsonObject l
-                        ? ActionCenter.forecast(l, ctx.rules().getDouble("focus", 6.0)).put("sprint", l.getString("sprint")) : null);
+                        ? ActionCenter.forecast(l, ctx.rules().getDouble("focus", 6.0)).put("sprint", l.getString("sprint"))
+                                .put("sprintName", l.getString("sprintName")) : null);
     }
 
     // ------------------------------------------------------------------ next-sprint capacity

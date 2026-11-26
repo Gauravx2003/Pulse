@@ -132,6 +132,8 @@ final class ActionCenterInsights
 
                 String sprint = null;
 
+                String sprintName = null;
+
                 for (int i = 0; i < people.size(); i++)
                 {
                     if (present(onboarding.get(i).result()) || !(rows.get(i).result() instanceof JsonObject f) || !present(f))
@@ -140,6 +142,8 @@ final class ActionCenterInsights
                     }
 
                     sprint = sprint == null ? f.getString("sprint") : sprint;
+
+                    sprintName = sprintName == null ? f.getString("sprintName") : sprintName;
 
                     JsonObject p = people.get(i);
 
@@ -157,7 +161,8 @@ final class ActionCenterInsights
                         .put("remaining", remaining)
                         .put("fitsPct", remaining > 0 ? (int) Math.round(fits / remaining * 100) : 100)
                         .put("carry", carry)
-                        .put("sprint", sprint);
+                        .put("sprint", sprint)
+                        .put("sprintName", sprintName);
             });
         });
     }

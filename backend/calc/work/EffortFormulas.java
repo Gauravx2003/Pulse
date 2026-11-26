@@ -355,7 +355,8 @@ public final class EffortFormulas implements FormulaModule
                     FROM people p WHERE p.id = $1""", Tuple.of(person));
 
             Future<JsonArray> midSprint = WorkSql.rows(ctx, """
-                    SELECT i.key, i.summary, i.status, s.number, s.starts_on AS "sprintStart", e.occurred_at AS "at",
+                    SELECT i.key, i.summary, i.status, s.key AS "sprintKey", s.number, s.starts_on AS "sprintStart",
+                           e.occurred_at AS "at",
                            e.actor_name AS "actorName",
                            coalesce((SELECT sum(w.hours) FROM worklogs_with_person w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours,
                            i.id::text AS "issueId", EXISTS (SELECT 1 FROM worklogs w WHERE w.issue_id = i.id) AS tracked
@@ -426,8 +427,10 @@ public final class EffortFormulas implements FormulaModule
                     .compose(x -> WorkloadFormulas.intervalHoursByIssue(ctx, person,
                             untrackedIssues(midSprint.result(), takeovers.result(), help.result())));
 
+            Future<PeriodCalendar> calendar = ctx.calendar();
+
             return Future.all(List.of(who, midSprint, takeovers, help, untracked, reviews, support, proactive, incidents, known,
-                            intervalHours))
+                            intervalHours, calendar))
                     .map(all ->
                     {
                         withIntervalHours(intervalHours.result(), midSprint.result(), takeovers.result(), help.result());
@@ -440,7 +443,10 @@ public final class EffortFormulas implements FormulaModule
 
                         for (JsonObject r : list(midSprint.result()))
                         {
-                            found.add(Effort.midSprint(r, "Sprint " + r.getInteger("number"), LocalDate.parse(r.getString("sprintStart")),
+                            String sprint = calendar.result().sprintName(r.getString("sprintKey"));
+
+                            found.add(Effort.midSprint(r, sprint == null ? "Sprint " + r.getInteger("number") : sprint,
+                                    LocalDate.parse(r.getString("sprintStart")),
                                     instant(r.getString("at")), requester(r.getString("actorName"), manager), number(r, "hours")));
                         }
 

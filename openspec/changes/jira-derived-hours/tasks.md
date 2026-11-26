@@ -65,7 +65,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   - add the ids and `worklog` to `fields=`
 
   Verify: `JiraConnectorTest` covers the proposals from the recorded `field.json` (10200/10201, 11000/10701) and an empty id turning the pair off.
-- [ ] 4.2 Worklogs:
+- [x] 4.2 Worklogs:
   - for an issue with time tracking, map embedded worklogs to `worklogs` records (external id = worklog id, `work_date` = `started` date in Asia/Kolkata, hours = seconds/3600, `account_id` = author `name`)
   - resolve the authors through `accounts().resolve`
   - count issues whose `worklog.total` exceeds the embedded list in the sync result
@@ -74,7 +74,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   - a re-sync with changed hours updates in place
   - `JiraConnectorContractTest` still passes
 
-  **Status (2026-11-26), left open:** worklogs are mapped and tested (`JiraDerivedHoursTest`). `fetchPages` resolves to `{cursor, truncatedWorklogs}`, but `LiveSyncService` (Track 1) copies only `cursor` into the sync result, so the count does not reach the sync log yet: Track 1 to copy `truncatedWorklogs` there.
+  **Status (2026-11-26):** worklogs are mapped and tested (`JiraDerivedHoursTest`). `fetchPages` resolves to `{cursor, truncatedWorklogs}`, and `LiveSyncService` copies the count into the sync log (Track 1, e509311).
 - [x] 4.3 Intervals:
   - for an issue without time tracking, map each configured pair to one `issue_work_intervals` record (`<key>|dev`, `<key>|qa`)
   - credit it to the assignee at the start from the assignee changelog, else the author who last set the start field, else the current assignee

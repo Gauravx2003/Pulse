@@ -122,7 +122,7 @@ The loaders add these hours to worklog hours by person and day, with each issue 
 
 1. Track 2 lands the migration and the views with loaders reading worklogs through `worklogs_with_person`. There are no intervals yet, so figures are unchanged, which proves the plumbing.
 2. Track 3 lands the connector mapping and config fields.
-3. On `pulse_live`: confirm the four field ids in Integrations, run Sync now (full), and compare a few people's hours with their Jira fields by hand.
+3. On `pulse_live`: confirm the four field ids in Integrations (saving the changed config clears the sync cursor, task 6.2), run Sync now, which then reads everything, and compare a few people's hours with their Jira fields by hand.
 4. **Rollback.** Clear the four field ids and sync: the rows get `starts_at` null and count nothing. Or redeploy the previous build: the new table and column are unused by old code.
 
 ## Open Questions

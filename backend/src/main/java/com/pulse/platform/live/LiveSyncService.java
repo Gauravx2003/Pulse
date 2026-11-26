@@ -133,7 +133,7 @@ public final class LiveSyncService
                     counts.put("cursor", next);
 
                     return logs.finish(id, "success", counts, summary(entities))
-                            .compose(row -> state.succeed(tool, next).map(row));
+                            .compose(row -> state.succeed(tool, next, cursor).map(row));
                 }
 
                 String code = code(ar.cause());

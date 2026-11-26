@@ -108,8 +108,15 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 6. Acceptance on real data
 
+- [x] 6.2 (Track 1) Saving a changed live config clears the sync cursor, so the next Sync now reads everything again and fills the intervals of issues synced before the field ids were set. Without it, Sync now stays incremental (`updated >=` the cursor) and only issues edited since then get intervals.
+  - `LiveConnectionsService.save` compares the config with the stored one; a change calls `SyncStateRepository.resetCursor` in the same transaction, notes it in the credential log and audit, and answers `fullSyncNext`
+  - `SyncStateRepository.succeed` advances the cursor only if it still is the one the run started from, so a config saved during a run keeps its full read
+  - the Save toast says "the next sync reads everything again"; `docs/demo.md` says so too
+
+  Verify: `LiveSyncRoutesTest` covers a changed config (cursor cleared, next sync without `since`, no duplicates), a new secret alone (cursor kept) and a reset during a run (not put back).
+
 - [ ] 6.1 On `pulse_live`:
-  - confirm the four field ids, run Sync now and record the sync counts (intervals, worklogs, truncated)
+  - confirm the four field ids and save (with 6.2 the cursor clears), run Sync now and record the sync counts (intervals, worklogs, truncated)
   - recalculate the closed periods frozen before that sync (Admin recalculate, with a reason): their snapshots were taken with no interval hours and do not change by themselves
   - for three people, compare a closed sprint's hours logged with a hand calculation from their Jira Start/End values
   - check that no day exceeds `dayHours`

@@ -59,7 +59,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 4. Jira connector (Track 3)
 
-- [ ] 4.1 Config and discovery:
+- [x] 4.1 Config and discovery:
   - add `devStartField`, `devEndField`, `qaStartField` and `qaEndField` to `configSchema` (optional, `customfield_[0-9]+`)
   - have `proposals()` offer datetime custom fields named "Start Time (Dev)" and the rest, ignoring case
   - add the ids and `worklog` to `fields=`
@@ -73,7 +73,9 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   Verify:
   - a re-sync with changed hours updates in place
   - `JiraConnectorContractTest` still passes
-- [ ] 4.3 Intervals:
+
+  **Status (2026-11-26), left open:** worklogs are mapped and tested (`JiraDerivedHoursTest`). `fetchPages` resolves to `{cursor, truncatedWorklogs}`, but `LiveSyncService` (Track 1) copies only `cursor` into the sync result, so the count does not reach the sync log yet: Track 1 to copy `truncatedWorklogs` there.
+- [x] 4.3 Intervals:
   - for an issue without time tracking, map each configured pair to one `issue_work_intervals` record (`<key>|dev`, `<key>|qa`)
   - credit it to the assignee at the start from the assignee changelog, else the author who last set the start field, else the current assignee
   - ends come from the End field, else `resolutiondate` (`end_source = resolution`), else null (`open`)
@@ -87,6 +89,8 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   Verify:
   - `JiraFixturesTest` passes, with no real email
   - Track 2 approves the mapping in the PR
+
+  **Status (2026-11-26), left open:** fixtures (PROJ-10730 worklogs + Start/End, PROJ-10723 truncated, PROJ-10720 hand-over with a QA interval, PROJ-10719 resolved-open) and the mapping record are in; `JiraFixturesTest` passes. Waiting for Track 2's approval in the PR. Until V295 (1.1) is on main, a live sync of these fixtures fails (`JiraShapeTest` fails with `bad_payload`), so this work must not merge before it.
 
 ## 5. End-to-end (Track 3)
 

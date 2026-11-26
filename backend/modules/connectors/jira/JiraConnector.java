@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -54,10 +55,21 @@ public class JiraConnector implements LiveConnector
 
     private static final String SPRINT_SCHEMA = "com.pyxis.greenhopper.jira:gh-sprint";
 
-    /** Issue fields the mapping reads; the configured story points and sprint fields are added. */
+    /** Datetime custom field names (lower case) and the Start/End config field each is proposed for. */
+    private static final Map<String, String> TIME_FIELD_NAMES = Map.of(
+            "start time (dev)", "devStartField",
+            "end time (dev)", "devEndField",
+            "start time (qa)", "qaStartField",
+            "end time (qa)", "qaEndField");
+
+    /** Config fields holding custom field ids that are added to {@code fields=}. */
+    private static final List<String> CONFIGURED_FIELDS = List.of("storyPointsField", "sprintField", "devStartField",
+            "devEndField", "qaStartField", "qaEndField");
+
+    /** Issue fields the mapping reads; the configured custom fields are added. */
     private static final List<String> FIELDS = List.of("summary", "issuetype", "status", "assignee", "creator",
             "reporter", "created", "updated", "duedate", "resolutiondate", "timeoriginalestimate", "timeestimate",
-            "timespent", "description", "comment");
+            "timespent", "description", "comment", "worklog");
 
     @Override
     public String tool()
@@ -98,11 +110,24 @@ public class JiraConnector implements LiveConnector
                 .add(field("sprintField", "Sprint field", "text", false,
                         "Proposed by Test connection, e.g. customfield_10108. Empty: sprints are not read.")
                         .put("pattern", "customfield_[0-9]+"))
+                .add(timeField("devStartField", "Start Time (Dev) field"))
+                .add(timeField("devEndField", "End Time (Dev) field"))
+                .add(timeField("qaStartField", "Start Time (QA) field"))
+                .add(timeField("qaEndField", "End Time (QA) field"))
                 .add(field("expiresOn", "Password or token expires on", "date", false,
                         "Optional. Jira does not report it; Pulse reminds you before this date."))
                 .add(field("ignoreBotEdits", "Ignore edits by bots and non-assignees", "boolean", false,
                         "Last activity then comes from the assignee's own changes, not Jira's updated time.")
                         .put("default", true)));
+    }
+
+    /** An optional Start/End datetime field id; when either id of a pair is empty, that pair is off. */
+    private static JsonObject timeField(String name, String label)
+    {
+        return field(name, label, "text", false,
+                "Proposed by Test connection. Used for hours on issues without Jira time tracking; leave empty to "
+                        + "turn this Dev or QA pair off.")
+                .put("pattern", "customfield_[0-9]+");
     }
 
     private static JsonObject field(String name, String label, String type, boolean required, String help)
@@ -232,6 +257,8 @@ public class JiraConnector implements LiveConnector
 
         JsonArray sprint = new JsonArray();
 
+        Map<String, JsonArray> times = new LinkedHashMap<>();
+
         for (Object item : fields)
         {
             if (!(item instanceof JsonObject field) || !Boolean.TRUE.equals(field.getBoolean("custom", true)))
@@ -254,9 +281,25 @@ public class JiraConnector implements LiveConnector
             {
                 sprint.add(proposal);
             }
+
+            String type = field.getJsonObject("schema", new JsonObject()).getString("type", "");
+
+            String time = TIME_FIELD_NAMES.get(name.toLowerCase(Locale.ROOT));
+
+            if ("datetime".equals(type) && time != null)
+            {
+                times.computeIfAbsent(time, k -> new JsonArray()).add(proposal);
+            }
         }
 
-        return new JsonObject().put("storyPointsField", storyPoints).put("sprintField", sprint);
+        JsonObject out = new JsonObject().put("storyPointsField", storyPoints).put("sprintField", sprint);
+
+        for (String name : TIME_FIELD_NAMES.values())
+        {
+            out.put(name, times.getOrDefault(name, new JsonArray()));
+        }
+
+        return out;
     }
 
     // ------------------------------------------------------------------ fetch
@@ -292,7 +335,7 @@ public class JiraConnector implements LiveConnector
     {
         StringBuilder out = new StringBuilder(String.join(",", FIELDS));
 
-        for (String name : List.of("storyPointsField", "sprintField"))
+        for (String name : CONFIGURED_FIELDS)
         {
             String id = config.getString(name);
 
@@ -322,11 +365,15 @@ public class JiraConnector implements LiveConnector
             return Future.failedFuture(LiveHttpException.failed(LiveHttpException.BAD_PAYLOAD, e.getMessage()));
         }
 
-        return page(ctx, base(ctx) + query, headers(ctx), 0, since, sink);
+        return page(ctx, base(ctx) + query, headers(ctx), 0, since, new AtomicInteger(), sink);
     }
 
+    /**
+     * One search page, then the next. Resolves to {@code {cursor, truncatedWorklogs}}: the number of issues
+     * whose worklogs the search answer did not embed in full (jira-derived-hours decision 2).
+     */
     private Future<JsonObject> page(LiveContext ctx, String url, JsonObject headers, int startAt, String cursor,
-                                    Function<JsonObject, Future<Void>> sink)
+                                    AtomicInteger truncated, Function<JsonObject, Future<Void>> sink)
     {
         return ctx.http().getOk(url + "&startAt=" + startAt, headers).compose(res ->
         {
@@ -346,7 +393,14 @@ public class JiraConnector implements LiveConnector
 
             for (Object item : issues)
             {
-                String updated = JiraMapper.iso(((JsonObject) item).getJsonObject("fields", new JsonObject()).getString("updated"));
+                JsonObject issueFields = ((JsonObject) item).getJsonObject("fields", new JsonObject());
+
+                if (JiraMapper.truncatedWorklogs(issueFields))
+                {
+                    truncated.incrementAndGet();
+                }
+
+                String updated = JiraMapper.iso(issueFields.getString("updated"));
 
                 if (updated != null && (latest == null || OffsetDateTime.parse(updated).isAfter(OffsetDateTime.parse(latest))))
                 {
@@ -365,8 +419,8 @@ public class JiraConnector implements LiveConnector
                     : resolveAccounts(ctx, issues).compose(v -> sink.apply(batch(ctx.config(), base(ctx), issues)));
 
             return written.compose(v -> more
-                    ? page(ctx, url, headers, nextStart, next, sink)
-                    : Future.succeededFuture(new JsonObject().put("cursor", next)));
+                    ? page(ctx, url, headers, nextStart, next, truncated, sink)
+                    : Future.succeededFuture(new JsonObject().put("cursor", next).put("truncatedWorklogs", truncated.get())));
         });
     }
 
@@ -399,7 +453,10 @@ public class JiraConnector implements LiveConnector
         return chain;
     }
 
-    /** One normalized batch: the dated sprints, then the issues, then their events (parents first). */
+    /**
+     * One normalized batch, parents first: the dated sprints, the issues, their events, worklogs and
+     * Start/End work intervals.
+     */
     static JsonObject batch(JsonObject config, String baseUrl, JsonArray issues)
     {
         String storyPointsField = config.getString("storyPointsField");
@@ -413,6 +470,10 @@ public class JiraConnector implements LiveConnector
         JsonArray issueRecords = new JsonArray();
 
         JsonArray events = new JsonArray();
+
+        JsonArray worklogs = new JsonArray();
+
+        JsonArray intervals = new JsonArray();
 
         for (Object item : issues)
         {
@@ -437,6 +498,10 @@ public class JiraConnector implements LiveConnector
             issueRecords.add(JiraMapper.issue(hit, baseUrl, storyPointsField, current, issueSprints.size()));
 
             events.addAll(JiraMapper.events(hit, ignoreBotEdits));
+
+            worklogs.addAll(JiraMapper.worklogs(hit));
+
+            intervals.addAll(JiraMapper.intervals(hit, config));
         }
 
         JsonArray entities = new JsonArray();
@@ -448,6 +513,16 @@ public class JiraConnector implements LiveConnector
 
         entities.add(new JsonObject().put("entity", "issues").put("records", issueRecords));
         entities.add(new JsonObject().put("entity", "issue_events").put("records", events));
+
+        if (!worklogs.isEmpty())
+        {
+            entities.add(new JsonObject().put("entity", "worklogs").put("records", worklogs));
+        }
+
+        if (!intervals.isEmpty())
+        {
+            entities.add(new JsonObject().put("entity", "issue_work_intervals").put("records", intervals));
+        }
 
         return new JsonObject().put("source", TOOL).put("entities", entities);
     }

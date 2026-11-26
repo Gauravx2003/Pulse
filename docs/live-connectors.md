@@ -282,15 +282,15 @@ task 25.4.
 | When | Request | Used for |
 |---|---|---|
 | Test connection | `/rest/api/2/myself` | account shown on the form: `name`, `displayName`, `emailAddress` |
-| Test connection | `/rest/api/2/field` | proposals: custom fields named "Story Points" / "Story point estimate" (story points), schema `com.pyxis.greenhopper.jira:gh-sprint` (sprint) |
-| Sync now | `/rest/api/2/search?jql=…&maxResults=100&expand=changelog&fields=…&startAt=N` | issues, sprints, events; pages until `startAt + issues >= total` |
+| Test connection | `/rest/api/2/field` | proposals: custom fields named "Story Points" / "Story point estimate" (story points), schema `com.pyxis.greenhopper.jira:gh-sprint` (sprint), datetime custom fields named "Start Time (Dev)", "End Time (Dev)", "Start Time (QA)", "End Time (QA)" (ignoring case) for the four Start/End ids |
+| Sync now | `/rest/api/2/search?jql=…&maxResults=100&expand=changelog&fields=…&startAt=N` | issues, sprints, events, worklogs, work intervals; pages until `startAt + issues >= total` |
 
 - **JQL.** `project in ("PUL", "OPS") ORDER BY updated ASC` on the first run, then
   `project in (…) AND updated >= "<cursor − 1 min, yyyy-MM-dd HH:mm>" ORDER BY updated ASC`. Keys are
   upper-cased and must match `[A-Z][A-Z0-9_]{0,49}`, so nothing else reaches the JQL.
 - **`fields=`** summary, issuetype, status, assignee, creator, reporter, created, updated, duedate,
-  resolutiondate, timeoriginalestimate, timeestimate, timespent, description, comment, plus the
-  confirmed story points and sprint field ids.
+  resolutiondate, timeoriginalestimate, timeestimate, timespent, description, comment, worklog, plus
+  the confirmed story points, sprint and Dev/QA Start/End field ids.
 - **Cursor.** The greatest `fields.updated` seen, stored as ISO-8601 with its offset. JQL has minute
   precision, so the next run overlaps by one minute, and the upsert by (source, external_id) absorbs
   the repeats.
@@ -350,9 +350,45 @@ task 25.4.
   default), a bot-only edit leaves last activity unchanged. With it off, Jira's `updated` counts as
   the assignee's activity whoever made the change.
 
+**Hours: worklogs and work intervals** (change jira-derived-hours)
+
+- **Precedence, per issue.** An issue has Jira time tracking when the search embeds a worklog for it or
+  `fields.timespent` > 0. Such an issue's hours come from its worklogs only; its work interval rows are
+  written with `starts_at` null, so intervals synced earlier stop counting. Any other issue's hours come
+  from its Dev and QA intervals.
+- **Truncated worklogs.** The search embeds at most 20 worklogs per issue (`worklog.total` gives the real
+  count). An issue with more still takes the time-tracking branch with the embedded ones, and the read
+  result reports the number of such issues as `truncatedWorklogs`.
+
+`worklogs` (`source = 'jira'`, `external_id` = worklog id)
+
+| Pulse column | Jira | Rule |
+|---|---|---|
+| `issue_id` | issue key | `$ref` to the issue |
+| `account_id` | `worklog.worklogs[].author.name` | the Jira username; `person_id` stays null and is resolved at read time (`worklogs_with_person`) |
+| `work_date` | `started` | the start date in Asia/Kolkata |
+| `hours` | `timeSpentSeconds` | seconds ÷ 3600, two decimals |
+| `logged_at` | `started` | the full start time |
+
+`issue_work_intervals` (`source = 'jira'`, `external_id` = `<key>|dev` or `<key>|qa`)
+
+| Pulse column | Jira | Rule |
+|---|---|---|
+| `kind` | | `dev` for the Dev pair, `qa` for the QA pair; a pair with either field id empty is off and writes nothing |
+| `starts_at` | the Start field | null when the field is empty or the issue has time tracking: the row then counts nothing |
+| `ends_at`, `end_source` | the End field, else `fields.resolutiondate` | `field` when the End field is set; `resolution` when it is empty and the issue is resolved; else null and `open` (counted up to now) |
+| `account_id` | assignee changelog | the issue's assignee at `starts_at` (from the `assignee` items' `from` / `to` usernames); if nobody was assigned then, the author of the change that set the start value; else the current assignee |
+
+- One row per issue and kind, upserted on every sync, so a moved or cleared Start/End value never leaves
+  stale hours. The connector stores raw intervals only; the `work` loaders split them into hours per day
+  (working-day window, holidays, leave and visit days, `dayHours`).
+- Start/End values are read from the field values in the search answer (ISO with offset), never from the
+  changelog's display strings.
+
 **People** (`external_accounts`, tool `jira`)
 
-- Every assignee, changelog author and comment author on a page is resolved once with
+- Every assignee, changelog author, comment author, worklog author and assignee named in the assignee
+  changelog on a page is resolved once with
   `{accountId: name, login: name, displayName, email: emailAddress}`.
 - Matching: an existing link first, then `emailAddress` against users' work emails, ignoring case.
   A user whose email the instance hides stays unmatched under their username until an Admin links them.

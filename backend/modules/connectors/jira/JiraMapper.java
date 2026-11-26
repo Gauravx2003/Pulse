@@ -187,7 +187,8 @@ final class JiraMapper
                 .put("carried_over", sprintCount > 1)
                 .put("reopened", false)
                 .put("was_stale", false)
-                .put("html_url", baseUrl + "/browse/" + key);
+                .put("html_url", baseUrl + "/browse/" + key)
+                .put("description", fields.getValue("description") instanceof String text ? text : null);
     }
 
     /** The date of the first status change in the changelog, or null. */

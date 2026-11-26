@@ -1,8 +1,9 @@
 {
   "notes": [
     "Task 26.1. field.json, search.json and jira-search.json are recorded from the internal Jira Server (REST v2) and sanitized. search-page1.json is jira-search.json and search-page2.json is search.json (re-keyed), with sprint, story points, time tracking, a hidden-email assignee, an unassigned issue and a bot edit added in the recorded shape.",
-    "error-401.xml is the recorded unauthenticated answer of /rest/api/2/myself (realm host replaced). 429 and 500 cannot be triggered safely on the shared server: they use Jira's errorMessages format.",
-    "Pages hold 5 issues (maxResults 5 as recorded), so page 2 starts at startAt 5."
+    "myself.json is the recorded /rest/api/2/myself (2026-11-26, sanitized to pulse.readonly). error-401.xml is the recorded unauthenticated answer of /rest/api/2/myself (realm host replaced). 429 and 500 cannot be triggered safely on the shared server: they use Jira's errorMessages format.",
+    "Pages hold 5 issues (maxResults 5 as recorded), so page 2 starts at startAt 5.",
+    "The recorded 100-issue page pair (startAt 0 and 100) is in ../jira-recorded/."
   ],
   "routes": [
     {

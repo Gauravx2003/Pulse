@@ -39,6 +39,9 @@ class JiraFixturesTest
 {
     private static final String FIXTURES = LiveMockServer.FIXTURES_ROOT + "jira/";
 
+    /** The recorded 100-issue page pair, kept apart because its startAt 0 route would shadow search-page1.json. */
+    private static final String RECORDED = "jira-recorded";
+
     private static final String SPRINT_STRING = "com.atlassian.greenhopper.service.sprint.Sprint@";
 
     private static final String SPRINT_FIELD = "customfield_10108";
@@ -261,9 +264,88 @@ class JiraFixturesTest
     }
 
     @Test
+    void recordedPagesPaginateAtOneHundred() throws Exception
+    {
+        LiveMockServer recorded = LiveMockServer.start(vertx, RECORDED).toCompletionStage().toCompletableFuture()
+                .get(10, TimeUnit.SECONDS);
+
+        try
+        {
+            String search = recorded.baseUrl() + "/rest/api/2/search?jql=project%20in%20(PROJ)%20ORDER%20BY%20updated%20ASC"
+                    + "&maxResults=100&expand=changelog&startAt=";
+
+            JsonObject first = client.getAbs(search + "0").send().toCompletionStage().toCompletableFuture()
+                    .get(10, TimeUnit.SECONDS).bodyAsJsonObject();
+
+            int next = first.getInteger("startAt") + first.getJsonArray("issues").size();
+
+            assertEquals(100, first.getInteger("maxResults"));
+            assertEquals(100, next, "a full first page of 100 issues");
+
+            JsonObject second = client.getAbs(search + next).send().toCompletionStage().toCompletableFuture()
+                    .get(10, TimeUnit.SECONDS).bodyAsJsonObject();
+
+            assertEquals(100, second.getInteger("startAt"));
+            assertEquals(first.getInteger("total"), second.getInteger("total"));
+            assertTrue(second.getInteger("total") > 200, "the recorded project holds more than two pages");
+
+            List<String> keys = new ArrayList<>();
+
+            boolean sprintString = false;
+
+            for (JsonObject page : List.of(first, second))
+            {
+                for (Object item : page.getJsonArray("issues"))
+                {
+                    JsonObject issue = (JsonObject) item;
+
+                    String key = issue.getString("key");
+
+                    assertTrue(key.startsWith("PROJ-"), "project key is sanitized: " + key);
+                    assertFalse(keys.contains(key), "issue keys are unique across pages: " + key);
+
+                    keys.add(key);
+
+                    assertNotNull(issue.getJsonObject("changelog"), key + " carries its changelog");
+
+                    JsonArray sprints = issue.getJsonObject("fields").getJsonArray(SPRINT_FIELD);
+
+                    sprintString |= sprints != null && sprints.getValue(0) instanceof String s && s.startsWith(SPRINT_STRING);
+                }
+            }
+
+            assertEquals(200, keys.size());
+            assertTrue(sprintString, "the recorded sprints come in Jira Server's string form");
+
+            JsonObject myself = client.getAbs(recorded.baseUrl() + "/rest/api/2/myself").send().toCompletionStage()
+                    .toCompletableFuture().get(10, TimeUnit.SECONDS).bodyAsJsonObject();
+
+            assertEquals("pulse.readonly", myself.getString("name"));
+        }
+        finally
+        {
+            recorded.close();
+        }
+    }
+
+    @Test
     void holdsNoSecretOrRealIdentity() throws Exception
     {
-        URL routes = Thread.currentThread().getContextClassLoader().getResource(FIXTURES + "routes.json");
+        List<String> files = scan(FIXTURES);
+
+        assertTrue(files.containsAll(List.of("routes.json", "myself.json", "field.json", "search-page1.json",
+                "search-page2.json", "error-401.xml", "error-429.json", "error-500.json")), "scanned " + files);
+
+        List<String> recorded = scan(LiveMockServer.FIXTURES_ROOT + RECORDED + "/");
+
+        assertTrue(recorded.containsAll(List.of("routes.json", "myself.json", "field.json", "search-100-page1.json",
+                "search-100-page2.json")), "scanned " + recorded);
+    }
+
+    /** Fails on a real email, a credential, the internal host or the company name in any file of the folder. */
+    private static List<String> scan(String folder) throws Exception
+    {
+        URL routes = Thread.currentThread().getContextClassLoader().getResource(folder + "routes.json");
 
         assertNotNull(routes);
 
@@ -290,10 +372,10 @@ class JiraFixturesTest
 
                 assertFalse(secret.matcher(text).find(), file.getFileName() + " holds a credential");
                 assertFalse(text.contains("172.16."), file.getFileName() + " holds the internal host");
+                assertFalse(text.toLowerCase().contains("motadata"), file.getFileName() + " holds the company name");
             }
         }
 
-        assertTrue(files.containsAll(List.of("routes.json", "myself.json", "field.json", "search-page1.json",
-                "search-page2.json", "error-401.xml", "error-429.json", "error-500.json")), "scanned " + files);
+        return files;
     }
 }

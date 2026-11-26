@@ -94,7 +94,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 5. End-to-end (Track 3)
 
-- [ ] 5.1 Extend `live-fixtures/jira-e2e/` and `frontend/e2e/live-flows/jira.spec.js`:
+- [x] 5.1 Extend `live-fixtures/jira-e2e/` and `frontend/e2e/live-flows/jira.spec.js`:
   - after Sync now, Priya's hours logged on Effort and Team utilization (closed period) equal the hours her fixture intervals give under the default window
   - an interval of `arjun.m` counts only after he is linked
 

@@ -53,7 +53,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   Verify:
   - a loader test with seed and live rows gives hours logged, days worked and closed-period utilization as the sum of both sources, with no 24-hour days
   - `FullOracleTest` is unchanged (the seed has no intervals)
-- [ ] 3.3 Add the link-then-read test for intervals (extend `LinkThenReadTest` or a sibling): an interval of an unmatched account counts for nobody; once linked, the person's hours logged and Effort change on the next read.
+- [x] 3.3 Add the link-then-read test for intervals (extend `LinkThenReadTest` or a sibling): an interval of an unmatched account counts for nobody; once linked, the person's hours logged and Effort change on the next read.
 
   Verify: the test passes.
 
@@ -106,6 +106,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 - [ ] 6.1 On `pulse_live`:
   - confirm the four field ids, run Sync now and record the sync counts (intervals, worklogs, truncated)
+  - recalculate the closed periods frozen before that sync (Admin recalculate, with a reason): their snapshots were taken with no interval hours and do not change by themselves
   - for three people, compare a closed sprint's hours logged with a hand calculation from their Jira Start/End values
   - check that no day exceeds `dayHours`
 

@@ -85,7 +85,7 @@ public class IssueRepository extends ScopedRepository
         return scopedList(scope, "w.person_id", """
                 SELECT w.id, w.person_id AS "personId", w.issue_id AS "issueId", w.work_date AS "workDate",
                        w.hours, w.logged_at AS "loggedAt"
-                FROM worklogs w
+                FROM worklogs_with_person w
                 WHERE w.person_id = $1 AND w.work_date BETWEEN $2 AND $3 AND {scope}
                 ORDER BY w.work_date, w.id""", Tuple.of(personId, from, to));
     }

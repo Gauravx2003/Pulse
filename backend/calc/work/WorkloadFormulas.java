@@ -568,7 +568,7 @@ public final class WorkloadFormulas implements FormulaModule
         Future<Days> days = days(ctx, person);
 
         Future<JsonArray> worklogs = WorkSql.rows(ctx, """
-                SELECT work_date AS day, sum(hours) AS hours FROM worklogs
+                SELECT work_date AS day, sum(hours) AS hours FROM worklogs_with_person
                 WHERE person_id = $1 AND work_date BETWEEN $2 AND $3 GROUP BY work_date""", Tuple.of(person, from, to));
 
         Future<JsonArray> commits = WorkSql.rows(ctx, """

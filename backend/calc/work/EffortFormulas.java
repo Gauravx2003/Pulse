@@ -356,7 +356,7 @@ public final class EffortFormulas implements FormulaModule
             Future<JsonArray> midSprint = WorkSql.rows(ctx, """
                     SELECT i.key, i.summary, i.status, s.number, s.starts_on AS "sprintStart", e.occurred_at AS "at",
                            e.actor_name AS "actorName",
-                           coalesce((SELECT sum(w.hours) FROM worklogs w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
+                           coalesce((SELECT sum(w.hours) FROM worklogs_with_person w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
                     FROM issue_events_with_actor e JOIN issues_with_assignee i ON i.id = e.issue_id
                     JOIN sprints s ON s.key = e.to_value
                     WHERE i.assignee_id = $1 AND e.kind = 'sprint_change' AND NOT e.is_bot
@@ -366,7 +366,7 @@ public final class EffortFormulas implements FormulaModule
             Future<JsonArray> takeovers = WorkSql.rows(ctx, """
                     SELECT i.key, i.summary, i.status, e.occurred_at AS "at", e.actor_name AS "actorName",
                            coalesce((SELECT name FROM people WHERE id::text = e.from_person), e.from_value) AS "fromName",
-                           coalesce((SELECT sum(w.hours) FROM worklogs w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
+                           coalesce((SELECT sum(w.hours) FROM worklogs_with_person w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
                     FROM issue_events_with_actor e JOIN issues_with_assignee i ON i.id = e.issue_id
                     LEFT JOIN sprints s ON s.id = i.sprint_id
                     WHERE e.kind = 'assignee_change' AND e.to_person = $1::text AND NOT e.is_bot
@@ -375,7 +375,7 @@ public final class EffortFormulas implements FormulaModule
 
             Future<JsonArray> help = WorkSql.rows(ctx, """
                     SELECT i.key, i.summary, a.name AS assignee, sum(c.commit_count) AS commits, max(c.commit_date) AS day,
-                           coalesce((SELECT sum(w.hours) FROM worklogs w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
+                           coalesce((SELECT sum(w.hours) FROM worklogs_with_person w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
                     FROM commit_days c CROSS JOIN LATERAL unnest(c.issue_keys) AS k(key)
                     JOIN issues_with_assignee i ON i.key = k.key JOIN people a ON a.id = i.assignee_id
                     WHERE c.person_id = $1 AND c.commit_date BETWEEN $2 AND $3 AND i.assignee_id <> $1

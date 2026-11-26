@@ -10,13 +10,13 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 1. Data layer (Track 2)
 
-- [ ] 1.1 Add migration `V295__live_worklogs_and_intervals.sql` (additive) in `backend/modules/work/migrations/`:
+- [x] 1.1 Add migration `V295__live_worklogs_and_intervals.sql` (additive) in `backend/modules/work/migrations/`:
   - `worklogs.account_id text`
   - table `issue_work_intervals`: `issue_id` FK, `kind` `dev`/`qa`, `starts_at`, `ends_at`, `end_source`, `account_id`, `source`, `external_id`, `synced_at`, timestamps, `version`; unique (`source`, `external_id`)
   - views `worklogs_with_person` and `issue_work_intervals_with_person`: a seed row keeps `person_id`; a live row takes the linked, non-bot person, as in V290
 
   Verify: `MigrationRunnerTest` passes, and `check-migration-versions.sh` passes.
-- [ ] 1.2 Point every worklog reader at `worklogs_with_person`, with no formula change:
+- [x] 1.2 Point every worklog reader at `worklogs_with_person`, with no formula change:
   - `WorkloadFormulas.WORKLOGS`
   - `WorkViewFormulas` day hours
   - `EffortFormulas` item hours

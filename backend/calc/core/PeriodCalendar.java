@@ -9,7 +9,9 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,12 +31,18 @@ import java.util.regex.Pattern;
  *  "end":  "2026-10-09",      // last working day of a sprint, release date of a release, else = to
  *  "days": 21,                // calendar days from..to
  *  "label": "Sprint 43 · 21 Sep – 9 Oct (active)",
- *  "short": "Sprint 43",
+ *  "short": "Sprint 43",     // the sprint's name when it has one (see below)
  *  "live": true}              // to >= today: live data, otherwise the snapshot taken at close
  * }</pre>
  *
+ * <p>A sprint's {@code short} is its name (a live Jira sprint's name, {@code sprints.name}), else
+ * {@code "Sprint " + number}; when two sprints of the calendar share a {@code short}, both get
+ * {@code " (" + key + ")"} appended, as {@code "Sprint 12 (J140)"} (change jira-sprint-names, spec
+ * platform/period-calendar "Sprint names"). Its {@code label} is {@code "<short> · <range>"}, plus
+ * {@code " (active)"}. A rename changes only these labels, never the key.
+ *
  * <p>Sprints and releases come from their tables, as rows
- * {@code {key, number, startsOn, workEndsOn, endsOn}} and
+ * {@code {key, number, name, startsOn, workEndsOn, endsOn}} ({@code name} null or absent when none) and
  * {@code {key, name, startsOn, endsOn, releaseDate, status}}. Sprints can be any length (S43 is three
  * weeks). An unknown or malformed key fails with {@link IllegalArgumentException}; the HTTP layer
  * answers it as 400 {@code invalid_parameter}.
@@ -61,6 +69,9 @@ public final class PeriodCalendar
 
     private final List<JsonObject> releases;
 
+    /** Each sprint's {@code short} by its key, clashes already told apart. */
+    private final Map<String, String> sprintShorts;
+
     private final LocalDate today;
 
     /**
@@ -72,6 +83,7 @@ public final class PeriodCalendar
     {
         this.sprints = sorted(sprints, "startsOn");
         this.releases = sorted(releases, "startsOn");
+        this.sprintShorts = shorts(this.sprints);
         this.today = today;
     }
 
@@ -209,7 +221,7 @@ public final class PeriodCalendar
 
         boolean live = !to.isBefore(today);
 
-        String name = "Sprint " + row.getValue("number");
+        String name = sprintShorts.get(row.getString("key"));
 
         return period(SPRINT, "s:" + row.getString("key"), from, to, end,
                 name + " · " + CalendarFormat.range(from, end) + (live ? " (active)" : ""), name, live);
@@ -307,6 +319,39 @@ public final class PeriodCalendar
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /**
+     * The {@code short} of every sprint: its trimmed name, else {@code "Sprint " + number}; the sprints
+     * that share one each get {@code " (" + key + ")"} appended.
+     */
+    private static Map<String, String> shorts(List<JsonObject> sprints)
+    {
+        Map<String, String> plain = new HashMap<>();
+
+        Map<String, Integer> uses = new HashMap<>();
+
+        for (JsonObject row : sprints)
+        {
+            String name = row.getString("name");
+
+            String shortName = name == null || name.isBlank() ? "Sprint " + row.getValue("number") : name.strip();
+
+            plain.put(row.getString("key"), shortName);
+
+            uses.merge(shortName, 1, Integer::sum);
+        }
+
+        Map<String, String> out = new HashMap<>();
+
+        for (Map.Entry<String, String> sprint : plain.entrySet())
+        {
+            String shortName = sprint.getValue();
+
+            out.put(sprint.getKey(), uses.get(shortName) > 1 ? shortName + " (" + sprint.getKey() + ")" : shortName);
+        }
+
+        return out;
+    }
 
     private JsonObject sprintRowOn(LocalDate day)
     {

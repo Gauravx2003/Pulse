@@ -314,6 +314,81 @@ class PeriodCalendarTest
         assertEquals("28 Sep, 15:30", CalendarFormat.dateTime(Instant.parse("2026-09-28T10:00:00Z")));
     }
 
+    // ------------------------------------------------------------------ Sprint names (change jira-sprint-names)
+
+    @Test
+    void aLiveSprintIsLabelledByItsJiraName()
+    {
+        PeriodCalendar live = new PeriodCalendar(new JsonArray()
+                .add(sprint("J142", 142, "2026-09-08", "2026-10-02", "2026-10-04").put("name", "Atlas 2.4.1")), RELEASES, TODAY);
+
+        JsonObject atlas = live.period("s:J142");
+
+        assertEquals("Atlas 2.4.1", atlas.getString("short"));
+        assertEquals("Atlas 2.4.1 · 8 Sep – 2 Oct (active)", atlas.getString("label"));
+        assertEquals("s:J142", atlas.getString("key"), "the key does not change with the name");
+
+        assertEquals("Atlas 2.4.1", live.activeSprint().getString("short"));
+        assertEquals("Atlas 2.4.1", live.sprints().getJsonObject(0).getString("short"));
+    }
+
+    @Test
+    void aSprintWithoutANameKeepsSprintN()
+    {
+        JsonObject s43 = calendar.period("s:S43");
+
+        assertEquals("Sprint 43", s43.getString("short"));
+        assertEquals("Sprint 43 · 21 Sep – 9 Oct (active)", s43.getString("label"));
+
+        // a null or blank name reads as none; a name is shown trimmed
+        PeriodCalendar blank = new PeriodCalendar(new JsonArray()
+                .add(sprint("J7", 7, "2026-09-07", "2026-09-18", "2026-09-20").put("name", "  "))
+                .add(sprint("J8", 8, "2026-09-21", "2026-10-02", "2026-10-04").putNull("name"))
+                .add(sprint("J9", 9, "2026-10-05", "2026-10-16", "2026-10-18").put("name", " Atlas 2.5 ")), RELEASES, TODAY);
+
+        assertEquals("Sprint 7", blank.period("s:J7").getString("short"));
+        assertEquals("Sprint 8", blank.period("s:J8").getString("short"));
+        assertEquals("Atlas 2.5", blank.period("s:J9").getString("short"));
+    }
+
+    @Test
+    void twoSprintsWithTheSameNameAreToldApartByTheirKeys()
+    {
+        PeriodCalendar boards = new PeriodCalendar(new JsonArray()
+                .add(sprint("J140", 140, "2026-09-07", "2026-09-18", "2026-09-20").put("name", "Sprint 12"))
+                .add(sprint("J141", 141, "2026-09-14", "2026-09-25", "2026-09-27").put("name", "Sprint 12"))
+                .add(sprint("J142", 142, "2026-09-21", "2026-10-02", "2026-10-04").put("name", "Atlas 2.4.1")), RELEASES, TODAY);
+
+        assertEquals("Sprint 12 (J140)", boards.period("s:J140").getString("short"));
+        assertEquals("Sprint 12 (J141)", boards.period("s:J141").getString("short"));
+        assertEquals("Sprint 12 (J140) · 7 Sep – 18 Sep", boards.period("s:J140").getString("label"));
+        assertEquals("Atlas 2.4.1", boards.period("s:J142").getString("short"), "a name used once has no key");
+
+        // a name that matches another sprint's "Sprint N" is a clash too
+        PeriodCalendar mixed = new PeriodCalendar(new JsonArray()
+                .add(sprint("S43", 43, "2026-09-21", "2026-10-09", "2026-10-11"))
+                .add(sprint("J9", 9, "2026-10-12", "2026-10-23", "2026-10-25").put("name", "Sprint 43")), RELEASES, TODAY);
+
+        assertEquals("Sprint 43 (S43)", mixed.period("s:S43").getString("short"));
+        assertEquals("Sprint 43 (J9)", mixed.period("s:J9").getString("short"));
+    }
+
+    @Test
+    void aRenameChangesOnlyTheLabel()
+    {
+        JsonObject before = new PeriodCalendar(new JsonArray()
+                .add(sprint("J142", 142, "2026-09-08", "2026-10-02", "2026-10-04").put("name", "Atlas 2.4.1")), RELEASES, TODAY)
+                .period("s:J142");
+
+        JsonObject after = new PeriodCalendar(new JsonArray()
+                .add(sprint("J142", 142, "2026-09-08", "2026-10-02", "2026-10-04").put("name", "Atlas 2.4.2")), RELEASES, TODAY)
+                .period("s:J142");
+
+        assertEquals("Atlas 2.4.2", after.getString("short"));
+        assertEquals(before.copy().put("label", "").put("short", ""), after.copy().put("label", "").put("short", ""),
+                "key, dates and state are the same");
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private static PeriodCalendar at(String today)

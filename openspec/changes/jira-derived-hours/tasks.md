@@ -59,13 +59,13 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 4. Jira connector (Track 3)
 
-- [ ] 4.1 Config and discovery:
+- [x] 4.1 Config and discovery:
   - add `devStartField`, `devEndField`, `qaStartField` and `qaEndField` to `configSchema` (optional, `customfield_[0-9]+`)
   - have `proposals()` offer datetime custom fields named "Start Time (Dev)" and the rest, ignoring case
   - add the ids and `worklog` to `fields=`
 
   Verify: `JiraConnectorTest` covers the proposals from the recorded `field.json` (10200/10201, 11000/10701) and an empty id turning the pair off.
-- [ ] 4.2 Worklogs:
+- [x] 4.2 Worklogs:
   - for an issue with time tracking, map embedded worklogs to `worklogs` records (external id = worklog id, `work_date` = `started` date in Asia/Kolkata, hours = seconds/3600, `account_id` = author `name`)
   - resolve the authors through `accounts().resolve`
   - count issues whose `worklog.total` exceeds the embedded list in the sync result
@@ -73,7 +73,9 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   Verify:
   - a re-sync with changed hours updates in place
   - `JiraConnectorContractTest` still passes
-- [ ] 4.3 Intervals:
+
+  **Status (2026-11-26):** worklogs are mapped and tested (`JiraDerivedHoursTest`). `fetchPages` resolves to `{cursor, truncatedWorklogs}`, and `LiveSyncService` copies the count into the sync log (Track 1, e509311).
+- [x] 4.3 Intervals:
   - for an issue without time tracking, map each configured pair to one `issue_work_intervals` record (`<key>|dev`, `<key>|qa`)
   - credit it to the assignee at the start from the assignee changelog, else the author who last set the start field, else the current assignee
   - ends come from the End field, else `resolutiondate` (`end_source = resolution`), else null (`open`)
@@ -88,14 +90,16 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   - `JiraFixturesTest` passes, with no real email
   - Track 2 approves the mapping in the PR
 
+  **Status (2026-11-26), left open:** fixtures (PROJ-10730 worklogs + Start/End, PROJ-10723 truncated, PROJ-10720 hand-over with a QA interval, PROJ-10719 resolved-open) and the mapping record are in; `JiraFixturesTest` passes. Waiting for Track 2's approval in the PR. With V295 on main, `JiraShapeTest` syncs these fixtures and passes.
+
 ## 5. End-to-end (Track 3)
 
-- [ ] 5.1 Extend `live-fixtures/jira-e2e/` and `frontend/e2e/live-flows/jira.spec.js`:
+- [x] 5.1 Extend `live-fixtures/jira-e2e/` and `frontend/e2e/live-flows/jira.spec.js`:
   - after Sync now, Priya's hours logged on Effort and Team utilization (closed period) equal the hours her fixture intervals give under the default window
   - an interval of `arjun.m` counts only after he is linked
 
   Verify: `npm run test:live-flows` passes on a fresh database.
-- [ ] 5.2 Update `docs/demo.md` ("The real team on live Jira"):
+- [x] 5.2 Update `docs/demo.md` ("The real team on live Jira"):
   - confirm the four field ids at Test connection
   - what derived hours mean: time on the issue in office hours, capped per day
   - where to change the working-day window

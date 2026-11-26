@@ -2,7 +2,8 @@
   "notes": [
     "Task 26.3: the Jira end-to-end flow (frontend/e2e/live-flows/jira.spec.js), served by the Playwright mock (frontend/e2e/live-flows/mockTool.js) to a backend whose today is 2026-11-26.",
     "myself.json, field.json and the error answers are copies of ../jira/ (recorded, sanitized). search.json is written in the recorded shape for the demo seed: Jira sprint 147 (23 Nov to 4 Dec 2026) is the live sprint; story points are customfield_10111 and the sprint is customfield_10108, as in field.json.",
-    "Assignees: priya.shah has the work email Priya@Pulse.Demo, so she is matched by email in another letter case; arjun.m has no emailAddress, so he stays unmatched until the Admin links him; PUL-207 (Priya) has had no update since 23 Nov, so it is stale on 26 Nov; jira.automation is a bot whose only edit is a label; PUL-206 is unassigned. PUL-202 has the sprint in the object form, the rest in the string form."
+    "Assignees: priya.shah has the work email Priya@Pulse.Demo, so she is matched by email in another letter case; arjun.m has no emailAddress, so he stays unmatched until the Admin links him; PUL-207 (Priya) has had no update since 23 Nov, so it is stale on 26 Nov; jira.automation is a bot whose only edit is a label; PUL-206 is unassigned. PUL-202 has the sprint in the object form, the rest in the string form.",
+    "jira-derived-hours 5.1: Jira sprint 146 (9 to 20 Nov 2026) is closed. In it, without Jira time tracking: PUL-208 (Priya, Start/End Time (Dev) Tue 17 Nov 14:00 to Wed 18 Nov 12:00: 4 h + 2 h), PUL-209 (Priya, Start Thu 19 Nov 10:00, no End, resolved Fri 20 Nov 11:00: 8 h + 1 h) and PUL-210 (arjun.m, Thu 12 Nov 10:00 to Fri 13 Nov 18:00: 8 h + 8 h). Under the default window 10:00-18:00 and dayHours 8, Priya logs 15 h in Sprint 146 and Arjun 16 h once arjun.m is linked."
   ],
   "routes": [
     {

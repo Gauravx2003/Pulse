@@ -3,7 +3,8 @@
     "Task 26.1. field.json, search.json and jira-search.json are recorded from the internal Jira Server (REST v2) and sanitized. search-page1.json is jira-search.json and search-page2.json is search.json (re-keyed), with sprint, story points, time tracking, a hidden-email assignee, an unassigned issue and a bot edit added in the recorded shape.",
     "myself.json is the recorded /rest/api/2/myself (2026-11-26, sanitized to pulse.readonly). error-401.xml is the recorded unauthenticated answer of /rest/api/2/myself (realm host replaced). 429 and 500 cannot be triggered safely on the shared server: they use Jira's errorMessages format.",
     "Pages hold 5 issues (maxResults 5 as recorded), so page 2 starts at startAt 5.",
-    "The recorded 100-issue page pair (startAt 0 and 100) is in ../jira-recorded/."
+    "The recorded 100-issue page pair (startAt 0 and 100) is in ../jira-recorded/.",
+    "jira-derived-hours 4.4: every issue carries the worklog field. PROJ-10730 has two worklogs and Start/End (Dev), so its worklogs win; PROJ-10723 embeds 1 of 21 worklogs (truncated); PROJ-10720 is a hand-over (Dev by dev.user4, QA 26 Nov 10:00-14:00 by dev.user1, assignee changes in the changelog); PROJ-10719 has End Time (Dev) cleared and was resolved at 17:30, with nobody assigned, so its Dev interval ends at the resolution and is credited to dev.user5, who set the start. Dev/QA fields: customfield_10200/10201 and customfield_11000/10701, as in field.json."
   ],
   "routes": [
     {

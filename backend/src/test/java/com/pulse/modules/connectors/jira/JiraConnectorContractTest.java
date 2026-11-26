@@ -51,6 +51,10 @@ class JiraConnectorContractTest extends AbstractLiveConnectorContractTest
                 .put("projectKeys", new JsonArray().add("PROJ"))
                 .put("storyPointsField", "customfield_10111")
                 .put("sprintField", "customfield_10108")
+                .put("devStartField", "customfield_10200")
+                .put("devEndField", "customfield_10201")
+                .put("qaStartField", "customfield_11000")
+                .put("qaEndField", "customfield_10701")
                 .put("ignoreBotEdits", true);
     }
 

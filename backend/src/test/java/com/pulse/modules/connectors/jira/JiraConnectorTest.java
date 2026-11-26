@@ -236,7 +236,8 @@ class JiraConnectorTest
             result = await(new JiraConnector().fetchPages(ctx, null, b -> Future.succeededFuture()));
         }
 
-        assertEquals(OffsetDateTime.parse("2026-11-25T23:45:12+05:30"), OffsetDateTime.parse(result.getString("cursor")));
+        assertEquals(OffsetDateTime.parse("2026-11-26T10:00:20+05:30"), OffsetDateTime.parse(result.getString("cursor")),
+                "PROJ-10720 is the latest update (its QA Start/End, jira-derived-hours fixtures)");
     }
 
     @Test

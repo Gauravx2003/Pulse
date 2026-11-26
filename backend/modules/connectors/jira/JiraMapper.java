@@ -7,10 +7,14 @@ import io.vertx.core.json.JsonObject;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -31,6 +35,8 @@ import java.util.regex.Pattern;
  *   <li>Changelog items, comments and creation become {@code issue_events}; authors go to
  *       {@code actor_account_id} (V292). As in the seed, a sprint change holds sprint keys and an
  *       assignee change holds the assignees, here their Jira usernames, resolved at read time (V294).</li>
+ *   <li>Jira worklogs become {@code worklogs}, and the configured Dev and QA Start/End fields become
+ *       {@code issue_work_intervals} when the issue has no time tracking (change jira-derived-hours).</li>
  *   <li>Jira sprints are keyed {@code J<id>}, apart from the seed's {@code S<n>} (25.4 review).</li>
  * </ul>
  */
@@ -42,6 +48,9 @@ final class JiraMapper
             .optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd()
             .appendOffset("+HHMM", "Z")
             .toFormatter(Locale.ROOT);
+
+    /** Pulse's zone: a worklog's day is its start date here. */
+    static final ZoneId IST = ZoneId.of("Asia/Kolkata");
 
     /** JQL's date-time, minute precision, in the offset of the cursor. */
     static final DateTimeFormatter JQL_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.ROOT);
@@ -483,6 +492,227 @@ final class JiraMapper
                 .put("summary", summary);
     }
 
+    // ------------------------------------------------------------------ worklogs and work intervals
+
+    /** The worklogs the search embeds in an issue (at most 20; {@link #truncatedWorklogs} tells when more exist). */
+    static JsonArray embeddedWorklogs(JsonObject fields)
+    {
+        return fields.getJsonObject("worklog", new JsonObject()).getJsonArray("worklogs", new JsonArray());
+    }
+
+    /** Jira time tracking is present: an embedded worklog, or time spent above zero (jira-derived-hours decision 2). */
+    static boolean hasTimeTracking(JsonObject fields)
+    {
+        return !embeddedWorklogs(fields).isEmpty() || fields.getValue("timespent") instanceof Number n && n.doubleValue() > 0;
+    }
+
+    /** The issue has more worklogs than the search embedded. */
+    static boolean truncatedWorklogs(JsonObject fields)
+    {
+        JsonObject worklog = fields.getJsonObject("worklog", new JsonObject());
+
+        return worklog.getInteger("total", 0) > embeddedWorklogs(fields).size();
+    }
+
+    /**
+     * The {@code worklogs} records of one search hit: one per embedded worklog, on its {@code started} date
+     * in Asia/Kolkata, credited to the author's Jira username ({@code account_id}, resolved at read time).
+     */
+    static JsonArray worklogs(JsonObject hit)
+    {
+        JsonArray out = new JsonArray();
+
+        String key = hit.getString("key");
+
+        for (Object item : embeddedWorklogs(hit.getJsonObject("fields", new JsonObject())))
+        {
+            JsonObject worklog = (JsonObject) item;
+
+            OffsetDateTime started = time(worklog.getString("started"));
+
+            Object seconds = worklog.getValue("timeSpentSeconds");
+
+            if (worklog.getString("id") == null || started == null || !(seconds instanceof Number))
+            {
+                continue;
+            }
+
+            JsonObject author = worklog.getJsonObject("author");
+
+            out.add(new JsonObject()
+                    .put("external_id", worklog.getString("id"))
+                    .put("issue_id", ref("issues", key))
+                    .put("person_id", null)
+                    .put("account_id", author == null ? null : author.getString("name"))
+                    .put("work_date", started.atZoneSameInstant(IST).toLocalDate().toString())
+                    .put("hours", hours(seconds))
+                    .put("logged_at", started.toString()));
+        }
+
+        return out;
+    }
+
+    /**
+     * The {@code issue_work_intervals} records of one search hit, one per configured pair ({@code <key>|dev},
+     * {@code <key>|qa}; a pair with an empty field id is off). An issue with Jira time tracking, or with the
+     * start cleared, gets its row with {@code starts_at} null, so an earlier interval stops counting.
+     * The end is the End field, else {@code resolutiondate}, else open (jira-derived-hours decisions 1 to 4).
+     */
+    static JsonArray intervals(JsonObject hit, JsonObject config)
+    {
+        JsonArray out = new JsonArray();
+
+        JsonObject fields = hit.getJsonObject("fields", new JsonObject());
+
+        String key = hit.getString("key");
+
+        boolean tracked = hasTimeTracking(fields);
+
+        for (String[] pair : new String[][] {{"dev", "devStartField", "devEndField"}, {"qa", "qaStartField", "qaEndField"}})
+        {
+            String startField = config.getString(pair[1]);
+
+            String endField = config.getString(pair[2]);
+
+            if (startField == null || startField.isBlank() || endField == null || endField.isBlank())
+            {
+                continue;
+            }
+
+            JsonObject record = new JsonObject()
+                    .put("external_id", key + "|" + pair[0])
+                    .put("issue_id", ref("issues", key))
+                    .put("kind", pair[0])
+                    .put("starts_at", null)
+                    .put("ends_at", null)
+                    .put("end_source", null)
+                    .put("account_id", null);
+
+            OffsetDateTime start = tracked ? null : fieldTime(fields, startField.strip());
+
+            if (start != null)
+            {
+                OffsetDateTime end = fieldTime(fields, endField.strip());
+
+                OffsetDateTime resolved = time(fields.getString("resolutiondate"));
+
+                String endSource = end != null ? "field" : resolved != null ? "resolution" : "open";
+
+                OffsetDateTime ends = end != null ? end : resolved;
+
+                record.put("starts_at", start.toString())
+                        .put("ends_at", ends == null ? null : ends.toString())
+                        .put("end_source", endSource)
+                        .put("account_id", creditedAccount(hit, start));
+            }
+
+            out.add(record);
+        }
+
+        return out;
+    }
+
+    /** A datetime custom field's value, or null when empty or not a datetime. */
+    private static OffsetDateTime fieldTime(JsonObject fields, String fieldId)
+    {
+        try
+        {
+            return fields.getValue(fieldId) instanceof String text ? time(text) : null;
+        }
+        catch (RuntimeException e)
+        {
+            return null;
+        }
+    }
+
+    /**
+     * Who an interval starting at {@code start} is credited to (decision 3): the issue's assignee at that
+     * moment from the assignee changelog; if nobody was assigned then, the author of the change that last set
+     * the start value; failing both, the current assignee.
+     */
+    static String creditedAccount(JsonObject hit, OffsetDateTime start)
+    {
+        JsonObject fields = hit.getJsonObject("fields", new JsonObject());
+
+        JsonObject current = fields.getJsonObject("assignee");
+
+        String currentName = current == null ? null : current.getString("name");
+
+        List<JsonObject> changes = new ArrayList<>();
+
+        JsonObject setter = null;
+
+        OffsetDateTime setAt = null;
+
+        for (Object h : histories(hit))
+        {
+            JsonObject history = (JsonObject) h;
+
+            OffsetDateTime at = time(history.getString("created"));
+
+            for (Object i : history.getJsonArray("items", new JsonArray()))
+            {
+                JsonObject item = (JsonObject) i;
+
+                if ("assignee".equalsIgnoreCase(item.getString("field")))
+                {
+                    changes.add(new JsonObject().put("at", at.toString()).put("from", item.getString("from"))
+                            .put("to", item.getString("to")));
+                }
+                else if ("custom".equals(item.getString("fieldtype")) && start.isEqual(orNull(item.getString("to")))
+                        && (setAt == null || !at.isBefore(setAt)))
+                {
+                    setter = history.getJsonObject("author");
+                    setAt = at;
+                }
+            }
+        }
+
+        String assigned = currentName;
+
+        if (!changes.isEmpty())
+        {
+            changes.sort(Comparator.comparing(c -> OffsetDateTime.parse(c.getString("at"))));
+
+            assigned = changes.get(0).getString("from");
+
+            for (JsonObject change : changes)
+            {
+                if (!OffsetDateTime.parse(change.getString("at")).isAfter(start))
+                {
+                    assigned = change.getString("to");
+                }
+            }
+        }
+
+        if (assigned != null)
+        {
+            return assigned;
+        }
+
+        if (setter != null && setter.getString("name") != null)
+        {
+            return setter.getString("name");
+        }
+
+        return currentName;
+    }
+
+    /** A changelog value as a datetime, or a time that equals nothing when it is not one. */
+    private static OffsetDateTime orNull(String value)
+    {
+        try
+        {
+            OffsetDateTime t = value == null ? null : time(value);
+
+            return t == null ? OffsetDateTime.MIN : t;
+        }
+        catch (RuntimeException e)
+        {
+            return OffsetDateTime.MIN;
+        }
+    }
+
     // ------------------------------------------------------------------ accounts
 
     /** The {@code resolve} input of a Jira user, or null: the username is the account id. */
@@ -500,7 +730,10 @@ final class JiraMapper
                 .put("email", user.getString("emailAddress"));
     }
 
-    /** Every user an issue mentions that Pulse matches to a person: assignee, changelog and comment authors. */
+    /**
+     * Every user an issue mentions that Pulse matches to a person: assignee, changelog, comment and worklog
+     * authors, and the assignees of the assignee changelog (usernames only), whom intervals may credit.
+     */
     static JsonArray users(JsonObject hit)
     {
         JsonObject fields = hit.getJsonObject("fields", new JsonObject());
@@ -509,10 +742,34 @@ final class JiraMapper
 
         out.add(fields.getJsonObject("assignee"));
 
-        histories(hit).forEach(h -> out.add(((JsonObject) h).getJsonObject("author")));
+        for (Object h : histories(hit))
+        {
+            JsonObject history = (JsonObject) h;
+
+            out.add(history.getJsonObject("author"));
+
+            for (Object i : history.getJsonArray("items", new JsonArray()))
+            {
+                JsonObject item = (JsonObject) i;
+
+                if ("assignee".equalsIgnoreCase(item.getString("field")))
+                {
+                    for (String side : List.of("from", "to"))
+                    {
+                        if (item.getString(side) != null)
+                        {
+                            out.add(new JsonObject().put("name", item.getString(side))
+                                    .put("displayName", item.getString(side + "String")));
+                        }
+                    }
+                }
+            }
+        }
 
         fields.getJsonObject("comment", new JsonObject()).getJsonArray("comments", new JsonArray())
                 .forEach(c -> out.add(((JsonObject) c).getJsonObject("author")));
+
+        embeddedWorklogs(fields).forEach(w -> out.add(((JsonObject) w).getJsonObject("author")));
 
         return out;
     }

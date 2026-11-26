@@ -257,8 +257,52 @@ Then:
    - Give the team lead your Admin email as `manager_email`, and everyone else the lead's, so Team
      utilization shows the team.
 2. **Connect and sync** as above, with **Personal access token** and a small project first. The first
-   sync reads the project's whole history.
+   sync reads the project's whole history. At **Test connection**, also confirm the four Start/End
+   field ids (see "Hours from the Start/End fields" below) before you save.
 3. **Unmatched accounts.** Link anyone whose Jira email is hidden or different.
+
+#### Hours from the Start/End fields
+
+This team does not log work in Jira: worklogs and time spent are empty. It records time in the
+datetime fields **Start Time (Dev)**, **End Time (Dev)**, **Start Time (QA)** and **End Time (QA)**, and
+Pulse turns those into hours logged (change jira-derived-hours).
+
+**Confirm the four field ids.** Test connection proposes them by name and type, next to story points
+and sprint. On the internal Jira they are:
+
+| Field | Id |
+|---|---|
+| Start Time (Dev) | `customfield_10200` |
+| End Time (Dev) | `customfield_10201` |
+| Start Time (QA) | `customfield_11000` |
+| End Time (QA) | `customfield_10701` |
+
+Choose **Use …** for each, run **Test connection** again (the values changed), then **Save**. A pair
+with either id empty is off: its issues give no hours. The sync log shows the worklogs and intervals read,
+and `truncatedWorklogs` (issues with more than the 20 worklogs the search returns).
+
+**What "hours logged" means here.** For an issue with no Jira time tracking, each Dev or QA pair is the
+time the issue spent between its Start and End, **in office hours**:
+
+- only weekdays that are not company holidays, the person's leave or customer-visit days
+- on each day, only the part inside the working-day window (default 10:00–18:00, Asia/Kolkata)
+- a person's overlapping intervals that day (Dev and QA, or two issues at once) count once
+- at most **Hours per day** (default 8) a day
+- no End yet: up to the issue's resolution time if it is resolved, else up to now, never after today
+
+The hours go to whoever was the issue's assignee when the interval started, so a Dev → QA hand-over
+credits each side to the right person. An issue with any worklog or time spent uses its worklogs
+instead, never both. It is elapsed time on the issue, not measured effort; read it that way.
+
+These hours feed Hours logged and Days worked on **Effort**, and closed periods on **Team utilization**.
+The live sprint's utilization still reads remaining hours, which this team does not set, so it stays at
+0 %.
+
+**Change the working-day window.** Rules & thresholds → **Staleness & capacity** → **Working day
+starts** and **Working day ends** (the end must be after the start). The daily cap is **Hours per day**
+in the **Monthly effort & extra-mile points** card. A change applies to open periods from the next read;
+a closed period that is already frozen keeps its numbers until an Admin recalculates it (docs/calc.md
+§7).
 
 Performance index, appraisal score and most of Discipline stay empty or at their default for these
 people, because those come from seeded inputs that real people don't have. The database holds real

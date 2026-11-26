@@ -29,7 +29,9 @@ import java.util.regex.Pattern;
  *   <li>Estimates are seconds in Jira and hours in Pulse.</li>
  *   <li>The sprint field is parsed from Jira Server's string form or the object form.</li>
  *   <li>Changelog items, comments and creation become {@code issue_events}; authors go to
- *       {@code actor_account_id} (V292).</li>
+ *       {@code actor_account_id} (V292). As in the seed, a sprint change holds sprint keys and an
+ *       assignee change holds the assignees, here their Jira usernames, resolved at read time (V294).</li>
+ *   <li>Jira sprints are keyed {@code J<id>}, apart from the seed's {@code S<n>} (25.4 review).</li>
  * </ul>
  */
 final class JiraMapper
@@ -300,10 +302,35 @@ final class JiraMapper
         return value == null || value.isBlank() || "<null>".equals(value) ? null : value;
     }
 
+    /** The Pulse key of a Jira sprint id: {@code J147}, never equal to a seeded {@code S<n>} key. */
+    static String sprintKey(String id)
+    {
+        return "J" + id;
+    }
+
+    /**
+     * The key of the last sprint in a changelog value ({@code "146,147"} is the issue's sprint list after
+     * the change), or null when the issue left every sprint.
+     */
+    static String lastSprintKey(String ids)
+    {
+        if (ids == null || ids.isBlank())
+        {
+            return null;
+        }
+
+        String[] all = ids.split(",");
+
+        String last = all[all.length - 1].strip();
+
+        return last.isEmpty() ? null : sprintKey(last);
+    }
+
     /**
      * The {@code sprints} record of a parsed sprint, or null when it has no dates yet (a future sprint):
      * the table needs a start and an end. {@code ends_on} is the Sunday on or after the last working day,
-     * as for seeded sprints.
+     * as for seeded sprints. The key is {@link #sprintKey}; the number, which the screens show, is the
+     * Jira id.
      */
     static JsonObject sprintRecord(JsonObject sprint)
     {
@@ -322,7 +349,7 @@ final class JiraMapper
 
         return new JsonObject()
                 .put("external_id", id)
-                .put("key", "S" + id)
+                .put("key", sprintKey(id))
                 .put("number", Integer.parseInt(id))
                 .put("starts_on", start)
                 .put("work_ends_on", end)
@@ -371,8 +398,8 @@ final class JiraMapper
                 out.add(event(key, "h" + history.getString("id") + "." + i, at, kind, history.getJsonObject("author"),
                         summary(kind, field, item.getString("toString")))
                         .put("field", field)
-                        .put("from_value", item.getString("fromString"))
-                        .put("to_value", item.getString("toString")));
+                        .put("from_value", changeValue(kind, item, "from"))
+                        .put("to_value", changeValue(kind, item, "to")));
             }
         }
 
@@ -397,6 +424,22 @@ final class JiraMapper
         }
 
         return out;
+    }
+
+    /**
+     * The stored value of one side ({@code from} or {@code to}) of a changelog item, as the seed stores it
+     * (25.4 review): a sprint change holds the key of the issue's last sprint ({@code J147}), an assignee
+     * change the Jira username, which {@code issue_events_with_actor} (V294) resolves to the linked
+     * person; any other field keeps Jira's display text. The display text stays in the summary.
+     */
+    static String changeValue(String kind, JsonObject item, String side)
+    {
+        return switch (kind)
+        {
+            case "sprint_change" -> lastSprintKey(item.getString(side));
+            case "assignee_change" -> item.getString(side);
+            default -> item.getString(side + "String");
+        };
     }
 
     /** The event kind of a changelog field. */

@@ -397,7 +397,7 @@ class JiraConnectorTest
 
         JsonObject sprint = store.get("sprints").get("147");
 
-        assertEquals("S147", sprint.getString("key"));
+        assertEquals("J147", sprint.getString("key"), "Jira sprints are keyed apart from the seed (25.4 review)");
         assertEquals("2026-11-23", sprint.getString("starts_on"));
         assertEquals("2026-12-04", sprint.getString("work_ends_on"));
         assertEquals("2026-12-06", sprint.getString("ends_on"), "the Sunday after the last working day");

@@ -325,7 +325,7 @@ task 25.4.
 - The sprint field is read in both forms Jira Server returns: the string
   `com.atlassian.greenhopper.service.sprint.Sprint@…[id=…,name=…,state=…,startDate=…,endDate=…,…]`
   (`<null>` read as null) and the object `{id, name, state, startDate, endDate, …}`.
-- `key` = `S<id>`, `number` = the Jira id, `starts_on` = `startDate`'s date, `work_ends_on` =
+- `key` = `J<id>` (apart from the seed's `S<n>`, 25.4 review), `number` = the Jira id (the screens show "Sprint <number>"), `starts_on` = `startDate`'s date, `work_ends_on` =
   `endDate`'s date, `ends_on` = the Sunday on or after `work_ends_on` (as seeded sprints end).
 - A sprint without both dates (a future sprint) is not stored, and an issue in it gets no `sprint_id`.
 
@@ -338,6 +338,10 @@ task 25.4.
 | each comment | `fields.comment.comments[]`; the body goes to `to_value` | `comment` |
 | Jira's `updated` | only with "Ignore edits by bots and non-assignees" **off**: a `transition` by the assignee | `transition` |
 
+- `from_value` / `to_value` are stored as the seed stores them (25.4 review): a `sprint_change` holds the
+  key of the issue's last sprint (`J147`; null when it left every sprint), an `assignee_change` the
+  Jira usernames, read as people through `from_person` / `to_person` of `issue_events_with_actor`
+  (V294). Any other field keeps Jira's display text. Display names stay in `summary`.
 - `actor_account_id` is the author's Jira username, and `actor_id` stays null: the person is resolved
   at read time (V292 view `issue_events_with_actor`). An account marked as a bot makes its events
   bot events.
@@ -370,6 +374,30 @@ task 25.4.
    quarter, which the demo seed holds up to 2026-Q3. In a quarter without them there is no index,
    whatever Jira holds. Jira moves the index only through Discipline (the live sprint's stale
    count).
+
+**25.4 review outcome (Track 2, 2026-11-26).** The record matches the Phase 1 seed semantics for
+statuses, hours, story points, due and resolved dates, accounts and description, and
+`JiraShapeTest` shows a live issue, its sprint and its metrics reach `CalcService` in the seed's
+shape. The four points above, and what the review added:
+
+- **Points 1, 3 and 4: accepted.** A production instance runs without the demo seed, so the two
+  calendars only meet in a demo. Do not connect a live Jira to a database with `PULSE_DEMO_SEED=true`
+  whose seeded sprints overlap the Jira sprints.
+- **Point 2: fixed.** Jira sprints are keyed `J<id>`; the number, which the screens show, stays
+  the Jira id.
+- **Changelog values: fixed.** `sprint_change` held the sprint name and `assignee_change` the display
+  names, so the Effort detection (mid-sprint additions, take-overs) never matched a live row. They now
+  hold the sprint key and the usernames (above), and V294 resolves the usernames.
+- **Follow-ups** (tasks 25.8 and 26.7):
+  - Jira worklogs are not read yet, so hours logged, closed-period utilization and Effort's logged
+    hours are 0 for Jira work.
+  - `carried_over` is set in the issue's newest sprint, where the seed sets it in the sprint the
+    issue left: the old sprint loses the issue's committed points and the new one counts it as
+    carried.
+  - `reopened` and `was_stale` are always false, so the reopen rate and the closed sprint's stale
+    count are 0 for Jira rows.
+  - `started_on` is the first status change of any kind; the seed's is the first move to In
+    Progress. Close for most workflows; noted, no task.
 
 **End-to-end flow.** `npm run test:live-flows` (in `frontend/`) runs `e2e/live-flows/jira.spec.js` with
 `playwright.live.config.js`, on its own backend and database:

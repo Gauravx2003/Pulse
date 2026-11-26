@@ -64,8 +64,10 @@ public interface LiveConnector extends ConnectorPort
     /**
      * Reads every change since {@code since} (the cursor of the last successful sync, or null for a
      * full read), page by page. Each page is handed to {@code sink} as a normalized batch and the next
-     * page is requested only after the sink's future succeeds. Resolves to {@code {"cursor": ...}}; a
-     * failed page fails the whole read with the cause (usually a {@link LiveHttpException}).
+     * page is requested only after the sink's future succeeds. Resolves to {@code {"cursor": ...}}, plus
+     * optional whole-number counts of the connector's own (e.g. Jira's {@code truncatedWorklogs}) that
+     * the sync log records beside the entity counts; a failed page fails the whole read with the cause
+     * (usually a {@link LiveHttpException}).
      */
     Future<JsonObject> fetchPages(LiveContext ctx, String since, Function<JsonObject, Future<Void>> sink);
 

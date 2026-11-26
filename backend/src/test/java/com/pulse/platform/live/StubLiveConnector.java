@@ -110,7 +110,8 @@ public class StubLiveConnector implements LiveConnector
 
             if (items.isEmpty())
             {
-                return Future.succeededFuture(new JsonObject().put("cursor", cursor));
+                // a connector count of its own, which the sync log records beside the entity counts
+                return Future.succeededFuture(new JsonObject().put("cursor", cursor).put("pagesRead", page - 1));
             }
 
             JsonArray records = new JsonArray();

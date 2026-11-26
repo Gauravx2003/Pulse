@@ -8,9 +8,12 @@ import com.pulse.calc.work.EffortFormulas;
 import com.pulse.calc.work.WorkloadFormulas;
 import com.pulse.platform.module.ModuleRegistry;
 import com.pulse.platform.module.PulseModule;
+import com.pulse.testsupport.RoleMatrix;
 import com.pulse.testsupport.TestApi;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -20,9 +23,12 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Task 3.2 (change jira-derived-hours): hours from Jira work intervals reach the same per-person, per-day hours
@@ -40,6 +46,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * <p>Hours logged, days worked and closed-period utilization are the seed's plus 8 h: the sum of both sources,
  * with the overlapping intervals merged, so no day gets 16 or 24 interval hours. On Effort, each issue taken
  * over keeps its own interval hours (IV-1 8 h, IV-2 6 h) and IV-3 its worklog hours for Priya (none).
+ *
+ * <p>Task 3.3: link-then-read for intervals. An interval credited to a Jira account nobody has linked counts for
+ * no one; once the Admin links the account to Priya, her hours logged on Effort and her Effort item hours include
+ * it from the next read, with no re-sync and no cache call, and unlinking takes it away again. It uses another
+ * working day of the sprint than the first test, so the two never overlap.
  */
 class LiveIntervalHoursTest
 {
@@ -74,7 +85,7 @@ class LiveIntervalHoursTest
     @Test
     void intervalHoursAddToWorklogHoursAndEffortItemsKeepTheirOwnHours() throws Exception
     {
-        LocalDate day = workingDayWithSeedHours();
+        LocalDate day = workingDaysWithSeedHours().get(0);
 
         JsonObject before = periodWork();
 
@@ -118,12 +129,65 @@ class LiveIntervalHoursTest
         assertEquals(0.0, hoursOf(found, "IV-3"), 0.001, "IV-3 tracks time in Jira: Priya has no worklog on it");
     }
 
+    @Test
+    void anIntervalOfAnUnmatchedAccountCountsForPriyaOnlyOnceLinked() throws Exception
+    {
+        LocalDate day = workingDaysWithSeedHours().get(1);
+
+        TestApi.Session admin = RoleMatrix.session(api, RoleMatrix.ADMIN);
+
+        String account = api.queryOne("INSERT INTO external_accounts (tool, tool_account_id, login) VALUES ('jira', 'priya.link',"
+                + " 'priya.link') RETURNING id::text AS id").getString("id");
+
+        double before = ((JsonObject) get(WorkloadFormulas.PERIOD_WORK, params())).getDouble("logged");
+
+        issue("LT-1", "priya.link");
+
+        interval("LT-1|dev", "LT-1", "dev", day + "T10:00:00+05:30", day + "T14:00:00+05:30", "priya.link");
+
+        takeover("LT-1", day, "priya.link");
+
+        // unmatched: the interval and the take-over count for nobody
+        assertEquals(before, effortLogged(admin), 0.001, "unmatched: Priya's hours logged on Effort are unchanged");
+        assertTrue(((JsonArray) get(EffortFormulas.DETECTED, params())).stream().map(JsonObject.class::cast)
+                .noneMatch(i -> "LT-1".equals(i.getString("ref"))), "unmatched: LT-1 is not Priya's take-over");
+
+        // link: no sync, no cache call; the next read counts it for Priya
+        ok(api.put("/api/v1/integrations/accounts/" + account + "/link", admin, new JsonObject().put("personId", priya)));
+
+        assertEquals(before + 4, effortLogged(admin), 0.001, "linked: 4 interval hours on Effort from the next read");
+        assertEquals(4.0, hoursOf((JsonArray) get(EffortFormulas.DETECTED, params()), "LT-1"), 0.001,
+                "linked: the take-over carries LT-1's interval hours");
+
+        // unlink: back to nobody
+        ok(api.delete("/api/v1/integrations/accounts/" + account + "/link", admin));
+
+        assertEquals(before, effortLogged(admin), 0.001, "unlinked: the interval counts for nobody again");
+    }
+
     // ------------------------------------------------------------------ helpers
 
     /**
-     * A weekday of Sprint 42 (7-18 Sep) on which Priya has seed worklog hours and is neither on leave nor on a visit.
+     * Priya's hours logged in Sprint 42 on the Effort screen, read through the running server and its cache.
      */
-    private static LocalDate workingDayWithSeedHours() throws Exception
+    private static double effortLogged(TestApi.Session session) throws Exception
+    {
+        return ok(api.get("/api/v1/effort/people/" + priya + "?period=" + SPRINT, session)).getJsonObject("effort")
+                .getDouble("logged");
+    }
+
+    private static JsonObject ok(HttpResponse<Buffer> res)
+    {
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+
+        return res.body() == null ? new JsonObject() : res.bodyAsJsonObject();
+    }
+
+    /**
+     * The weekdays of Sprint 42 (7-18 Sep) on which Priya has seed worklog hours and is neither on leave nor on a
+     * visit, in date order (at least two).
+     */
+    private static List<LocalDate> workingDaysWithSeedHours() throws Exception
     {
         JsonArray leave = (JsonArray) get("people.leaveDays", new JsonObject().put("person", priya));
 
@@ -132,6 +196,8 @@ class LiveIntervalHoursTest
         JsonArray days = api.sql().queryList("SELECT DISTINCT work_date::text AS day FROM worklogs WHERE person_id = '" + priya
                 + "'::uuid AND work_date BETWEEN '2026-09-08' AND '2026-09-18' AND hours > 0 ORDER BY 1").toCompletionStage()
                 .toCompletableFuture().get();
+
+        List<LocalDate> out = new ArrayList<>();
 
         for (Object o : days)
         {
@@ -144,11 +210,13 @@ class LiveIntervalHoursTest
 
             if (weekday && (leave == null || !leave.contains(day.toString())) && !onVisit)
             {
-                return day;
+                out.add(day);
             }
         }
 
-        throw new AssertionError("no working day with seed hours in Sprint 42: " + days.encode());
+        assertTrue(out.size() >= 2, "two working days with seed hours in Sprint 42: " + days.encode());
+
+        return out;
     }
 
     private static JsonObject periodWork() throws Exception
@@ -179,24 +247,40 @@ class LiveIntervalHoursTest
 
     private static void issue(String key) throws Exception
     {
+        issue(key, "priya.iv");
+    }
+
+    private static void issue(String key, String account) throws Exception
+    {
         api.exec("INSERT INTO issues (key, summary, status, source, external_id, synced_at, assignee_account_id) VALUES ('" + key
-                + "', 'Live issue " + key + "', 'In Progress', 'jira', '" + key + "', now(), 'priya.iv')");
+                + "', 'Live issue " + key + "', 'In Progress', 'jira', '" + key + "', now(), '" + account + "')");
     }
 
     private static void interval(String externalId, String key, String kind, String start, String end) throws Exception
     {
+        interval(externalId, key, kind, start, end, "priya.iv");
+    }
+
+    private static void interval(String externalId, String key, String kind, String start, String end, String account)
+            throws Exception
+    {
         api.exec("INSERT INTO issue_work_intervals (issue_id, kind, starts_at, ends_at, end_source, account_id, source,"
                 + " external_id, synced_at) SELECT id, '" + kind + "', " + quoted(start) + ", " + quoted(end) + ", "
-                + (start == null ? "NULL" : "'field'") + ", 'priya.iv', 'jira', '" + externalId + "', now() FROM issues WHERE key = '"
+                + (start == null ? "NULL" : "'field'") + ", '" + account + "', 'jira', '" + externalId + "', now() FROM issues WHERE key = '"
                 + key + "'");
     }
 
     /** The assignee changed to Priya's Jira account on {@code day} at 09:00, after the sprint started. */
     private static void takeover(String key, LocalDate day) throws Exception
     {
+        takeover(key, day, "priya.iv");
+    }
+
+    private static void takeover(String key, LocalDate day, String account) throws Exception
+    {
         api.exec("INSERT INTO issue_events (issue_id, occurred_at, kind, field, from_value, to_value, actor_name, summary, source,"
                 + " external_id, synced_at, actor_account_id) SELECT id, '" + day + " 09:00+05:30', 'assignee_change', 'assignee',"
-                + " 'arjun.m', 'priya.iv', 'Rahul Verma', 'Assignee → Priya', 'jira', '" + key + ":takeover', now(), 'rahul.v'"
+                + " 'arjun.m', '" + account + "', 'Rahul Verma', 'Assignee → Priya', 'jira', '" + key + ":takeover', now(), 'rahul.v'"
                 + " FROM issues WHERE key = '" + key + "'");
     }
 

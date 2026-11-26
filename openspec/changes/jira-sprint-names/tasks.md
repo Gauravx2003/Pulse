@@ -47,7 +47,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 3. Jira connector (Track 3)
 
-- [ ] 3.1 `JiraMapper.sprintRecord` writes `name`: Jira's name trimmed, null when empty. Add a renamed sprint and an unnamed one to `live-fixtures/jira/` in the recorded shape, string and object forms.
+- [x] 3.1 `JiraMapper.sprintRecord` writes `name`: Jira's name trimmed, null when empty. Add a renamed sprint and an unnamed one to `live-fixtures/jira/` in the recorded shape, string and object forms.
 
   Verify:
   - `JiraConnectorTest` covers: name stored in both forms, a rename updating in place with no second row, an empty name stored as null

@@ -106,7 +106,7 @@ class LiveIssuesTest
             List<Integer> applied = late.stream().map(SqlScript::version).toList();
 
             assertEquals(190, applied.get(0), "V190 first: " + applied);
-            assertTrue(applied.containsAll(List.of(290, 292)), "V290 and V292 after it: " + applied);
+            assertTrue(applied.containsAll(List.of(290, 292, 293)), "V290, V292 and V293 after it: " + applied);
 
             JsonObject views = TestApi.await(new SqlExecutor(db.ownerPool())
                     .queryOne("SELECT to_regclass('issues_with_assignee') IS NOT NULL AND to_regclass('issue_events_with_actor')"
@@ -114,6 +114,25 @@ class LiveIssuesTest
 
             assertTrue(views.getBoolean("present"));
         }
+    }
+
+    /** V293 (task 26.2): the Jira description, nullable and read through the view; seed rows have none. */
+    @Test
+    void v293AddsTheDescriptionToTheTableAndTheView() throws Exception
+    {
+        assertEquals(1, api.count("""
+                SELECT count(*) FROM information_schema.columns
+                WHERE table_schema = current_schema() AND table_name = 'issues'
+                  AND column_name = 'description' AND data_type = 'text' AND is_nullable = 'YES'"""));
+
+        assertEquals(0, api.count("SELECT count(*) FROM issues_with_assignee WHERE source = 'seed' AND description IS NOT NULL"));
+
+        live("DESC-1", "d-unmatched");
+
+        api.exec("UPDATE issues SET description = 'h3. Problem' WHERE source = 'jira' AND external_id = 'DESC-1'");
+
+        assertEquals("h3. Problem", api.queryOne("SELECT description FROM issues_with_assignee WHERE external_id = 'DESC-1'"
+                + " AND source = 'jira'").getString("description"));
     }
 
     @Test

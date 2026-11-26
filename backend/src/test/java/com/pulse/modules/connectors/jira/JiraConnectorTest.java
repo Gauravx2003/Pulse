@@ -2,8 +2,10 @@ package com.pulse.modules.connectors.jira;
 
 import com.pulse.calc.work.WorkloadFormulas;
 import com.pulse.platform.accounts.InMemoryExternalAccountService;
+import com.pulse.platform.http.ApiException;
 import com.pulse.platform.live.BaseUrls;
 import com.pulse.platform.live.GuardedHttp;
+import com.pulse.platform.live.LiveConfig;
 import com.pulse.platform.live.LiveContext;
 import com.pulse.platform.live.testkit.LiveMockServer;
 import io.vertx.core.Future;
@@ -338,6 +340,33 @@ class JiraConnectorTest
                 () -> new JiraConnector().allowedOrigins(new JsonObject().put("baseUrl", "not a url")));
     }
 
+    /**
+     * On save: the Test connection and Save routes (24.5) check the submitted values with
+     * {@link LiveConfig#validate} against this connector's own schema, before any request leaves.
+     */
+    @Test
+    void saveRefusesUserInfoAndMetadataBaseUrlsWithJirasSchema()
+    {
+        JiraConnector connector = new JiraConnector();
+
+        for (String bad : List.of("http://admin:secret@jira.example.local:8080", "http://169.254.169.254"))
+        {
+            JsonObject config = JiraConnectorContractTest.config(bad, JiraConnector.BASIC);
+
+            ApiException refused = assertThrows(ApiException.class,
+                    () -> LiveConfig.validate(connector, config, SECRET, false), bad);
+
+            assertEquals("config.baseUrl", refused.details().getString("field"), bad);
+            assertFalse(refused.getMessage().contains("secret"), "the refusal does not echo the user info");
+        }
+
+        JsonObject lan = LiveConfig.validate(connector, JiraConnectorContractTest.config("http://172.16.10.6:8080/",
+                JiraConnector.BASIC), SECRET, false);
+
+        assertEquals("http://172.16.10.6:8080", lan.getJsonObject("config").getString("baseUrl"));
+        assertFalse(lan.getJsonArray("warnings").isEmpty(), "http shows the unencrypted warning");
+    }
+
     @Test
     void refusesProjectKeysThatCouldInjectJql()
     {
@@ -363,6 +392,8 @@ class JiraConnectorTest
         assertNull(sized.getValue("assignee_id"), "live rows resolve their person through the view");
         assertEquals(mock.baseUrl() + "/browse/PROJ-10730", sized.getString("html_url"));
         assertEquals("147", sized.getJsonObject("sprint_id").getString("external_id"));
+        assertTrue(sized.getString("description").startsWith("h3. Problem\nSample problem description for issue 1"),
+                "wiki markup stored as is, with no ADF parsing");
 
         JsonObject sprint = store.get("sprints").get("147");
 

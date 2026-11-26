@@ -1,8 +1,10 @@
 package com.pulse.modules.integrations;
 
 import com.pulse.calc.core.CalcService;
+import com.pulse.platform.live.LiveSyncService;
 import com.pulse.platform.live.LoopbackFlag;
 import com.pulse.platform.live.StubLiveConnector;
+import com.pulse.platform.live.SyncStateRepository;
 import com.pulse.platform.live.testkit.LiveMockServer;
 import com.pulse.platform.secrets.SecretBox;
 import com.pulse.testsupport.RoleMatrix;
@@ -140,9 +142,13 @@ class LiveSyncRoutesTest
 
     private void connect() throws Exception
     {
-        JsonObject values = new JsonObject()
-                .put("config", new JsonObject().put("baseUrl", mock.baseUrl()))
-                .put("secret", SECRET);
+        connect(new JsonObject().put("baseUrl", mock.baseUrl()), SECRET);
+    }
+
+    /** Tests and saves {@code config} with {@code secret}; returns the save answer. */
+    private JsonObject connect(JsonObject config, String secret) throws Exception
+    {
+        JsonObject values = new JsonObject().put("config", config).put("secret", secret);
 
         HttpResponse<Buffer> tested = record(api.post(BASE + "/test", admin, values));
 
@@ -154,6 +160,8 @@ class LiveSyncRoutesTest
         assertEquals(200, saved.statusCode(), saved.bodyAsString());
 
         mock.reset();
+
+        return saved.bodyAsJsonObject();
     }
 
     private HttpResponse<Buffer> sync() throws Exception
@@ -286,6 +294,63 @@ class LiveSyncRoutesTest
                 .getInteger("inserted"));
 
         assertEquals("2026-11-21T11:15:00Z", mock.requests().get(0).getJsonObject("query").getString("since"));
+    }
+
+    @Test
+    void changedConfigClearsTheCursorSoTheNextSyncReadsEverything() throws Exception
+    {
+        connect();
+
+        syncOk();
+
+        assertEquals("2026-11-21T11:15:00Z", cursor());
+
+        // e.g. new Jira field ids: issues already synced must be read again to get the new mapping
+        JsonObject saved = connect(new JsonObject().put("baseUrl", mock.baseUrl()).put("label", "Team A"), SECRET);
+
+        assertEquals(Boolean.TRUE, saved.getBoolean("fullSyncNext"));
+        assertNull(cursor());
+        assertEquals(1, api.count("SELECT count(*) FROM credential_log WHERE tool = 'stub' "
+                + "AND message LIKE '%the next sync reads everything again'"));
+
+        JsonObject entry = syncOk().getJsonObject("sync");
+
+        // a full read with no since, and the upsert updates rather than duplicates
+        assertNull(mock.requests().get(0).getJsonObject("query").getString("since"));
+        assertEquals(4, entry.getJsonObject("counts").getInteger("total"));
+        assertEquals(4, liveRows());
+        assertEquals("2026-11-21T11:15:00Z", cursor());
+    }
+
+    @Test
+    void newSecretAloneKeepsTheCursor() throws Exception
+    {
+        connect();
+
+        syncOk();
+
+        JsonObject saved = connect(new JsonObject().put("baseUrl", mock.baseUrl()), SECRET + "-rotated");
+
+        assertEquals(Boolean.FALSE, saved.getBoolean("fullSyncNext"));
+        assertEquals("2026-11-21T11:15:00Z", cursor());
+    }
+
+    @Test
+    void aCursorClearedDuringARunIsNotPutBack() throws Exception
+    {
+        connect();
+
+        syncOk();
+
+        SyncStateRepository state = new SyncStateRepository(api.sql());
+
+        // a run starts from the stored cursor, the Admin saves a new config meanwhile, the run then ends
+        TestApi.await(state.lock(StubLiveConnector.TOOL, LiveSyncService.STALE_LOCK_SECONDS));
+        assertTrue(TestApi.await(state.resetCursor(StubLiveConnector.TOOL)));
+        TestApi.await(state.succeed(StubLiveConnector.TOOL, "2026-11-22T09:00:00Z", "2026-11-21T11:15:00Z"));
+
+        assertNull(cursor());
+        assertEquals("succeeded", api.queryOne("SELECT status FROM sync_state WHERE tool = 'stub'").getString("status"));
     }
 
     @Test

@@ -11,6 +11,7 @@ import com.pulse.platform.live.LiveConnector;
 import com.pulse.platform.live.LiveContext;
 import com.pulse.platform.live.LiveHttpException;
 import com.pulse.platform.live.LoopbackFlag;
+import com.pulse.platform.live.SyncStateRepository;
 import com.pulse.platform.live.TestProofs;
 import com.pulse.platform.module.ModuleContext;
 import com.pulse.platform.secrets.SecretKeyException;
@@ -259,7 +260,9 @@ final class LiveConnectionsService
 
     /**
      * Stores the connection after checking the proof. The proof is used up by this call even when the
-     * save fails. Resolves to {@link #connection}.
+     * save fails. A config that differs from the stored one clears the sync cursor, so the next sync
+     * reads everything again (jira-derived-hours 6.2); a new secret alone keeps it. Resolves to
+     * {@link #connection} plus {@code fullSyncNext}, true when the cursor was cleared.
      */
     Future<JsonObject> save(JsonObject user, String tool, JsonObject body)
     {
@@ -302,16 +305,28 @@ final class LiveConnectionsService
 
                 String change = added ? "added" : "changed";
 
+                // a changed config can change what every issue maps to (a new field id, another project):
+                // the next sync reads everything again instead of only what changed since the cursor
+                boolean configChanged = before != null && !config.equals(before.getJsonObject("config"));
+
+                Future<Boolean> reset = configChanged
+                        ? new SyncStateRepository(tx).resetCursor(tool)
+                        : Future.succeededFuture(false);
+
                 return store.save(tool, config, secret, expiry)
-                        .compose(v -> repo.log(tool, change, (added ? "Credentials added" : "Credentials changed")
-                                + " (live connection test passed)", actor))
-                        .compose(v -> AuditService.record(tx, AuditService.entry(user, AuditEvents.CREDENTIAL_CHANGED,
-                                "integration", tool, new JsonObject()
-                                        .put("change", change)
-                                        .put("live", true)
-                                        .put("fields", new JsonArray(List.copyOf(config.fieldNames()))))));
+                        .compose(v -> reset)
+                        .compose(full -> repo.log(tool, change, (added ? "Credentials added" : "Credentials changed")
+                                + " (live connection test passed)"
+                                + (full ? "; the next sync reads everything again" : ""), actor)
+                                .compose(v -> AuditService.record(tx, AuditService.entry(user,
+                                        AuditEvents.CREDENTIAL_CHANGED, "integration", tool, new JsonObject()
+                                                .put("change", change)
+                                                .put("live", true)
+                                                .put("fullSync", full)
+                                                .put("fields", new JsonArray(List.copyOf(config.fieldNames()))))))
+                                .map(full));
             });
-        }).compose(v -> connection(tool));
+        }).compose(full -> connection(tool).map(view -> view.put("fullSyncNext", full)));
     }
 
     // ------------------------------------------------------------------ disconnect

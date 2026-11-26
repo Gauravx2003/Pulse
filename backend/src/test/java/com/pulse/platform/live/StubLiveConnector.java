@@ -34,7 +34,9 @@ public class StubLiveConnector implements LiveConnector
     {
         return new JsonObject().put("fields", new JsonArray()
                 .add(new JsonObject().put("name", "baseUrl").put("label", "Base URL").put("type", "url")
-                        .put("required", true)));
+                        .put("required", true))
+                // optional and unused by the reads: changing it is a config change (cursor reset tests)
+                .add(new JsonObject().put("name", "label").put("label", "Label").put("type", "text")));
     }
 
     @Override

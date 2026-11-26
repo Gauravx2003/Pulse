@@ -48,12 +48,25 @@ public final class SyncStateRepository extends BaseRepository
 
     /**
      * Releases the lock after a successful run and advances the cursor; a null {@code cursor} (the tool
-     * returned nothing new) keeps the stored one.
+     * returned nothing new) keeps the stored one. {@code from} is the cursor the run started from: when
+     * the stored one no longer matches it ({@link #resetCursor} ran meanwhile), the cursor is left as is,
+     * so a config saved during a run still gets its full read.
      */
-    public Future<Void> succeed(String tool, String cursor)
+    public Future<Void> succeed(String tool, String cursor, String from)
     {
-        return execute("UPDATE sync_state SET status = 'succeeded', cursor = COALESCE($2, cursor), "
-                + "last_error_code = NULL WHERE tool = $1", Tuple.of(tool, cursor)).mapEmpty();
+        return execute("UPDATE sync_state SET status = 'succeeded', "
+                + "cursor = CASE WHEN cursor IS NOT DISTINCT FROM $3 THEN COALESCE($2, cursor) ELSE cursor END, "
+                + "last_error_code = NULL WHERE tool = $1", Tuple.of(tool, cursor, from)).mapEmpty();
+    }
+
+    /**
+     * Clears the stored cursor, so the next sync reads everything again (jira-derived-hours 6.2). Resolves
+     * to true when there was a cursor to clear.
+     */
+    public Future<Boolean> resetCursor(String tool)
+    {
+        return execute("UPDATE sync_state SET cursor = NULL WHERE tool = $1 AND cursor IS NOT NULL", Tuple.of(tool))
+                .map(n -> n > 0);
     }
 
     /** Releases the lock after a failed run; the cursor does not move. {@code code} is never a secret. */

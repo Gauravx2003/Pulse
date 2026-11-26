@@ -225,13 +225,15 @@ async function save() {
   busy.value = 'save';
 
   try {
-    await api.put(
+    const saved = await api.put(
       `/integrations/${encodeURIComponent(props.connection.tool)}/connection`,
       { ...body(), proof: result.value.proof },
       { quiet: true },
     );
     secret.value = '';
-    showToast(`${connected.value ? 'Credentials changed' : 'Connected'} · ${props.tile?.name ?? props.connection.tool}`);
+    // a changed config clears the sync cursor: say so, since that sync takes as long as the first one
+    const full = saved?.fullSyncNext ? ' · the next sync reads everything again' : '';
+    showToast(`${connected.value ? 'Credentials changed' : 'Connected'} · ${props.tile?.name ?? props.connection.tool}${full}`);
     emit('saved');
   } catch (e) {
     // the proof is used up either way: test again

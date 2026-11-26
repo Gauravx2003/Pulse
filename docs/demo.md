@@ -278,7 +278,10 @@ and sprint. On the internal Jira they are:
 | End Time (QA) | `customfield_10701` |
 
 Choose **Use …** for each, run **Test connection** again (the values changed), then **Save**. A pair
-with either id empty is off: its issues give no hours. The sync log shows the worklogs and intervals read,
+with either id empty is off: its issues give no hours. Saving a changed config clears the sync cursor
+(the toast says "the next sync reads everything again"), so the next **Sync now** reads every issue
+again and fills the intervals of issues synced before; it takes as long as the first sync. A new token
+alone keeps the cursor. The sync log shows the worklogs and intervals read,
 and `truncatedWorklogs` (issues with more than the 20 worklogs the search returns).
 
 **What "hours logged" means here.** For an issue with no Jira time tracking, each Dev or QA pair is the

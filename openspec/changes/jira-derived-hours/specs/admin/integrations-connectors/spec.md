@@ -46,3 +46,18 @@ The system SHALL, during Jira Test connection, propose the datetime custom field
 #### Scenario: Fields proposed
 - **WHEN** the instance has datetime fields named Start Time (Dev) and End Time (Dev)
 - **THEN** Test connection proposes their ids for Dev start and Dev end, and they are used only after the Admin confirms and saves
+
+### Requirement: Full read after a config change
+The system SHALL clear a live tool's sync cursor when an Admin saves a config that differs from the stored one, so that the next sync reads every record again and applies the new mapping to records synced before. Saving a new secret with the same config SHALL keep the cursor. A sync that was running when the cursor was cleared SHALL NOT put its own cursor back.
+
+#### Scenario: Field ids added after the first sync
+- **WHEN** an Admin saves the Dev and QA field ids for a Jira connection that already synced
+- **THEN** the save confirms that the next sync reads everything again, and the next Sync now reads every issue with no `updated` filter, updating the stored rows without duplicates
+
+#### Scenario: Token rotated
+- **WHEN** an Admin saves a new token with the same config
+- **THEN** the cursor is kept and the next sync reads only what changed
+
+#### Scenario: Config saved during a sync
+- **WHEN** a sync is running and an Admin saves a changed config before it ends
+- **THEN** the cursor stays cleared after the running sync succeeds

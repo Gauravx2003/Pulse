@@ -230,12 +230,14 @@ public final class WorkViewFormulas implements FormulaModule
             Future<WorkloadFormulas.Days> days = WorkloadFormulas.days(ctx, person);
 
             Future<JsonArray> logged = WorkSql.rows(ctx, """
-                    SELECT work_date AS day, sum(hours) AS hours FROM worklogs
+                    SELECT work_date AS day, sum(hours) AS hours FROM worklogs_with_person
                     WHERE person_id = $1 AND work_date BETWEEN $2 AND $3 GROUP BY work_date""", Tuple.of(person, from, workEnd));
 
             Future<Object> live = ctx.get(WorkloadFormulas.LIVE_SPRINT, params);
 
-            return Future.all(days, logged, live).map(all ->
+            Future<JsonObject> intervals = days.compose(d -> WorkloadFormulas.intervalHours(ctx, person, from, workEnd, d));
+
+            return Future.all(days, logged, live, intervals).map(all ->
             {
                 Map<String, Double> hours = new HashMap<>();
 
@@ -243,6 +245,8 @@ public final class WorkViewFormulas implements FormulaModule
                 {
                     hours.put(row.getString("day"), Workload.orZero(Workload.number(row, "hours")));
                 }
+
+                WorkloadFormulas.addIntervalHours(hours, intervals.result());
 
                 List<LocalDate> sprintDays = new ArrayList<>();
 

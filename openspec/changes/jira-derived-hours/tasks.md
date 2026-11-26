@@ -10,13 +10,13 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 1. Data layer (Track 2)
 
-- [ ] 1.1 Add migration `V295__live_worklogs_and_intervals.sql` (additive) in `backend/modules/work/migrations/`:
+- [x] 1.1 Add migration `V295__live_worklogs_and_intervals.sql` (additive) in `backend/modules/work/migrations/`:
   - `worklogs.account_id text`
   - table `issue_work_intervals`: `issue_id` FK, `kind` `dev`/`qa`, `starts_at`, `ends_at`, `end_source`, `account_id`, `source`, `external_id`, `synced_at`, timestamps, `version`; unique (`source`, `external_id`)
   - views `worklogs_with_person` and `issue_work_intervals_with_person`: a seed row keeps `person_id`; a live row takes the linked, non-bot person, as in V290
 
   Verify: `MigrationRunnerTest` passes, and `check-migration-versions.sh` passes.
-- [ ] 1.2 Point every worklog reader at `worklogs_with_person`, with no formula change:
+- [x] 1.2 Point every worklog reader at `worklogs_with_person`, with no formula change:
   - `WorkloadFormulas.WORKLOGS`
   - `WorkViewFormulas` day hours
   - `EffortFormulas` item hours
@@ -27,16 +27,16 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 2. Working-day window rule (Track 2)
 
-- [ ] 2.1 Add `workday.start` and `workday.end` (TIME) to `RuleCatalogue` in the staleness and capacity group, with defaults `10:00` and `18:00` in the default rule set (seed and `RuleCatalogue` defaults). Reject an end that is not after the start.
+- [x] 2.1 Add `workday.start` and `workday.end` (TIME) to `RuleCatalogue` in the staleness and capacity group, with defaults `10:00` and `18:00` in the `RuleCatalogue` defaults; a stored rule version that predates the window reads it from the defaults (the seeded S100 is forward-only and is not edited). Reject an end that is not after the start.
 
   Verify: `RulesRoutesTest` covers the default, a valid change creating a new audited version, and the 18:00–10:00 refusal with a message on the window.
-- [ ] 2.2 Check that the Rules screen shows and saves the two fields in the existing card (the TIME input already exists for `att.lateAfter`).
+- [x] 2.2 Check that the Rules screen shows and saves the two fields in the existing card (the TIME input already exists for `att.lateAfter`).
 
   Verify: the rules e2e test or a new assertion shows the window, and `npm run lint` is clean.
 
 ## 3. Splitting intervals into hours (Track 2)
 
-- [ ] 3.1 Add the pure function `calc/work/WorkIntervals` (design decision 5):
+- [x] 3.1 Add the pure function `calc/work/WorkIntervals` (design decision 5):
   - clip to [start, min(end, now)] in Asia/Kolkata
   - weekdays only, minus holidays, leave and visit days
   - overlap with the window
@@ -45,7 +45,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   - never after today
 
   Verify: `WorkIntervalsTest` covers every scenario of `specs/work/effort-extra-mile` (two days, weekend and holiday, open, resolved-open, Dev/QA overlap, end before start) plus a window change.
-- [ ] 3.2 Feed interval hours into the same per-person, per-day hours as worklogs.
+- [x] 3.2 Feed interval hours into the same per-person, per-day hours as worklogs.
   - Feed them into `PeriodWork` inputs, the `WORKLOGS` loader and the work-view day hours.
   - For Effort items, use the issue's own clipped hours.
   - Each issue takes one source: worklogs when it has any, else its intervals.

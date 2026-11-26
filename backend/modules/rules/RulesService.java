@@ -348,9 +348,10 @@ final class RulesService
 
     private static Future<JsonObject> current(RulesRepository repo)
     {
+        // a rule the stored version lacks (added after it was written) reads, shows and saves from its default
         return repo.current().compose(row -> row == null
                 ? Future.failedFuture(new IllegalStateException("No rule version: the base seed has not run"))
-                : Future.succeededFuture(row));
+                : Future.succeededFuture(row.put("rules", RuleCatalogue.withDefaults(row.getJsonObject("rules")))));
     }
 
     private static void checkVersion(JsonObject current, int expectedVersion)

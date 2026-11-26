@@ -77,13 +77,17 @@ public final class RuleCatalogue
     /** Permission that edits appraisal standards (spec "Editable rule groups"). */
     public static final String APPRAISAL_PERMISSION = "appraisal.approve";
 
-    /** Reference section 12 defaults, without the PR title pattern (added in {@link #defaults()}). */
+    /**
+     * Reference section 12 defaults, without the PR title pattern (added in {@link #defaults()}), plus the
+     * working-day window (change jira-derived-hours), which the seeded version 1 does not hold: a rule set read
+     * from the database goes through {@link #withDefaults} so a later rule reads its default until saved.
+     */
     private static final String DEFAULTS_JSON = """
             {"staleDays":2,"focus":6,"under":60,"healthy":85,"over":120,"notStartedPct":40,
              "weights":{"delivery":35,"quality":15,"culture":25,"okr":15,"growth":10},
              "nudge":true,"excludeBots":true,"vw":[15,10,10,10,5,5,10,10,5,10,10],
              "d5":95,"d4":85,"d3":70,"d2":50,"dayHours":8,"monthCap":6,"bonusPerPoint":0.05,"bonusCap":0.3,
-             "unplannedAlert":30,
+             "unplannedAlert":30,"workday":{"start":"10:00","end":"18:00"},
              "pts":{"midsprint":1,"incident":2,"takeover":1,"untracked":1,"help":1,"reviews":0.5,"support":1,
                     "proactivefix":1.5,"visit":1.5,"visitDay":0.5,"visitWeekend":1,"visitEsc":0.5,"visitCsat":1},
              "visitCap":8,"prMaxLines":400,"prMinAppr":2,"prCmtMin":20,"prSla":24,"prTarget":85,
@@ -120,6 +124,20 @@ public final class RuleCatalogue
     public static JsonObject defaults()
     {
         return DEFAULTS.copy();
+    }
+
+    /**
+     * A copy of {@code rules} with every key it lacks taken from the defaults, at every level of nested
+     * objects. A stored value is never replaced, and arrays are kept as stored. A rule added after a
+     * database's rule version was written (the working-day window) so reads its default until it is saved.
+     */
+    public static JsonObject withDefaults(JsonObject rules)
+    {
+        JsonObject out = rules == null ? new JsonObject() : rules.copy();
+
+        fill(out, DEFAULTS);
+
+        return out;
     }
 
     /** Group keys in card order. */
@@ -328,6 +346,11 @@ public final class RuleCatalogue
             return appraisalProblem(rules);
         }
 
+        if (STALENESS.equals(group))
+        {
+            return workdayProblem(rules);
+        }
+
         return null;
     }
 
@@ -353,6 +376,49 @@ public final class RuleCatalogue
         }
 
         return total;
+    }
+
+    /**
+     * The working-day window must end after it starts (spec platform/rules-thresholds, "Working-day window").
+     * Each time is checked as HH:MM by {@link #problem} first.
+     */
+    private static JsonObject workdayProblem(JsonObject rules)
+    {
+        Object start = read(rules, "workday.start");
+
+        Object end = read(rules, "workday.end");
+
+        if (!(start instanceof String s) || !(end instanceof String e) || !validTime(s) || !validTime(e))
+        {
+            return null;
+        }
+
+        if (LocalTime.parse(e.strip(), HH_MM).isAfter(LocalTime.parse(s.strip(), HH_MM)))
+        {
+            return null;
+        }
+
+        return new JsonObject()
+                .put("code", "workday_window")
+                .put("message", "The working day must end after it starts (" + s.strip() + "–" + e.strip() + ").")
+                .put("field", "workday.end");
+    }
+
+    private static void fill(JsonObject target, JsonObject defaults)
+    {
+        for (String key : defaults.fieldNames())
+        {
+            Object value = defaults.getValue(key);
+
+            if (!target.containsKey(key))
+            {
+                target.put(key, value instanceof JsonObject o ? o.copy() : value instanceof JsonArray a ? a.copy() : value);
+            }
+            else if (value instanceof JsonObject o && target.getValue(key) instanceof JsonObject t)
+            {
+                fill(t, o);
+            }
+        }
     }
 
     private static JsonObject appraisalProblem(JsonObject rules)
@@ -441,7 +507,11 @@ public final class RuleCatalogue
                 f("focus", "Focus hours per day", "Hours of task work in a working day", NUMBER, 4, 8, 0.5, " h"),
                 f("nudge", "Slack nudges", "Let managers DM a nudge for stale issues", BOOLEAN, 0, 0, 0, ""),
                 f("excludeBots", "Exclude bots", "Ignore edits by bots and non-assignees when computing last activity",
-                        BOOLEAN, 0, 0, 0, "")));
+                        BOOLEAN, 0, 0, 0, ""),
+                f("workday.start", "Working day starts", "Work intervals from Jira count from this time (Asia/Kolkata)",
+                        TIME, 0, 0, 0, ""),
+                f("workday.end", "Working day ends", "Work intervals from Jira count until this time; at most the hours per day",
+                        TIME, 0, 0, 0, "")));
 
         groups.put(UTILIZATION, group(UTILIZATION, "Utilization bands", RULES_PERMISSION, null,
                 f("under", "Under below", "Spare capacity", INTEGER, 30, 80, 5, "%"),

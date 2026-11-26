@@ -304,6 +304,53 @@ test.describe('Rules & thresholds', () => {
     await expect(slider).toHaveValue(String(before));
   });
 
+  // change jira-derived-hours: the working-day window that splits Jira work intervals into hours
+  test('the working-day window shows in Staleness & capacity, refuses an end before its start, and saves', async ({
+    page,
+  }) => {
+    await signIn(page, DEMO.admin);
+    await page.goto('/rules');
+
+    const stale = card(page, 'Staleness & capacity');
+    const start = stale.getByLabel('Working day starts');
+    const end = stale.getByLabel('Working day ends');
+
+    await expect(start).toHaveValue(/^\d{2}:\d{2}$/);
+    await expect(end).toHaveValue(/^\d{2}:\d{2}$/);
+
+    const from = await start.inputValue();
+    const until = await end.inputValue();
+
+    // other tests save rules in parallel: a save that meets their newer version gets the "someone else
+    // changed the rules" reload, so each step is retried until it lands on the version it read
+    const saveEnd = async (value) => {
+      await expect(async () => {
+        await end.fill(value);
+        await end.press('Enter');
+        await expect(toast(page, 'Working day ends · saved').last()).toBeVisible({ timeout: 2_000 });
+      }).toPass();
+    };
+
+    // an end that is not after the start is refused on the window, and nothing is saved
+    await expect(async () => {
+      await end.fill(from);
+      await end.press('Enter');
+      await expect(stale.locator('.pl-field-error')).toContainText('must end after it starts', { timeout: 2_000 });
+    }).toPass();
+
+    await page.reload();
+    await expect(end).toHaveValue(until);
+
+    // a later end is saved and kept, then put back
+    await saveEnd('20:30');
+    await page.reload();
+    await expect(end).toHaveValue('20:30');
+
+    await saveEnd(until);
+    await page.reload();
+    await expect(end).toHaveValue(until);
+  });
+
   test('an unsafe title pattern is refused inline and Reset defaults asks first', async ({ page }) => {
     await signIn(page, DEMO.admin);
     await page.goto('/rules');

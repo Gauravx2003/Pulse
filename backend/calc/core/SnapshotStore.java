@@ -57,16 +57,29 @@ public final class SnapshotStore
 
     // ------------------------------------------------------------------ rule versions
 
-    /** The latest rule version: {@code {version, rules}}; null before any version exists. */
+    /**
+     * The latest rule version: {@code {version, rules}}; null before any version exists. A rule the stored
+     * version lacks reads its default ({@link RuleCatalogue#withDefaults}).
+     */
     public static Future<JsonObject> currentRules(SqlExecutor sql)
     {
-        return sql.queryOne("SELECT version, rule_set AS rules FROM rule_versions ORDER BY version DESC LIMIT 1");
+        return sql.queryOne("SELECT version, rule_set AS rules FROM rule_versions ORDER BY version DESC LIMIT 1")
+                .map(SnapshotStore::withDefaults);
     }
 
-    /** A rule version: {@code {version, rules}}; null when there is none. */
+    /**
+     * A rule version: {@code {version, rules}}; null when there is none. A rule the stored version lacks reads
+     * its default.
+     */
     public static Future<JsonObject> rules(SqlExecutor sql, int version)
     {
-        return sql.queryOne("SELECT version, rule_set AS rules FROM rule_versions WHERE version = $1", Tuple.of(version));
+        return sql.queryOne("SELECT version, rule_set AS rules FROM rule_versions WHERE version = $1", Tuple.of(version))
+                .map(SnapshotStore::withDefaults);
+    }
+
+    private static JsonObject withDefaults(JsonObject row)
+    {
+        return row == null ? null : row.put("rules", RuleCatalogue.withDefaults(row.getJsonObject("rules")));
     }
 
     // ------------------------------------------------------------------ snapshots

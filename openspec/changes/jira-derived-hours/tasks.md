@@ -82,7 +82,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   - a cleared start, or an issue that gained time tracking, writes the record with `starts_at` null
 
   Verify: `JiraConnectorTest` covers each scenario of `specs/admin/integrations-connectors`: recorded, hand-over, resolved-open, time tracking wins, interval moved, fields not configured.
-- [ ] 4.4 Fixtures and mapping record:
+- [x] 4.4 Fixtures and mapping record:
   - add worklog and Start/End cases to `live-fixtures/jira/search-page1.json` / `search-page2.json` in the recorded shape: datetime with `+0530`, a hand-over, an open interval on a resolved issue, an issue with worklogs and Start/End
   - extend the "Jira Server → Pulse" section of `docs/live-connectors.md` with the worklog and interval rows and the precedence rule
 
@@ -90,7 +90,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
   - `JiraFixturesTest` passes, with no real email
   - Track 2 approves the mapping in the PR
 
-  **Status (2026-11-26), left open:** fixtures (PROJ-10730 worklogs + Start/End, PROJ-10723 truncated, PROJ-10720 hand-over with a QA interval, PROJ-10719 resolved-open) and the mapping record are in; `JiraFixturesTest` passes. Waiting for Track 2's approval in the PR. With V295 on main, `JiraShapeTest` syncs these fixtures and passes.
+  **Status (2026-11-26):** fixtures (PROJ-10730 worklogs + Start/End, PROJ-10723 truncated, PROJ-10720 hand-over with a QA interval, PROJ-10719 resolved-open) and the mapping record are in; `JiraFixturesTest` and `JiraShapeTest` pass. Track 2 approved the mapping by merging PR #45, which asked for it.
 
 ## 5. End-to-end (Track 3)
 

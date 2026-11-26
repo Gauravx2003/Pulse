@@ -36,7 +36,7 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 3. Splitting intervals into hours (Track 2)
 
-- [ ] 3.1 Add the pure function `calc/work/WorkIntervals` (design decision 5):
+- [x] 3.1 Add the pure function `calc/work/WorkIntervals` (design decision 5):
   - clip to [start, min(end, now)] in Asia/Kolkata
   - weekdays only, minus holidays, leave and visit days
   - overlap with the window

@@ -197,6 +197,16 @@ Suggested order: 24.3, 24.1, 24.4 (Day 1 freeze), then 24.2, 24.5, 24.6, 24.7, 2
   - Verify:
     - `AdminBootstrapTest`: created once and hashed; ignored once an Admin exists; refused without a password, with a weak password or an invalid email, for an existing account, and for a demo address under production
     - `DemoSeedFlagTest` is unchanged
+- [x] 24.10 **Period choice with no sprint yet, and after a sync** (added 2026-11-26, found on `scripts/live.sh`).
+  - **Bug 1.** A database with no sprint (a live setup before its first Jira sync) left every screen that offers sprints first with no period: "No periods · Loading…" forever, and no data request.
+  - **Bug 2.** `GET /periods` was read once per page view, so the sprints a sync added appeared only after a reload.
+  - **Fix.**
+    - `defaultKeyOf` (`ui/periods.js`) opens on the first offered kind that has a period, so the month opens while no sprint exists.
+    - `reloadPeriods()` (`shell/period.js`) runs after every live Sync now.
+  - Verify:
+    - `e2e/periods.spec.js`: with no sprints served, Overview and Effort open on the month and load; this test fails on the old code
+    - the Jira flow (26.3) shows the synced sprint in Team utilization's period list within the same page view; this check fails on the old code
+    - the work, effort, bugs, utilization, PR, primitives, attendance and live-integrations suites pass
 
 ---
 

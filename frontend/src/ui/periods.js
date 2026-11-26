@@ -35,6 +35,22 @@ export function defaultKey(periods, kind) {
   return (live.length ? live[live.length - 1] : list[0])?.key ?? null;
 }
 
+/**
+ * The default of the first kind in {@code kinds} that has any period: a screen offering sprints opens on
+ * the month while no sprint exists yet (a new database before its first Jira sync), instead of waiting.
+ */
+export function defaultKeyOf(periods, kinds) {
+  for (const kind of kinds) {
+    const key = defaultKey(periods, kind);
+
+    if (key) {
+      return key;
+    }
+  }
+
+  return null;
+}
+
 /** True when {@code key} names a period of the given kinds that exists in {@code periods}. */
 export function isKnown(periods, key, kinds) {
   const kind = kindOf(key);

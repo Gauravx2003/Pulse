@@ -250,6 +250,9 @@ class LiveSyncRoutesTest
         assertEquals(4, entry.getJsonObject("counts").getJsonObject("entities").getJsonObject("stub_items")
                 .getInteger("inserted"));
 
+        // a count of the connector's own, returned beside its cursor (as Jira's truncatedWorklogs)
+        assertEquals(2, entry.getJsonObject("counts").getInteger("pagesRead"));
+
         assertEquals(4, liveRows());
         assertEquals("2026-11-21T11:15:00Z", cursor());
 

@@ -643,8 +643,10 @@ public final class CalcService
 
         if (c == null || !today.equals(calendarDay))
         {
-            c = sql.queryList("SELECT key, number, starts_on AS \"startsOn\", work_ends_on AS \"workEndsOn\", "
-                            + "ends_on AS \"endsOn\" FROM sprints ORDER BY starts_on")
+            // name comes from work migration V296; read through to_jsonb so a schema without the work
+            // module (a test that loads only other modules) still builds the calendar, with no names
+            c = sql.queryList("SELECT s.key, s.number, to_jsonb(s) ->> 'name' AS name, s.starts_on AS \"startsOn\", "
+                            + "s.work_ends_on AS \"workEndsOn\", s.ends_on AS \"endsOn\" FROM sprints s ORDER BY s.starts_on")
                     .compose(sprints -> sql.queryList("SELECT key, name, starts_on AS \"startsOn\", ends_on AS \"endsOn\", "
                                     + "release_date AS \"releaseDate\", status FROM releases ORDER BY starts_on")
                             .map(releases -> new PeriodCalendar(sprints, releases, today)));

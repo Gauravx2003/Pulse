@@ -11,15 +11,15 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 1. Storage and the label rule (Track 2)
 
-- [ ] 1.1 Add migration `V296__sprint_names.sql` (additive): `sprints.name text`, nullable. Add `name` to the sprint query `CalcService` loads into the calendar.
+- [x] 1.1 Add migration `V296__sprint_names.sql` (additive): `sprints.name text`, nullable. Add `name` to the sprint query `CalcService` loads into the calendar.
 
   Verify: `MigrationRunnerTest` and `check-migration-versions.sh` pass.
-- [ ] 1.2 In `PeriodCalendar.sprint()`, build `short` from the name, else `"Sprint " + number`. When two sprints of the calendar share a `short`, append `" (" + key + ")"` to both. The label stays `"<short> · <range>"` plus " (active)". Keys do not change.
+- [x] 1.2 In `PeriodCalendar.sprint()`, build `short` from the name, else `"Sprint " + number`. When two sprints of the calendar share a `short`, append `" (" + key + ")"` to both. The label stays `"<short> · <range>"` plus " (active)". Keys do not change.
 
   Verify:
   - `PeriodCalendarTest` covers a named sprint, an unnamed one ("Sprint 43" unchanged), and two sprints with the same name
   - `FullOracleTest` and the period e2e tests (`periods.spec.js`) pass unchanged
-- [ ] 1.3 Check that closed periods show the calendar's current label, not the one stored in a snapshot's `inputs.period`. If a screen reads the stored label, switch it to the calendar's.
+- [x] 1.3 Check that closed periods show the calendar's current label, not the one stored in a snapshot's `inputs.period`. If a screen reads the stored label, switch it to the calendar's.
 
   Verify: a test renames a sprint after its period is frozen, and the period list shows the new name.
 

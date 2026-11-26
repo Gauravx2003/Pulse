@@ -213,10 +213,24 @@ Depends on the Track 1 Day 1 freeze (`ExternalAccountService` stub). Suggested o
   - Verify:
     - a link-then-read test shows the person's figures change with no re-sync
     - the baseline 23.2 cross-screen consistency test passes with Jira rows present
-- [ ] 25.4 **Jira mapping review and shape test.**
+- [x] 25.4 **Jira mapping review and shape test.**
   - Review Track 3's Jira → Pulse mapping (26.3) against the Phase 1 seed semantics: statuses, time units, story points, sprint.
   - Add a test that a live issue and a live sprint, ingested from Track 3's fixtures, give the same `CalcService` input shape as their seed equivalents.
   - Verify: the review is approved in Track 3's PR, and the shape test passes.
+
+  **Status (2026-11-26), done, approved with follow-ups.** 26.3 was already merged (PR #39), so the review is recorded in `docs/live-connectors.md` section 5, "25.4 review outcome", and in this task's PR.
+  - **Shape test.** `JiraShapeTest` ingests `live-fixtures/jira/` through the real Test connection, Save and Sync now routes, links `dev.user1` to Priya, and checks:
+    - a live issue reads like a seed issue in `work.issue`, `work.periodIssues` and `work.sprintMetrics`
+    - the live sprint reads like a seed sprint in `core.periods` and `core.period`
+  - **Fixed here** (JiraMapper is Track 3's code; flagged in the PR):
+    - Jira sprints are keyed `J<id>`, apart from the seed's `S<n>` (review point 2)
+    - a `sprint_change` holds the sprint key and an `assignee_change` the usernames, as the seed does
+    - V294 resolves those usernames (`from_person`, `to_person`), so the Effort detection finds live mid-sprint additions and take-overs
+  - **Accepted:** review points 1, 3 and 4, and `started_on` as the first status change.
+  - **Follow-ups:** 25.8 (Track 2) and 26.7 (Track 3).
+  - **Verified:**
+    - `JiraShapeTest` (4) and `JiraMapperReviewTest` (4) pass
+    - the Jira backend tests and the Jira live flow (`npm run test:live-flows`) pass
 - [ ] 25.5 **Migration V291 for GitHub (additive).**
   - Add `html_url` and `author_account_id` to `pull_requests`, and `author_account_id` to `commit_days`.
   - Add read views that resolve the person of live rows.
@@ -237,6 +251,17 @@ Depends on the Track 1 Day 1 freeze (`ExternalAccountService` stub). Suggested o
     - zero cross-role leaks
     - the same response for forbidden and nonexistent records
     - oracle results identical to Phase 1
+- [ ] 25.8 **Jira follow-ups from the 25.4 review.** Pairs with 26.7.
+  - **Worklogs:**
+    - Add `worklogs.account_id` (V295, additive) and a read view that resolves the person through `external_accounts`, as V290 does for issues.
+    - Point the `calc/work` worklog loaders (utilization, daily load, Effort) at it.
+  - **Carried over:**
+    - For live sprints, derive "carried over" from `sprint_change` events: an issue that left a closed sprint while not done counts as carried in that sprint, and the sprint keeps its committed points.
+    - Do not use the mapper's `carried_over` flag, which marks the newest sprint.
+  - **Reopened and stale history:** derive `reopened` from a status change out of Done within 14 days. Mark live issues that were stale when their sprint closed, as the seed's `was_stale` history flag does.
+  - Verify:
+    - a live sprint's commitment, carried over, reopen rate and closed-period utilization match a seed sprint built from the same history
+    - `FullOracleTest` is unchanged
 
 ---
 
@@ -353,6 +378,12 @@ Depends on the Track 1 Day 1 freeze (`LiveConnector`, `LiveContext`, mock server
   - Write the GitHub → Pulse mapping section of `docs/live-connectors.md` (reviewed by Track 2 in 25.6).
   - Add a Playwright flow against the mock server: connect with a fine-grained token, sync, PR with a GitHub badge, link an unmatched login, 401, Disconnect.
   - Verify: the flow passes with seed, Jira and GitHub rows together.
+- [ ] 26.7 **Jira worklogs** (from the 25.4 review; pairs with 25.8).
+  - Read each issue's worklogs: `fields=worklog` on the search, and `GET /rest/api/2/issue/{key}/worklog` when it says more than it returns.
+  - Ingest them into `worklogs` (`source = 'jira'`, `external_id` = the worklog id) with the hours, the day in the author's offset and the author's username in `account_id`.
+  - Stop setting `carried_over` from the sprint list, since 25.8 derives it.
+  - Add the fixtures, and extend the Jira flow so the person's logged hours move after a sync.
+  - Verify: the contract test, the Jira tests and the Jira flow pass.
 
 ---
 

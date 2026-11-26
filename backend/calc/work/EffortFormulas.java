@@ -29,8 +29,10 @@ import java.util.UUID;
  *
  * <p>Detection ({@code work.extraDetected}) reads the Track 2 tables with these event conventions,
  * which ingest (task 5.4) follows: a {@code sprint_change} event's {@code to_value} is the sprint key
- * ({@code S43}); an {@code assignee_change} event's {@code from_value} and {@code to_value} are the
- * people ids when matched, otherwise the names. Bot events never count.
+ * ({@code S43}, a Jira sprint {@code J147}); an {@code assignee_change} event's {@code from_value} and
+ * {@code to_value} are the people ids when matched, otherwise the names, and a live event's are Jira
+ * usernames, read as people through {@code from_person} and {@code to_person} of
+ * {@code issue_events_with_actor} (V294). Bot events never count.
  */
 public final class EffortFormulas implements FormulaModule
 {
@@ -363,11 +365,11 @@ public final class EffortFormulas implements FormulaModule
 
             Future<JsonArray> takeovers = WorkSql.rows(ctx, """
                     SELECT i.key, i.summary, i.status, e.occurred_at AS "at", e.actor_name AS "actorName",
-                           coalesce((SELECT name FROM people WHERE id::text = e.from_value), e.from_value) AS "fromName",
+                           coalesce((SELECT name FROM people WHERE id::text = e.from_person), e.from_value) AS "fromName",
                            coalesce((SELECT sum(w.hours) FROM worklogs w WHERE w.issue_id = i.id AND w.person_id = $1), 0) AS hours
                     FROM issue_events_with_actor e JOIN issues_with_assignee i ON i.id = e.issue_id
                     LEFT JOIN sprints s ON s.id = i.sprint_id
-                    WHERE e.kind = 'assignee_change' AND e.to_value = $1::text AND NOT e.is_bot
+                    WHERE e.kind = 'assignee_change' AND e.to_person = $1::text AND NOT e.is_bot
                       AND (s.starts_on IS NULL OR (e.occurred_at AT TIME ZONE 'Asia/Kolkata')::date > s.starts_on)
                       AND (e.occurred_at AT TIME ZONE 'Asia/Kolkata')::date BETWEEN $2 AND $3""", range);
 

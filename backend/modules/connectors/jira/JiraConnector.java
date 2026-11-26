@@ -4,7 +4,9 @@ import com.pulse.platform.live.BaseUrls;
 import com.pulse.platform.live.LiveConnector;
 import com.pulse.platform.live.LiveContext;
 import com.pulse.platform.live.LiveHttpException;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -45,7 +47,18 @@ public class JiraConnector implements LiveConnector
 
     static final String BEARER = "bearer";
 
-    static final int PAGE_SIZE = 100;
+    /**
+     * Issues per search page. 50, not Jira's maximum of 100: a 100-issue page with its changelogs took
+     * 6-17 s on the internal Jira Server, at the edge of {@code GuardedHttp}'s 15 s read timeout, and a
+     * full read failed with {@code timeout} after 13 minutes. Jira builds the same issues either way.
+     */
+    static final int PAGE_SIZE = 50;
+
+    /**
+     * Pause before each next page, so twice the pages do not mean twice the request rate on the Jira
+     * server. Pages are already read one at a time, each only after the previous one is stored.
+     */
+    static final long PAGE_PAUSE_MS = 1_500;
 
     static final String UNAUTHORIZED_HINT = "401 Unauthorized, check the username and password or token.";
 
@@ -70,6 +83,19 @@ public class JiraConnector implements LiveConnector
     private static final List<String> FIELDS = List.of("summary", "issuetype", "status", "assignee", "creator",
             "reporter", "created", "updated", "duedate", "resolutiondate", "timeoriginalestimate", "timeestimate",
             "timespent", "description", "comment", "worklog");
+
+    private final long pauseMs;
+
+    public JiraConnector()
+    {
+        this(PAGE_PAUSE_MS);
+    }
+
+    /** With another pause between pages; tests pass 0. */
+    JiraConnector(long pauseMs)
+    {
+        this.pauseMs = pauseMs;
+    }
 
     @Override
     public String tool()
@@ -419,9 +445,22 @@ public class JiraConnector implements LiveConnector
                     : resolveAccounts(ctx, issues).compose(v -> sink.apply(batch(ctx.config(), base(ctx), issues)));
 
             return written.compose(v -> more
-                    ? page(ctx, url, headers, nextStart, next, truncated, sink)
+                    ? pause().compose(p -> page(ctx, url, headers, nextStart, next, truncated, sink))
                     : Future.succeededFuture(new JsonObject().put("cursor", next).put("truncatedWorklogs", truncated.get())));
         });
+    }
+
+    /** Waits {@link #pauseMs} on the current Vert.x context's timer; never blocks the event loop. */
+    private Future<Void> pause()
+    {
+        Context context = Vertx.currentContext();
+
+        if (pauseMs <= 0 || context == null)
+        {
+            return Future.succeededFuture();
+        }
+
+        return Future.future(done -> context.owner().setTimer(pauseMs, id -> done.complete()));
     }
 
     /** Records every user of the page once in external_accounts (assignees, changelog and comment authors). */

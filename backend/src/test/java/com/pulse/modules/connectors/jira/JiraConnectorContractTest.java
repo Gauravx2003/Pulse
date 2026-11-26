@@ -27,7 +27,7 @@ class JiraConnectorContractTest extends AbstractLiveConnectorContractTest
     @Override
     protected LiveConnector connector()
     {
-        return new JiraConnector();
+        return new JiraConnector(0); // no pause between pages; JiraConnectorTest.pauseBetweenPagesOnly covers it
     }
 
     @Override

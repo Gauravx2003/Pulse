@@ -283,7 +283,7 @@ task 25.4.
 |---|---|---|
 | Test connection | `/rest/api/2/myself` | account shown on the form: `name`, `displayName`, `emailAddress` |
 | Test connection | `/rest/api/2/field` | proposals: custom fields named "Story Points" / "Story point estimate" (story points), schema `com.pyxis.greenhopper.jira:gh-sprint` (sprint), datetime custom fields named "Start Time (Dev)", "End Time (Dev)", "Start Time (QA)", "End Time (QA)" (ignoring case) for the four Start/End ids |
-| Sync now | `/rest/api/2/search?jql=…&maxResults=100&expand=changelog&fields=…&startAt=N` | issues, sprints, events, worklogs, work intervals; pages until `startAt + issues >= total` |
+| Sync now | `/rest/api/2/search?jql=…&maxResults=50&expand=changelog&fields=…&startAt=N` | issues, sprints, events, worklogs, work intervals; pages until `startAt + issues >= total`, one at a time with a 1.5 s pause between them (50, not 100, per page: a 100-issue page with changelogs took up to 17 s on the internal Jira, past the 15 s read timeout) |
 
 - **JQL.** `project in ("PUL", "OPS") ORDER BY updated ASC` on the first run, then
   `project in (…) AND updated >= "<cursor − 1 min, yyyy-MM-dd HH:mm>" ORDER BY updated ASC`. Keys are

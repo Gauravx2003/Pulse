@@ -105,7 +105,8 @@ class JiraConnectorTest
 
         try (LiveContext ctx = context(config, SECRET))
         {
-            await(new JiraConnector().fetchPages(ctx, since, batch ->
+            // no pause between pages here; pauseBetweenPagesOnly covers it
+            await(new JiraConnector(0).fetchPages(ctx, since, batch ->
             {
                 for (Object e : batch.getJsonArray("entities"))
                 {
@@ -202,6 +203,33 @@ class JiraConnectorTest
     // ------------------------------------------------------------------ fetch
 
     @Test
+    void pauseBetweenPagesOnly() throws Exception
+    {
+        long pause = 400;
+
+        List<Long> pages = new ArrayList<>();
+
+        try (LiveContext ctx = context(config(), SECRET))
+        {
+            await(new JiraConnector(pause).fetchPages(ctx, null, batch ->
+            {
+                pages.add(System.nanoTime());
+
+                return Future.succeededFuture();
+            }));
+        }
+
+        long afterLast = (System.nanoTime() - pages.get(1)) / 1_000_000;
+
+        // the fixtures hold two pages: one pause between them, none after the last
+        assertEquals(2, mock.requests().size());
+        assertEquals(2, pages.size());
+        assertTrue((pages.get(1) - pages.get(0)) / 1_000_000 >= pause, "the second page waits for the pause");
+        assertTrue(afterLast < pause, "no pause after the last page: " + afterLast + " ms");
+        assertEquals(1_500, JiraConnector.PAGE_PAUSE_MS);
+    }
+
+    @Test
     void incrementalRunAsksFromOneMinuteBeforeTheCursor() throws Exception
     {
         Map<String, Map<String, JsonObject>> full = sync(config(), null);
@@ -210,7 +238,7 @@ class JiraConnectorTest
 
         assertEquals("project in (\"PROJ\") ORDER BY updated ASC", firstSearch.getString("jql"), "a full read has no time bound");
         assertEquals("changelog", firstSearch.getString("expand"));
-        assertEquals("100", firstSearch.getString("maxResults"));
+        assertEquals("50", firstSearch.getString("maxResults"), "50 per page keeps each answer well under the read timeout");
         assertTrue(firstSearch.getString("fields").contains("customfield_10111"));
 
         mock.reset();

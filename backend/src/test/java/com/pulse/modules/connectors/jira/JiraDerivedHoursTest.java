@@ -90,7 +90,7 @@ class JiraDerivedHoursTest
 
         try (LiveContext ctx = context(config))
         {
-            JsonObject done = await(new JiraConnector().fetchPages(ctx, null, batch ->
+            JsonObject done = await(new JiraConnector(0).fetchPages(ctx, null, batch ->
             {
                 for (Object e : batch.getJsonArray("entities"))
                 {

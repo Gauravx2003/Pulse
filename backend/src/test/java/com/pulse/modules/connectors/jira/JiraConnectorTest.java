@@ -25,6 +25,7 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -402,7 +403,8 @@ class JiraConnectorTest
         assertEquals("2026-11-23", sprint.getString("starts_on"));
         assertEquals("2026-12-04", sprint.getString("work_ends_on"));
         assertEquals("2026-12-06", sprint.getString("ends_on"), "the Sunday after the last working day");
-        assertEquals(1, store.get("sprints").size(), "the string and object forms of sprint 147 give one row; 148 has no dates");
+        assertEquals(Set.of("147", "149"), store.get("sprints").keySet(),
+                "the string and object forms of sprint 147 give one row, as do those of 149; 148 has no dates");
 
         JsonObject objectForm = store.get("issues").get("PROJ-10723");
 
@@ -421,6 +423,74 @@ class JiraConnectorTest
         assertEquals("svc.automation", botEvent.getString("actor_account_id"));
         assertEquals("field_change", botEvent.getString("kind"));
         assertEquals("PROJ-10721", botEvent.getJsonObject("issue_id").getString("external_id"));
+    }
+
+    // ------------------------------------------------------------------ sprint names (change jira-sprint-names 3.1)
+
+    @Test
+    void sprintNamesAreStoredFromBothForms() throws Exception
+    {
+        JsonObject named = JiraMapper.sprintRecord(JiraMapper.sprints(new JsonObject().put("customfield_10108", new JsonArray()
+                .add("com.atlassian.greenhopper.service.sprint.Sprint@1a[id=142,rapidViewId=1,state=ACTIVE,name=  Atlas 2.4.1 ,"
+                        + "startDate=2026-11-09T10:00:00.000+05:30,endDate=2026-11-20T19:00:00.000+05:30,goal=<null>]")),
+                "customfield_10108").getJsonObject(0));
+
+        assertEquals("Atlas 2.4.1", named.getString("name"), "string form, trimmed");
+
+        JsonObject object = JiraMapper.sprintRecord(JiraMapper.sprints(new JsonObject().put("customfield_10108", new JsonArray()
+                .add(new JsonObject().put("id", 142).put("name", "Atlas 2.4.1").put("state", "ACTIVE")
+                        .put("startDate", "2026-11-09T10:00:00.000+05:30").put("endDate", "2026-11-20T19:00:00.000+05:30"))),
+                "customfield_10108").getJsonObject(0));
+
+        assertEquals("Atlas 2.4.1", object.getString("name"), "object form");
+        assertEquals("J142", object.getString("key"), "the key does not change with the name");
+    }
+
+    @Test
+    void renamedSprintUpdatesItsRowInPlace() throws Exception
+    {
+        Map<String, Map<String, JsonObject>> store = sync(config(), null);
+
+        // page 1 reads sprint 147 as "SprintRelease 10.0.3"; page 2 reads it after its rename, in both forms
+        assertEquals("SprintRelease 10.0.3.1", store.get("sprints").get("147").getString("name"));
+        assertEquals(1, store.get("sprints").keySet().stream().filter("147"::equals).count(), "no second row");
+
+        List<String> pageOne = new ArrayList<>();
+
+        try (LiveContext ctx = context(config(), SECRET))
+        {
+            await(new JiraConnector().fetchPages(ctx, null, batch ->
+            {
+                if (pageOne.isEmpty())
+                {
+                    for (Object e : batch.getJsonArray("entities"))
+                    {
+                        JsonObject entity = (JsonObject) e;
+
+                        if ("sprints".equals(entity.getString("entity")))
+                        {
+                            entity.getJsonArray("records").forEach(r -> pageOne.add(((JsonObject) r).getString("name")));
+                        }
+                    }
+                }
+
+                return Future.succeededFuture();
+            }));
+        }
+
+        assertTrue(pageOne.contains("SprintRelease 10.0.3"), "the first page still had the old name: " + pageOne);
+    }
+
+    @Test
+    void sprintWithoutANameIsStoredWithNone() throws Exception
+    {
+        JsonObject unnamed = sync(config(), null).get("sprints").get("149");
+
+        assertNull(unnamed.getValue("name"), "an empty Jira name is stored as null");
+        assertEquals("J149", unnamed.getString("key"));
+        assertEquals(149, unnamed.getInteger("number"), "the number stays the fallback label");
+        assertNull(JiraMapper.sprintName("   "));
+        assertNull(JiraMapper.sprintName(null));
     }
 
     @Test

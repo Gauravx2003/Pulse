@@ -47,13 +47,13 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 3. Jira connector (Track 3)
 
-- [ ] 3.1 `JiraMapper.sprintRecord` writes `name`: Jira's name trimmed, null when empty. Add a renamed sprint and an unnamed one to `live-fixtures/jira/` in the recorded shape, string and object forms.
+- [x] 3.1 `JiraMapper.sprintRecord` writes `name`: Jira's name trimmed, null when empty. Add a renamed sprint and an unnamed one to `live-fixtures/jira/` in the recorded shape, string and object forms.
 
   Verify:
   - `JiraConnectorTest` covers: name stored in both forms, a rename updating in place with no second row, an empty name stored as null
   - `JiraShapeTest` passes on the migrated schema
   - `JiraFixturesTest` passes, with no real name or email in the fixtures
-- [ ] 3.2 Extend `live-fixtures/jira-e2e/` and `frontend/e2e/live-flows/jira.spec.js`: after Sync now, the period picker and Work items show the fixture sprint's name instead of "Sprint 147".
+- [x] 3.2 Extend `live-fixtures/jira-e2e/` and `frontend/e2e/live-flows/jira.spec.js`: after Sync now, the period picker and Work items show the fixture sprint's name instead of "Sprint 147".
 
   Verify: `npm run test:live-flows` passes on a fresh database.
 

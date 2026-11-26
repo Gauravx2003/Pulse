@@ -338,8 +338,9 @@ final class JiraMapper
     /**
      * The {@code sprints} record of a parsed sprint, or null when it has no dates yet (a future sprint):
      * the table needs a start and an end. {@code ends_on} is the Sunday on or after the last working day,
-     * as for seeded sprints. The key is {@link #sprintKey}; the number, which the screens show, is the
-     * Jira id.
+     * as for seeded sprints. The key is {@link #sprintKey}; the number is the Jira id, the fallback label.
+     * {@code name} is the sprint's Jira name, trimmed, or null when Jira has none (change jira-sprint-names):
+     * the upsert by external id renames the row in place when the sprint is renamed in Jira.
      */
     static JsonObject sprintRecord(JsonObject sprint)
     {
@@ -360,9 +361,23 @@ final class JiraMapper
                 .put("external_id", id)
                 .put("key", sprintKey(id))
                 .put("number", Integer.parseInt(id))
+                .put("name", sprintName(sprint.getString("name")))
                 .put("starts_on", start)
                 .put("work_ends_on", end)
                 .put("ends_on", workEnd.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).toString());
+    }
+
+    /** A Jira sprint name, trimmed; null when empty. */
+    static String sprintName(String name)
+    {
+        if (name == null)
+        {
+            return null;
+        }
+
+        String trimmed = name.strip();
+
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     // ------------------------------------------------------------------ events

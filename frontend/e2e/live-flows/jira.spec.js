@@ -12,7 +12,7 @@ import { startMockTool } from './mockTool.js';
  *  2. Test passes and proposes the field ids; Admin confirms them and saves.
  *  3. Sync now runs, and the issue appears with a Jira badge.
  *  4. Workload, Discipline, index and the appraisal draft score move, and every screen reads one number.
- *  4b. Hours logged of the closed Sprint 146 come from the Start/End (Dev) fields (change jira-derived-hours
+ *  4b. Hours logged of the closed sprint 146 ("Atlas 2.4.0") come from the Start/End (Dev) fields (change jira-derived-hours
  *      5.1): Team utilization and Effort read 15 h for Priya; arjun.m's 16 h count only once he is linked (5).
  *  5. An unmatched username is linked, and the person's figures update.
  *  7. A concurrent Sync now gets 409 (run before 6, while the connection is healthy).
@@ -34,6 +34,9 @@ const PASSWORD = 'e2e-Jira-pass-7Q';
 const TOOL = 'Jira Software';
 const PRIYA = 'Priya Shah';
 const ARJUN = 'Arjun Mehta';
+// Jira sprints 147 (live on 26 Nov) and 146 (closed), shown by their Jira names (change jira-sprint-names)
+const LIVE_SPRINT = 'Atlas 2.4.1';
+const LAST_SPRINT = 'Atlas 2.4.0';
 
 const h1 = (page, name) => page.getByRole('heading', { level: 1, name });
 const card = (page, name) =>
@@ -88,16 +91,17 @@ async function choosePeriod(page, text) {
 }
 
 /**
- * A person's hours logged in the closed Jira Sprint 146 on Team utilization (Manager); the closed-period
- * table is "People · Sprint 146" with Hours logged in its sixth column.
+ * A person's hours logged in the closed Jira sprint 146 on Team utilization (Manager). The screens label it
+ * by its Jira name (change jira-sprint-names), so the closed-period table is "People · Atlas 2.4.0", with
+ * Hours logged in its sixth column.
  */
 async function closedSprintHours(page, name) {
   await page.goto('/team-utilization');
-  await choosePeriod(page, 'Sprint 146');
+  await choosePeriod(page, LAST_SPRINT);
 
   const table = page
     .locator('section.pl-card')
-    .filter({ has: page.getByRole('heading', { level: 2, name: 'People · Sprint 146', exact: true }) });
+    .filter({ has: page.getByRole('heading', { level: 2, name: `People · ${LAST_SPRINT}`, exact: true }) });
   const row = table.locator('tbody tr').filter({ hasText: name });
 
   await expect(row).toBeVisible();
@@ -105,7 +109,7 @@ async function closedSprintHours(page, name) {
   const logged = num((await row.locator('td').allInnerTexts())[5]);
 
   // back to the live sprint, so the next screens read it again
-  await choosePeriod(page, 'Sprint 147');
+  await choosePeriod(page, LIVE_SPRINT);
 
   return logged;
 }
@@ -165,7 +169,7 @@ test('Jira Server: connect, sync, figures, link, 409, 401 and disconnect', async
     // step 3 shows that Sync now refreshes the period choices without a reload (task 24.10)
     await as(page, DEMO.admin);
     await page.goto('/team-utilization');
-    await expect(page.getByRole('combobox', { name: 'Period' })).not.toContainText('Sprint 147');
+    await expect(page.getByRole('combobox', { name: 'Period' })).not.toContainText(LIVE_SPRINT);
     await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Integrations' }).click();
     await tile(page).getByRole('button', { name: `Settings ${TOOL}` }).click();
     await page.getByRole('dialog', { name: TOOL }).getByRole('button', { name: 'Change credentials' }).click();
@@ -245,7 +249,9 @@ test('Jira Server: connect, sync, figures, link, 409, 401 and disconnect', async
 
     // the synced sprint is a period choice at once, in the same page view
     await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Team utilization' }).click();
-    await expect(page.getByRole('combobox', { name: 'Period' })).toContainText('Sprint 147');
+    // the period picker names the Jira sprint by its Jira name, not its id (change jira-sprint-names 3.2)
+    await expect(page.getByRole('combobox', { name: 'Period' })).toContainText(LIVE_SPRINT);
+    await expect(page.getByRole('combobox', { name: 'Period' })).not.toContainText('Sprint 147');
     await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Integrations' }).click();
 
     // the bot and the hidden-email user are unmatched; Priya matched by email
@@ -262,6 +268,11 @@ test('Jira Server: connect, sync, figures, link, 409, 401 and disconnect', async
 
     await expect(row).toHaveCount(1);
     await expect(row.locator('.pl-badge').filter({ hasText: /^Jira$/ })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 2, name: LIVE_SPRINT, exact: true }),
+      'the live sprint card is titled by the Jira name',
+    ).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Sprint 147', exact: true })).toHaveCount(0);
     await expect(row.getByRole('link', { name: /^Open in Jira PUL-201/ })).toHaveAttribute('href', `${mock.baseUrl}/browse/PUL-201`);
   });
 
@@ -326,22 +337,22 @@ test('Jira Server: connect, sync, figures, link, 409, 401 and disconnect', async
     expect(total, 'score = weighted parts').toBeCloseTo(mix, 1);
   });
 
-  await test.step('4b · Hours logged come from the Start/End (Dev) fields of the closed Sprint 146', async () => {
+  await test.step('4b · Hours logged come from the Start/End (Dev) fields of the closed sprint 146', async () => {
     // jira-derived-hours 5.1. Under the default window 10:00-18:00 and dayHours 8: PUL-208 gives 4 h + 2 h,
     // PUL-209 (open, resolved Fri 20 Nov 11:00) 8 h + 1 h, so 15 h for Priya; arjun.m is not linked yet
-    expect(await closedSprintHours(page, PRIYA), 'Team utilization · Sprint 146 · Priya').toBeCloseTo(15, 1);
+    expect(await closedSprintHours(page, PRIYA), 'Team utilization · Atlas 2.4.0 · Priya').toBeCloseTo(15, 1);
     expect(await closedSprintHours(page, ARJUN), 'arjun.m counts for no one yet').toBe(0);
 
     // Effort (Priya's own tab) reads the same hours
     await as(page, DEMO.employee);
     await page.goto('/effort');
-    await choosePeriod(page, 'Sprint 146');
+    await choosePeriod(page, LAST_SPRINT);
 
-    const effort = page.getByRole('group', { name: 'Effort · Sprint 146' });
+    const effort = page.getByRole('group', { name: `Effort · ${LAST_SPRINT}` });
 
     await expect(effort).toBeVisible();
-    expect(num(await stat(effort, 'Hours logged').innerText()), 'Effort · Sprint 146 · Priya').toBeCloseTo(15, 1);
-    await choosePeriod(page, 'Sprint 147');
+    expect(num(await stat(effort, 'Hours logged').innerText()), 'Effort · Atlas 2.4.0 · Priya').toBeCloseTo(15, 1);
+    await choosePeriod(page, LIVE_SPRINT);
 
     await as(page, DEMO.manager);
   });
@@ -374,7 +385,7 @@ test('Jira Server: connect, sync, figures, link, 409, 401 and disconnect', async
     expect(linked.work).toBeCloseTo(14 / 6, 1);
 
     // and PUL-210's Dev interval (Thu 12 Nov 10:00 to Fri 13 Nov 18:00) now counts for him: 8 h + 8 h
-    expect(await closedSprintHours(page, ARJUN), 'Team utilization · Sprint 146 · Arjun, linked').toBeCloseTo(16, 1);
+    expect(await closedSprintHours(page, ARJUN), 'Team utilization · Atlas 2.4.0 · Arjun, linked').toBeCloseTo(16, 1);
     expect(mock.requests.filter((r) => r.path === '/rest/api/2/search')).toHaveLength(1);
   });
 

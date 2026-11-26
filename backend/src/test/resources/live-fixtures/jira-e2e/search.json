@@ -181,7 +181,7 @@
         },
         "customfield_10111": 3.0,
         "customfield_10108": [
-          "com.atlassian.greenhopper.service.sprint.Sprint@5b2e9d71[id=146,rapidViewId=1,state=CLOSED,name=Sprint 146,startDate=2026-11-09T10:00:00.000+05:30,endDate=2026-11-20T19:00:00.000+05:30,completeDate=2026-11-20T19:05:00.000+05:30,activatedDate=2026-11-09T10:05:00.000+05:30,sequence=146,goal=<null>,autoStartStop=false,synced=false]"
+          "com.atlassian.greenhopper.service.sprint.Sprint@5b2e9d71[id=146,rapidViewId=1,state=CLOSED,name=Atlas 2.4.0,startDate=2026-11-09T10:00:00.000+05:30,endDate=2026-11-20T19:00:00.000+05:30,completeDate=2026-11-20T19:05:00.000+05:30,activatedDate=2026-11-09T10:05:00.000+05:30,sequence=146,goal=<null>,autoStartStop=false,synced=false]"
         ],
         "customfield_10200": "2026-11-17T14:00:00.000+0530",
         "customfield_10201": "2026-11-18T12:00:00.000+0530",
@@ -340,7 +340,7 @@
         },
         "customfield_10111": 3.0,
         "customfield_10108": [
-          "com.atlassian.greenhopper.service.sprint.Sprint@5b2e9d71[id=146,rapidViewId=1,state=CLOSED,name=Sprint 146,startDate=2026-11-09T10:00:00.000+05:30,endDate=2026-11-20T19:00:00.000+05:30,completeDate=2026-11-20T19:05:00.000+05:30,activatedDate=2026-11-09T10:05:00.000+05:30,sequence=146,goal=<null>,autoStartStop=false,synced=false]"
+          "com.atlassian.greenhopper.service.sprint.Sprint@5b2e9d71[id=146,rapidViewId=1,state=CLOSED,name=Atlas 2.4.0,startDate=2026-11-09T10:00:00.000+05:30,endDate=2026-11-20T19:00:00.000+05:30,completeDate=2026-11-20T19:05:00.000+05:30,activatedDate=2026-11-09T10:05:00.000+05:30,sequence=146,goal=<null>,autoStartStop=false,synced=false]"
         ],
         "customfield_10200": "2026-11-19T10:00:00.000+0530",
         "customfield_10201": null,
@@ -502,7 +502,7 @@
         },
         "customfield_10111": 3.0,
         "customfield_10108": [
-          "com.atlassian.greenhopper.service.sprint.Sprint@5b2e9d71[id=146,rapidViewId=1,state=CLOSED,name=Sprint 146,startDate=2026-11-09T10:00:00.000+05:30,endDate=2026-11-20T19:00:00.000+05:30,completeDate=2026-11-20T19:05:00.000+05:30,activatedDate=2026-11-09T10:05:00.000+05:30,sequence=146,goal=<null>,autoStartStop=false,synced=false]"
+          "com.atlassian.greenhopper.service.sprint.Sprint@5b2e9d71[id=146,rapidViewId=1,state=CLOSED,name=Atlas 2.4.0,startDate=2026-11-09T10:00:00.000+05:30,endDate=2026-11-20T19:00:00.000+05:30,completeDate=2026-11-20T19:05:00.000+05:30,activatedDate=2026-11-09T10:05:00.000+05:30,sequence=146,goal=<null>,autoStartStop=false,synced=false]"
         ],
         "customfield_10200": "2026-11-12T10:00:00.000+0530",
         "customfield_10201": "2026-11-13T18:00:00.000+0530",
@@ -659,7 +659,7 @@
         },
         "customfield_10111": 5.0,
         "customfield_10108": [
-          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Atlas 2.4.1,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
         ],
         "customfield_10200": null,
         "customfield_10201": null,
@@ -761,7 +761,7 @@
             "id": 147,
             "rapidViewId": 1,
             "state": "ACTIVE",
-            "name": "Sprint 147",
+            "name": "Atlas 2.4.1",
             "startDate": "2026-11-23T10:00:00.000+05:30",
             "endDate": "2026-12-04T19:00:00.000+05:30",
             "completeDate": null,
@@ -919,7 +919,7 @@
         },
         "customfield_10111": 2.0,
         "customfield_10108": [
-          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Atlas 2.4.1,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
         ],
         "customfield_10200": null,
         "customfield_10201": null,
@@ -1065,7 +1065,7 @@
         },
         "customfield_10111": 3.0,
         "customfield_10108": [
-          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Atlas 2.4.1,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
         ],
         "customfield_10200": null,
         "customfield_10201": null,
@@ -1212,7 +1212,7 @@
         },
         "customfield_10111": 2.0,
         "customfield_10108": [
-          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Atlas 2.4.1,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
         ],
         "customfield_10200": null,
         "customfield_10201": null,
@@ -1337,7 +1337,7 @@
         },
         "customfield_10111": 1.0,
         "customfield_10108": [
-          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Atlas 2.4.1,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
         ],
         "customfield_10200": null,
         "customfield_10201": null,
@@ -1424,7 +1424,7 @@
         },
         "customfield_10111": null,
         "customfield_10108": [
-          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Sprint 147,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
+          "com.atlassian.greenhopper.service.sprint.Sprint@6a1f3c2e[id=147,rapidViewId=1,state=ACTIVE,name=Atlas 2.4.1,startDate=2026-11-23T10:00:00.000+05:30,endDate=2026-12-04T19:00:00.000+05:30,completeDate=<null>,activatedDate=2026-11-23T10:05:00.000+05:30,sequence=147,goal=<null>,autoStartStop=false,synced=false]"
         ],
         "customfield_10200": null,
         "customfield_10201": null,

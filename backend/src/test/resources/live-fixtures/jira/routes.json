@@ -4,7 +4,8 @@
     "myself.json is the recorded /rest/api/2/myself (2026-11-26, sanitized to pulse.readonly). error-401.xml is the recorded unauthenticated answer of /rest/api/2/myself (realm host replaced). 429 and 500 cannot be triggered safely on the shared server: they use Jira's errorMessages format.",
     "Pages hold 5 issues (maxResults 5 as recorded), so page 2 starts at startAt 5.",
     "The recorded 100-issue page pair (startAt 0 and 100) is in ../jira-recorded/.",
-    "jira-derived-hours 4.4: every issue carries the worklog field. PROJ-10730 has two worklogs and Start/End (Dev), so its worklogs win; PROJ-10723 embeds 1 of 21 worklogs (truncated); PROJ-10720 is a hand-over (Dev by dev.user4, QA 26 Nov 10:00-14:00 by dev.user1, assignee changes in the changelog); PROJ-10719 has End Time (Dev) cleared and was resolved at 17:30, with nobody assigned, so its Dev interval ends at the resolution and is credited to dev.user5, who set the start. Dev/QA fields: customfield_10200/10201 and customfield_11000/10701, as in field.json."
+    "jira-derived-hours 4.4: every issue carries the worklog field. PROJ-10730 has two worklogs and Start/End (Dev), so its worklogs win; PROJ-10723 embeds 1 of 21 worklogs (truncated); PROJ-10720 is a hand-over (Dev by dev.user4, QA 26 Nov 10:00-14:00 by dev.user1, assignee changes in the changelog); PROJ-10719 has End Time (Dev) cleared and was resolved at 17:30, with nobody assigned, so its Dev interval ends at the resolution and is credited to dev.user5, who set the start. Dev/QA fields: customfield_10200/10201 and customfield_11000/10701, as in field.json.",
+    "jira-sprint-names 3.1: page 2 reads sprint 147 after a rename in Jira (\"SprintRelease 10.0.3\" on page 1, \"SprintRelease 10.0.3.1\" on page 2, object and string forms), so the sync renames one row in place. Sprint 149 (9 to 20 Nov 2026, another board) has no name: string form on PROJ-10726, object form on PROJ-10719."
   ],
   "routes": [
     {

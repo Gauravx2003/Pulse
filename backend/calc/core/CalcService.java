@@ -10,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -695,6 +696,12 @@ public final class CalcService
         public LocalDate today()
         {
             return CalcService.this.today();
+        }
+
+        @Override
+        public Instant now()
+        {
+            return clock.now().toInstant();
         }
 
         @Override

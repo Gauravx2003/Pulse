@@ -93,7 +93,15 @@ class RulesRoutesTest
     {
         JsonObject seeded = api.queryOne("SELECT rule_set FROM rule_versions WHERE version = 1").getJsonObject("rule_set");
 
-        assertEquals(RuleCatalogue.defaults(), seeded, "seed version 1 must equal the catalogue defaults");
+        // the working-day window came after the seed (change jira-derived-hours): it reads its default
+        assertFalse(seeded.containsKey("workday"), "the seeded version 1 predates the working-day window");
+        assertEquals(RuleCatalogue.defaults(), RuleCatalogue.withDefaults(seeded),
+                "seed version 1 must equal the catalogue defaults, with later rules at their default");
+
+        JsonObject workday = rulesInForce().getJsonObject("workday");
+
+        assertEquals(new JsonObject().put("start", "10:00").put("end", "18:00"), workday,
+                "rules never changed: the working-day window is 10:00–18:00");
 
         JsonObject body = api.get("/api/v1/rules/groups", admin).bodyAsJsonObject();
 
@@ -339,5 +347,48 @@ class RulesRoutesTest
 
         assertEquals(4, audit.getJsonObject("changes").getJsonObject("staleDays").getInteger("before"), "the old value is kept");
         assertEquals(0, api.get("/api/v1/rules/reset", admin).bodyAsJsonObject().getInteger("changes"));
+    }
+
+    /** Change jira-derived-hours, spec "Working-day window": a valid window is a new audited version; end before start is refused. */
+    @Test
+    @Order(12)
+    void theWorkingDayWindowIsATimeRangeEndingAfterItsStart() throws Exception
+    {
+        int before = version();
+
+        HttpResponse<Buffer> res = save(RuleCatalogue.STALENESS, new JsonObject()
+                .put("workday.start", "9:30").put("workday.end", "18:30"));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+        assertEquals(before + 1, res.bodyAsJsonObject().getInteger("version"));
+        assertEquals(2, res.bodyAsJsonObject().getInteger("changed"));
+        assertEquals(new JsonObject().put("start", "09:30").put("end", "18:30"), rulesInForce().getJsonObject("workday"));
+
+        JsonObject audit = api.queryOne("SELECT summary FROM audit_log WHERE action = 'rules.changed' ORDER BY occurred_at DESC LIMIT 1")
+                .getJsonObject("summary");
+
+        assertEquals(new JsonObject().put("before", "10:00").put("after", "09:30"),
+                audit.getJsonObject("changes").getJsonObject("workday.start"));
+
+        int saved = version();
+
+        HttpResponse<Buffer> reversed = save(RuleCatalogue.STALENESS, new JsonObject()
+                .put("workday.start", "18:00").put("workday.end", "10:00"));
+
+        assertEquals(422, reversed.statusCode(), reversed.bodyAsString());
+        assertEquals("workday_window", TestApi.error(reversed).getString("code"));
+        assertEquals("values.workday.end", TestApi.error(reversed).getString("field"), "the message is on the window");
+        assertEquals(saved, version(), "nothing was saved");
+        assertEquals(new JsonObject().put("start", "09:30").put("end", "18:30"), rulesInForce().getJsonObject("workday"),
+                "the previous version stays in force");
+
+        HttpResponse<Buffer> empty = save(RuleCatalogue.STALENESS, new JsonObject().put("workday.end", "09:30"));
+
+        assertEquals(422, empty.statusCode(), "an end equal to the start is refused too");
+
+        HttpResponse<Buffer> bad = save(RuleCatalogue.STALENESS, new JsonObject().put("workday.start", "25:00"));
+
+        assertEquals(400, bad.statusCode());
+        assertEquals("values.workday.start", TestApi.error(bad).getString("field"));
     }
 }

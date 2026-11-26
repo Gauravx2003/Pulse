@@ -27,10 +27,10 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
 ## 2. Working-day window rule (Track 2)
 
-- [ ] 2.1 Add `workday.start` and `workday.end` (TIME) to `RuleCatalogue` in the staleness and capacity group, with defaults `10:00` and `18:00` in the default rule set (seed and `RuleCatalogue` defaults). Reject an end that is not after the start.
+- [x] 2.1 Add `workday.start` and `workday.end` (TIME) to `RuleCatalogue` in the staleness and capacity group, with defaults `10:00` and `18:00` in the `RuleCatalogue` defaults; a stored rule version that predates the window reads it from the defaults (the seeded S100 is forward-only and is not edited). Reject an end that is not after the start.
 
   Verify: `RulesRoutesTest` covers the default, a valid change creating a new audited version, and the 18:00–10:00 refusal with a message on the window.
-- [ ] 2.2 Check that the Rules screen shows and saves the two fields in the existing card (the TIME input already exists for `att.lateAfter`).
+- [x] 2.2 Check that the Rules screen shows and saves the two fields in the existing card (the TIME input already exists for `att.lateAfter`).
 
   Verify: the rules e2e test or a new assertion shows the window, and `npm run lint` is clean.
 

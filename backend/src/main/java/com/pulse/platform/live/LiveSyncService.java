@@ -32,8 +32,8 @@ import java.util.UUID;
  *       secret that does not decrypt fails the run with code {@code key} before any request.</li>
  *   <li>Calls {@code fetchPages(ctx, cursor, sink)}; the sink ingests each page through
  *       {@link IngestService} in its own transaction, always under the connector's own source.</li>
- *   <li>Closes the {@code sync_log} entry with the counts per entity, and advances the cursor only on
- *       success.</li>
+ *   <li>Closes the {@code sync_log} entry with the counts per entity, plus any whole-number count the
+ *       connector returns beside its cursor, and advances the cursor only on success.</li>
  *   <li>Publishes the {@link CalcService} invalidation event whenever a page was ingested.</li>
  * </ol>
  *
@@ -127,6 +127,8 @@ public final class LiveSyncService
                 if (ar.succeeded())
                 {
                     String next = ar.result() == null ? null : ar.result().getString("cursor");
+
+                    extras(ar.result(), counts);
 
                     counts.put("cursor", next);
 
@@ -250,6 +252,31 @@ public final class LiveSyncService
         }
 
         return new JsonObject().put("source", connector.source()).put("total", total).put("entities", entities.copy());
+    }
+
+    /**
+     * Copies the connector's own counts from the {@code fetchPages} result into the log's counts: every
+     * whole-number field beside {@code cursor}, such as Jira's {@code truncatedWorklogs}. The platform's
+     * own keys ({@code source}, {@code total}, {@code entities}, {@code cursor}) are never overwritten.
+     */
+    static void extras(JsonObject result, JsonObject counts)
+    {
+        if (result == null)
+        {
+            return;
+        }
+
+        for (String name : result.fieldNames())
+        {
+            Object value = result.getValue(name);
+
+            boolean whole = value instanceof Integer || value instanceof Long;
+
+            if (whole && !"cursor".equals(name) && !counts.containsKey(name))
+            {
+                counts.put(name, value);
+            }
+        }
     }
 
     private static int rows(JsonObject c)

@@ -268,7 +268,11 @@ test('Jira Server: connect, sync, figures, link, 409, 401 and disconnect', async
 
     await expect(row).toHaveCount(1);
     await expect(row.locator('.pl-badge').filter({ hasText: /^Jira$/ })).toBeVisible();
-    await expect(row, 'the sprint column shows the Jira name').toContainText(LIVE_SPRINT);
+    await expect(
+      page.getByRole('heading', { level: 2, name: LIVE_SPRINT, exact: true }),
+      'the live sprint card is titled by the Jira name',
+    ).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Sprint 147', exact: true })).toHaveCount(0);
     await expect(row.getByRole('link', { name: /^Open in Jira PUL-201/ })).toHaveAttribute('href', `${mock.baseUrl}/browse/PUL-201`);
   });
 

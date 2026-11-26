@@ -40,6 +40,7 @@ services:
       PULSE_TODAY: "2026-09-28"   # pins "today" so demo data matches the prototype; ignored when PULSE_PROFILE=production
       PULSE_TRUST_PROXY: "true"   # requests arrive through the frontend nginx, which sets X-Real-IP
       PULSE_APP_URL: http://localhost   # browser origin of the SPA: CORS and the Origin check on writes
+      PULSE_SECRET_KEY: ${PULSE_SECRET_KEY:-}   # live credentials (Phase 2): export one (openssl rand -base64 32) to save Jira or GitHub credentials
     ports:
       - "8088:8088"
     depends_on:

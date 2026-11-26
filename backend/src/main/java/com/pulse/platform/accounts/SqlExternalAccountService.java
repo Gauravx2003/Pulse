@@ -88,6 +88,12 @@ public final class SqlExternalAccountService implements ExternalAccountService
                     return Future.failedFuture(notFound());
                 }
 
+                if (account.getBoolean("erased", false))
+                {
+                    return Future.failedFuture(ApiException.unprocessable("account_erased",
+                            "This account belonged to a deleted user and can't be linked."));
+                }
+
                 if (account.getString("personId") != null)
                 {
                     return Future.failedFuture(ApiException.conflict("already_linked",

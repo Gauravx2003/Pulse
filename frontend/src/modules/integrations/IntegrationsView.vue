@@ -20,13 +20,26 @@
           :key="t.id"
           :mark="t.mark"
           :name="t.name"
-          :description="t.reads"
-          :detail="`Feeds: ${t.feeds}`"
+          :description="t.reads ?? ''"
+          :detail="t.feeds ? `Feeds: ${t.feeds}` : ''"
           :status-text="t.status"
           :status-tone="STATE_TONES[t.state] ?? ''"
           :action-label="ACTION_LABELS[t.action] ?? 'Settings'"
+          :badge="isLive(t) ? 'Live' : ''"
           @action="onTileAction(t)"
-        />
+        >
+          <template v-if="isLive(t)" #extra>
+            <button
+              type="button"
+              class="pl-btn pl-btn-sm"
+              :disabled="isSyncing(t)"
+              :aria-label="`Sync ${t.name} now`"
+              @click="liveSync(t)"
+            >
+              {{ isSyncing(t) ? 'Syncing…' : 'Sync now' }}
+            </button>
+          </template>
+        </IntegrationTile>
       </div>
     </PlCard>
 
@@ -133,8 +146,8 @@
           :key="t.id"
           :mark="t.mark"
           :name="t.name"
-          :description="t.reads"
-          :detail="t.note ?? `Feeds: ${t.feeds}`"
+          :description="t.reads ?? ''"
+          :detail="t.note ?? (t.feeds ? `Feeds: ${t.feeds}` : '')"
           :status-text="t.status"
           action-label="Connect"
           :action-disabled="!t.connectEnabled"
@@ -142,6 +155,8 @@
         />
       </div>
     </PlCard>
+
+    <UnmatchedAccountsPanel v-if="liveTools.length" ref="accountsPanel" :tools="liveTools" />
 
     <PlCard title="Credential activity" :loading="loading" :empty="!loading && !activity.length" empty-text="No credential activity yet.">
       <ul class="activity">
@@ -156,11 +171,24 @@
     <SettingsModal
       :open="settingsOpen"
       :tool="current"
+      :connection="currentConnection"
       @close="settingsOpen = false"
       @change-credentials="switchToCredentials"
       @changed="load"
     />
-    <CredentialsModal :open="credentialsOpen" :tool="current" @close="credentialsOpen = false" @saved="onCredentialsSaved" />
+    <CredentialsModal
+      :open="credentialsOpen && Boolean(currentConnection)"
+      :tile="current?.tile ?? null"
+      :connection="currentConnection"
+      @close="credentialsOpen = false"
+      @saved="onCredentialsSaved"
+    />
+    <SeededCredentialsModal
+      :open="credentialsOpen && !currentConnection"
+      :tool="current"
+      @close="credentialsOpen = false"
+      @saved="onCredentialsSaved"
+    />
   </div>
 </template>
 
@@ -170,13 +198,20 @@
 // connection make no outbound call, and credentials are stored as masked placeholders. The Scheduled
 // jobs card (task 5.5, spec platform/jobs-scheduler) lists each job's next and last run and lets the
 // Admin run one now.
-import { computed, onMounted, ref } from 'vue';
+//
+// Live connectors (task 24.7, change pulse-v2-live-connectors) need nothing tool-specific here: a
+// tile with `liveConnector` gets its form from GET /integrations/:tool/connection (CredentialsModal),
+// a Live badge and its own Sync now once a live connection is saved, and the Unmatched accounts panel
+// lists the accounts its syncs saw. While a live sync runs the tiles are re-read every few seconds.
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { api } from '@/api/client.js';
 import { Badge, IntegrationTile } from '@/kit/index.js';
 import { formatDateTime, formatDateWithYear } from '@/ui/format.js';
 import { PlAlert, PlCard, PlField, PlPageHeader, PlTable, showToast } from '@/ui/index.js';
 import CredentialsModal from './CredentialsModal.vue';
+import SeededCredentialsModal from './SeededCredentialsModal.vue';
 import SettingsModal from './SettingsModal.vue';
+import UnmatchedAccountsPanel from './UnmatchedAccountsPanel.vue';
 import { ACTION_LABELS, JIRA_BOARDS, STATE_TONES, SYNC_MODE_LABELS } from './presentation.js';
 
 const SYNC_COLUMNS = [
@@ -220,11 +255,22 @@ const loadError = ref('');
 const busy = ref(false);
 const syncing = ref(false);
 
+/** GET /integrations/:tool/connection of every tool with a live connector */
+const connections = ref({});
+/** tools whose Sync now this page started and that has not answered yet */
+const syncingHere = ref(new Set());
+const accountsPanel = ref(null);
+let pollTimer = null;
+
+const SYNC_POLL_MS = 4000;
+
 const current = ref(null);
+const currentConnection = computed(() => (current.value ? (connections.value[current.value.tile?.id] ?? null) : null));
 const settingsOpen = ref(false);
 const credentialsOpen = ref(false);
 
 const connected = computed(() => tiles.value.filter((t) => t.connected));
+const liveTools = computed(() => tiles.value.filter((t) => t.liveConnector).map((t) => ({ id: t.id, name: t.name })));
 const available = computed(() => tiles.value.filter((t) => !t.connected));
 
 const jiraSubtitle = computed(() => {
@@ -251,7 +297,7 @@ const credRows = computed(() =>
   connected.value
     .map((t) => details.value[t.id])
     .filter(Boolean)
-    .map((d) => ({
+    .map((d) => (isLive(d.tile) ? liveCredRow(d) : {
       id: d.tile.id,
       tool: d.tile.name,
       method: d.method ?? 'No credentials stored',
@@ -261,6 +307,30 @@ const credRows = computed(() =>
       lastTest: d.testedAt ? `${formatDateTime(d.testedAt)} · ${d.testOk ? 'passed' : 'failed'}` : 'Never',
     })),
 );
+
+/** A credentials row of a live connection: the secret's last 4, when it was saved and its expiry. */
+function liveCredRow(d) {
+  const stored = connections.value[d.tile.id]?.connection ?? {};
+
+  return {
+    id: d.tile.id,
+    tool: d.tile.name,
+    method: `Live · ••••${stored.last4 ?? ''}`,
+    saved: stored.rotatedAt ? formatDateWithYear(stored.rotatedAt) : '—',
+    rotation: d.tile.state === 'token_expiring' ? d.tile.status : stored.expiresAt ? `Expires ${formatDateWithYear(stored.expiresAt)}` : 'No expiry known',
+    rotationTone: d.tile.state === 'token_expiring' ? 'accent' : d.tile.state === 'sync_failed' ? 'danger' : 'ok',
+    lastTest: 'Passed before save',
+  };
+}
+
+/** A tile with a saved live connection (its sync state is reported as `syncing`). */
+function isLive(t) {
+  return Boolean(t.liveConnector && connections.value[t.id]?.connection?.hasSecret);
+}
+
+function isSyncing(t) {
+  return Boolean(t.syncing) || syncingHere.value.has(t.id);
+}
 
 const jobRows = computed(() =>
   jobs.value.map((j) => {
@@ -314,9 +384,15 @@ async function load() {
     activity.value = activityRes.items ?? [];
     jobs.value = jobsRes.items ?? [];
 
-    const all = await Promise.all(connected.value.map((t) => api.get(`/integrations/tools/${t.id}`)));
+    const live = tiles.value.filter((t) => t.liveConnector);
+    const [all, liveViews] = await Promise.all([
+      Promise.all(connected.value.map((t) => api.get(`/integrations/tools/${t.id}`))),
+      Promise.all(live.map((t) => api.get(`/integrations/${encodeURIComponent(t.id)}/connection`))),
+    ]);
 
     details.value = Object.fromEntries(all.map((d) => [d.tile.id, d]));
+    connections.value = Object.fromEntries(liveViews.map((c) => [c.tool, c]));
+    schedulePoll();
   } catch (e) {
     loadError.value = e.message;
   } finally {
@@ -355,6 +431,44 @@ function onTileAction(tile) {
 function onCredentialsSaved() {
   credentialsOpen.value = false;
   load();
+}
+
+/** Re-reads the tiles every few seconds while a live sync runs elsewhere, so Sync now comes back. */
+function schedulePoll() {
+  clearTimeout(pollTimer);
+
+  if (tiles.value.some((t) => t.syncing && !syncingHere.value.has(t.id))) {
+    pollTimer = setTimeout(async () => {
+      try {
+        tiles.value = (await api.get('/integrations/tools', { quiet: true })).tiles ?? tiles.value;
+      } catch {
+        // the next full load shows any error
+      }
+
+      schedulePoll();
+    }, SYNC_POLL_MS);
+  }
+}
+
+/** Sync now of a live tool: disabled while it runs; a failure shows on the tile as "Sync failed · code". */
+async function liveSync(t) {
+  syncingHere.value = new Set([...syncingHere.value, t.id]);
+
+  try {
+    const res = await api.post(`/integrations/${encodeURIComponent(t.id)}/sync`);
+
+    showToast(res.sync?.outcome === 'failed' ? `${t.name} · Sync failed · ${res.sync.message}` : `${t.name} · synced`);
+  } catch {
+    // shown by the API client (409 while another sync of the tool runs)
+  } finally {
+    const next = new Set(syncingHere.value);
+
+    next.delete(t.id);
+    syncingHere.value = next;
+  }
+
+  await load();
+  accountsPanel.value?.load();
 }
 
 async function saveJira() {
@@ -412,6 +526,7 @@ async function runJob(name) {
 }
 
 onMounted(load);
+onBeforeUnmount(() => clearTimeout(pollTimer));
 </script>
 
 <style scoped>

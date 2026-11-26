@@ -34,6 +34,7 @@ import java.util.function.Supplier;
  * PUT    /accounts/:id/link           {personId}: link an account to a person; 409 when already linked
  * DELETE /accounts/:id/link           unlink
  * PUT    /accounts/:id/bot            {isBot}: mark or unmark a bot
+ * GET    /people[?q=]                 people an account may be linked to: link-to-person search (task 24.7)
  * GET    /:tool/connection            live connector: schema, secret spec, stored config and last4 (task 24.5)
  * POST   /:tool/test                  {config, secret, expiresAt?}: real Test connection; a pass carries a proof
  * PUT    /:tool/connection            {config, secret, expiresAt?, proof}: save, only with a passing test's proof
@@ -140,6 +141,8 @@ final class IntegrationsRoutes
 
         router.put("/accounts/:id/bot").handler(policy.requires(PERMISSION)).handler(BOT.handler())
                 .handler(this::setBot);
+
+        router.get("/people").handler(policy.requires(PERMISSION)).handler(this::linkablePeople);
 
         // live connectors (task 24.5): generic for any registered tool
         router.get("/:tool/connection").handler(policy.requires(PERMISSION)).handler(this::liveConnection);
@@ -263,6 +266,11 @@ final class IntegrationsRoutes
     private void accounts(RoutingContext rc)
     {
         accounts.list(rc.queryParams()).onSuccess(rc::json).onFailure(rc::fail);
+    }
+
+    private void linkablePeople(RoutingContext rc)
+    {
+        integrations.linkablePeople(rc.queryParams()).onSuccess(rc::json).onFailure(rc::fail);
     }
 
     private void linkAccount(RoutingContext rc)

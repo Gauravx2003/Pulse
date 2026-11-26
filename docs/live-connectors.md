@@ -27,7 +27,7 @@ A live connector implements `LiveConnector` (which extends the Phase 1 `Connecto
 |---|---|---|
 | `tool()` | tile id: `"jira"`, `"gh"` | lower case, `[a-z0-9_-]` |
 | `source()` | row source: `"jira"`, `"github"` | never `"seed"` |
-| `configSchema()` | `{fields: [{name, label, type, required, pattern, help, options, dependsOn}]}` | non-secret fields; type is text, url, list, date, boolean or choice. The Integrations form is rendered from it. |
+| `configSchema()` | `{fields: [{name, label, type, required, pattern, help, options, dependsOn, default}]}` | non-secret fields; type is text, url, list, date, boolean or choice. The Integrations form is rendered from it (`default` pre-fills a new connection; `dependsOn` shows the field only while another field holds one of the listed values). |
 | `secretSpec()` | `{name, label, help, authModes, pattern}` | the one secret (password, token) |
 | `allowedOrigins(config)` | `[{scheme, host, port, pathPrefix?}]` | Jira: exactly the base URL's origin (`BaseUrls.origin(url)`). GitHub: fixed. |
 | `requiredScopes()` | `["..."]` | shown on the tile; empty when the tool reports none |

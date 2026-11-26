@@ -87,6 +87,55 @@ class IntegrationsRoutesTest
         RoleMatrix.assertRoleMatrix(api, "GET " + BASE + "/credential-log", adminOnly);
         RoleMatrix.assertRoleMatrix(api, "GET " + BASE + "/sync-log", adminOnly);
         RoleMatrix.assertRoleMatrix(api, "POST " + BASE + "/tools/gc/sync", new JsonObject(), adminOnly);
+        RoleMatrix.assertRoleMatrix(api, "GET " + BASE + "/people", adminOnly);
+    }
+
+    // ------------------------------------------------------------------ link-to-person search (task 24.7)
+
+    @Test
+    void linkablePeopleSearchByNameOrEmail() throws Exception
+    {
+        HttpResponse<Buffer> all = api.get(BASE + "/people", admin);
+
+        assertEquals(200, all.statusCode(), all.bodyAsString());
+
+        JsonObject page = all.bodyAsJsonObject();
+
+        assertTrue(page.getLong("total") > 0, page.encode());
+        assertEquals(10, page.getInteger("pageSize"));
+
+        JsonObject first = page.getJsonArray("items").getJsonObject(0);
+
+        assertTrue(first.containsKey("id") && first.containsKey("name") && first.containsKey("email"), first.encode());
+
+        // never the CTC
+        assertFalse(first.containsKey("ctc"), first.encode());
+
+        String name = first.getString("name");
+
+        String word = name.split(" ")[0];
+
+        HttpResponse<Buffer> found = api.get(BASE + "/people?q=" + word.toLowerCase(), admin);
+
+        assertEquals(200, found.statusCode(), found.bodyAsString());
+
+        JsonArray items = found.bodyAsJsonObject().getJsonArray("items");
+
+        assertFalse(items.isEmpty());
+
+        for (Object o : items)
+        {
+            JsonObject p = (JsonObject) o;
+
+            String haystack = (p.getString("name") + " " + p.getString("email", "")).toLowerCase();
+
+            assertTrue(haystack.contains(word.toLowerCase()), p.encode());
+        }
+
+        assertEquals(0, api.get(BASE + "/people?q=zz-nobody-zz", admin).bodyAsJsonObject().getLong("total"));
+
+        // capped page size
+        assertEquals(25, api.get(BASE + "/people?pageSize=500", admin).bodyAsJsonObject().getInteger("pageSize"));
     }
 
     // ------------------------------------------------------------------ tiles

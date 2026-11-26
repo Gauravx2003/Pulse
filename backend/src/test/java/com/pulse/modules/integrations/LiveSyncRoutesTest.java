@@ -469,4 +469,43 @@ class LiveSyncRoutesTest
         assertEquals(409, res.statusCode(), res.bodyAsString());
         assertEquals(4, liveRows());
     }
+
+    // ------------------------------------------------------------------ tile expiry (task 24.7)
+
+    @Test
+    void tileShowsTheLiveConnectionsExpiry() throws Exception
+    {
+        connect();
+
+        api.exec("UPDATE integration_connections SET expires_at = now() + interval '5 days' WHERE tool = '"
+                + StubLiveConnector.TOOL + "'");
+
+        JsonObject tile = tile();
+
+        assertEquals("token_expiring", tile.getString("state"), tile.encode());
+        assertTrue(tile.getString("status").startsWith("Token expires in "), tile.encode());
+        assertEquals("fix", tile.getString("action"));
+        assertTrue(tile.getValue("expiresAt") != null, tile.encode());
+
+        api.exec("UPDATE integration_connections SET expires_at = now() + interval '90 days' WHERE tool = '"
+                + StubLiveConnector.TOOL + "'");
+
+        assertEquals("connected", tile().getString("state"));
+
+        api.exec("UPDATE integration_connections SET expires_at = NULL WHERE tool = '" + StubLiveConnector.TOOL + "'");
+
+        JsonObject none = tile();
+
+        assertEquals("connected", none.getString("state"));
+        assertNull(none.getValue("expiresAt"));
+    }
+
+    @Test
+    void toolDetailAnswersForALiveConnectorOutsideTheCatalogue() throws Exception
+    {
+        HttpResponse<Buffer> res = record(api.get("/api/v1/integrations/tools/" + StubLiveConnector.TOOL, admin));
+
+        assertEquals(200, res.statusCode(), res.bodyAsString());
+        assertEquals(StubLiveConnector.TOOL, res.bodyAsJsonObject().getJsonObject("tile").getString("id"));
+    }
 }

@@ -47,3 +47,6 @@ Thumbs.db
 # OpenSpec-generated agent skills (each dev runs: openspec init --tools claude)
 .claude/skills/
 .agents/
+
+# Demo secrets (scripts/demo.sh)
+.pulse/

@@ -92,6 +92,29 @@ class Track3CrossTrackTest
     }
 
     @Test
+    void theOverviewIssueCountOfAMonthIsTheWorkItemsListOfThatMonth() throws Exception
+    {
+        // Anjali: S41 overlaps September but two of its three issues were resolved in August.
+        String anjali = personOf("anjali@pulse.demo");
+
+        HttpResponse<Buffer> overview = api.get("/api/v1/work/people/" + anjali + "/overview?period=m:2026-09",
+                RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        HttpResponse<Buffer> items = api.get("/api/v1/work/people/" + anjali + "/work-items?period=m:2026-09",
+                RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+        assertEquals(200, overview.statusCode(), overview.bodyAsString());
+
+        assertEquals(200, items.statusCode(), items.bodyAsString());
+
+        int listed = items.bodyAsJsonObject().getJsonArray("items").size();
+
+        assertEquals(5, listed, items.bodyAsString());
+
+        assertEquals(listed, overview.bodyAsJsonObject().getInteger("issueCount"), overview.bodyAsString());
+    }
+
+    @Test
     void anOnboardingJoinerIsNeverJudgedOnUtilizationOrGivenWork() throws Exception
     {
         String rohit = personOf("rohit@pulse.demo");
@@ -101,6 +124,31 @@ class Track3CrossTrackTest
         assertEquals("onboarding", alert.getString("kind"), alert.encode());
 
         assertEquals("Software Engineer onboarding", alert.getJsonObject("plan").getString("plan"));
+
+        // Not judged in closed periods either: the month, a closed sprint and the release carry the flag too.
+        for (String period : new String[] { "m:2026-09", "s:S42", "r:8.3" })
+        {
+            HttpResponse<Buffer> closed = api.get("/api/v1/work/people/" + rohit + "/overview?period=" + period,
+                    RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+            assertEquals(200, closed.statusCode(), closed.bodyAsString());
+
+            assertTrue(closed.bodyAsJsonObject().getBoolean("onboarding"), period + " " + closed.bodyAsString());
+        }
+
+        assertTrue(overview(rohit).getBoolean("onboarding"));
+
+        for (String period : new String[] { "s:S43", "m:2026-09", "r:8.3" })
+        {
+            HttpResponse<Buffer> items = api.get("/api/v1/work/people/" + rohit + "/work-items?period=" + period,
+                    RoleMatrix.session(api, RoleMatrix.MANAGER));
+
+            assertEquals(200, items.statusCode(), items.bodyAsString());
+
+            assertTrue(items.bodyAsJsonObject().getBoolean("onboarding"), period + " " + items.bodyAsString());
+        }
+
+        assertFalse(overview(personOf(RoleMatrix.EMPLOYEE)).getBoolean("onboarding"));
 
         HttpResponse<Buffer> res = api.get("/api/v1/utilization/team", RoleMatrix.session(api, RoleMatrix.MANAGER));
 

@@ -178,7 +178,9 @@ const deleteMessage = computed(() => {
   const removed = (d.removed ?? []).join(', ');
   const reports = d.reports ? ` Their ${d.reports} direct report${d.reports === 1 ? '' : 's'} will report to ${d.reassignTo?.name ?? 'you'}.` : '';
 
-  return `This removes ${removed}.${reports} ${d.suggestion ?? ''}`.trim();
+  const kept = (d.kept ?? []).length ? ` It keeps ${d.kept.join(', ')}.` : '';
+
+  return `This removes ${removed}.${kept}${reports} ${d.suggestion ?? ''}`.trim();
 });
 
 function subtitle(row) {

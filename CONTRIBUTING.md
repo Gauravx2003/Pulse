@@ -10,7 +10,22 @@ Pulse v1 is built in one week by three people working in parallel, one **track**
 | 2 | @ROMIL05 | Work items, utilization, pull requests, effort, bugs and support, action center, progress, OKRs, road map | 7–15 | `V200–V299`, `S200–S299` |
 | 3 | @Krupen08 | CSV engine and data imports, attendance, customer visits, culture, reviews (incl. 1:1s, kudos, 360°), training, appraisal | 16–22 | `V300–V399`, `S300–S399` |
 
-Groups 23 (integration checks) and 24 (live GitHub and Jira, Phase 2) are shared. Nobody starts group 24 before Phase 1 acceptance (23.1–23.4) passes.
+Group 23 (integration checks) is shared. Phase 2 (live Jira and GitHub) has its own split, below. Nobody starts Phase 2 before Phase 1 acceptance (23.1–23.4) passes.
+
+### Phase 2: live connectors
+
+The plan lives in `openspec/changes/pulse-v2-live-connectors/` (`tasks.md`, and `design.md` decision 9 for the split). Directory ownership is unchanged; Phase 2 adds:
+
+| Track | Scope | Task groups | Migrations |
+|---|---|---|---|
+| 1 | Platform in `backend/src/` (secrets, guarded HTTP, live registry, sync orchestrator, external accounts, mock server and contract test kit), `modules/integrations` (backend and frontend), `modules/users`, `docs/`, CODEOWNERS | 24 | `V190–V199` |
+| 2 | Work tables and screens: `calc/work` loaders, `modules/work`, `pull_requests`, `utilization`, `effort` | 25 | `V290–V299` (V290 Jira, V291 GitHub) |
+| 3 | The new module `backend/modules/connectors/` (`jira/`, then `github/`), the fixtures in `backend/src/test/resources/live-fixtures/` and the Phase 2 Playwright flows | 26 | none (`V390–V399` reserved) |
+
+- **Jira first.** GitHub work may be built in parallel but merges to `main` only after Jira acceptance (27.1, 27.2).
+- **Additive only.** No Phase 1 table, column, endpoint, response shape, formula or threshold changes.
+- **Connectors** call only `LiveContext` and write only through `IngestService`. Every outbound request goes through `LiveContext.http()`; automated tests use the mock server only. How to add one: [`docs/live-connectors.md`](docs/live-connectors.md).
+- **PR checklist additions:** no secret in any log, response or audit entry; no outbound call outside `LiveContext.http()`; no Phase 1 contract changed; no tool-specific code outside `backend/modules/connectors/<tool>/`.
 
 ## Who owns which directory
 
@@ -89,11 +104,14 @@ Copy this into the PR description:
 ```bash
 docker compose up -d postgres          # PostgreSQL 16 on :5432 (user pulse / pulse_secret_dev)
 export PULSE_DEMO_SEED=true            # demo accounts (demo123) and demo data; never in production
+export PULSE_SECRET_KEY="$(openssl rand -base64 32)"   # only to save live credentials (Phase 2); keep it stable
 cd backend && mvn exec:java            # runs migrations + seeds, then serves :8088
 cd frontend && npm install && npm run dev
 ```
 
 Every `/api/v1` route needs a session: sign in with `POST /api/v1/auth/login` (`{"email", "password"}`), which sets the `pulse_session` cookie and returns `csrfToken`; send that token as the `X-CSRF-Token` header on every POST, PUT, PATCH and DELETE. In a handler the signed-in user is `ctx.get(SessionHandler.USER)`. Fail with `ctx.fail(status, ApiException...)`; never write error responses yourself. Behind the frontend nginx set `PULSE_TRUST_PROXY=true` so sign-in throttling sees the real client IP.
+
+`scripts/demo.sh` does all of this in one command from a fresh clone, including a stable `PULSE_SECRET_KEY` (see [`docs/demo.md`](docs/demo.md), which also covers the Jira user and rights, Basic versus Bearer, the `http` risk and linking demo users to real accounts). Change `PULSE_SECRET_KEY` and saved live credentials become unreadable.
 
 `PULSE_PROFILE` is `development` (default) or `production`. Production refuses to start when `PULSE_DEMO_SEED` is on or a `@pulse.demo` account exists.
 

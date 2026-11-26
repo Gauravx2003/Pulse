@@ -8,6 +8,8 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Tuple;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -44,6 +46,71 @@ public final class ExternalAccountRepository extends BaseRepository
             + "RETURNING ea.*) "
             + "SELECT " + COLUMNS + " FROM upserted ea LEFT JOIN people p ON p.id = ea.person_id";
 
+    /** Prefix of the opaque account id an erased account takes; no tool issues ids with a colon after this. */
+    public static final String ERASED_PREFIX = "erased:";
+
+    /** What an erased account, and the live events it wrote, show instead of a name. */
+    public static final String ERASED_NAME = "Deleted user";
+
+    /**
+     * Erasure of a deleted person's tool accounts (spec privacy-retention, task 24.8), one statement:
+     * every account linked to the person is unlinked and its account id, login, display name and email
+     * are replaced by an opaque id. The raw copies in live rows (see {@link #LIVE_REFERENCES}) move to
+     * that id, so the rows still join to the (now unlinked) account and stay in team totals with no person.
+     * {@code $1} person, {@code $2} {@link #ERASED_PREFIX}, {@code $3} {@link #ERASED_NAME}.
+     */
+    private static final String ERASE_ACCOUNTS = """
+            WITH target AS (
+                SELECT id, tool, tool_account_id AS old_id, login, display_name
+                FROM external_accounts WHERE person_id = $1 FOR UPDATE
+            ), erased AS (
+                UPDATE external_accounts ea
+                SET person_id = NULL, tool_account_id = $2 || ea.id::text, login = $3,
+                    display_name = NULL, email = NULL, updated_at = now()
+                FROM target t WHERE ea.id = t.id
+                RETURNING ea.id, t.tool, t.old_id, t.login AS old_login, t.display_name AS old_name,
+                          ea.tool_account_id AS new_id
+            )""";
+
+    /**
+     * Live tables holding raw account copies, each with the CTE that rewrites them from {@code erased}.
+     * A table is touched only when its module is installed. A module that stores a new raw account
+     * column (GitHub pull requests, task 25.5) adds its entry here.
+     */
+    private static final Map<String, String> LIVE_REFERENCES = new LinkedHashMap<>();
+
+    static
+    {
+        // the issue assignee
+        LIVE_REFERENCES.put("issues", """
+                assigned AS (
+                    UPDATE issues i SET assignee_account_id = e.new_id
+                    FROM erased e WHERE i.source = e.tool AND i.assignee_account_id = e.old_id
+                    RETURNING i.id
+                )""");
+
+        // the events they wrote, with their name, and assignee changes naming them in anyone's events; one
+        // UPDATE, since a row changed by two parts of one statement keeps only one of the changes
+        LIVE_REFERENCES.put("issue_events", """
+                events AS (
+                    UPDATE issue_events ev
+                    SET actor_account_id = CASE WHEN ev.actor_account_id = e.old_id THEN e.new_id ELSE ev.actor_account_id END,
+                        actor_name = CASE WHEN ev.actor_account_id = e.old_id THEN $3 ELSE ev.actor_name END,
+                        from_value = CASE WHEN ev.kind = 'assignee_change' AND ev.from_value IN (e.old_id, e.old_login, e.old_name)
+                                          THEN $3 ELSE ev.from_value END,
+                        to_value = CASE WHEN ev.kind = 'assignee_change' AND ev.to_value IN (e.old_id, e.old_login, e.old_name)
+                                        THEN $3 ELSE ev.to_value END,
+                        summary = CASE WHEN ev.kind = 'assignee_change' AND ev.to_value IN (e.old_id, e.old_login, e.old_name)
+                                       THEN 'Assigned to ' || $3 ELSE ev.summary END
+                    FROM erased e
+                    WHERE ev.source = e.tool
+                      AND (ev.actor_account_id = e.old_id
+                           OR (ev.kind = 'assignee_change' AND (ev.from_value IN (e.old_id, e.old_login, e.old_name)
+                                                                 OR ev.to_value IN (e.old_id, e.old_login, e.old_name))))
+                    RETURNING ev.id
+                )""");
+    }
+
     public ExternalAccountRepository(SqlExecutor sql)
     {
         super(sql);
@@ -64,8 +131,34 @@ public final class ExternalAccountRepository extends BaseRepository
     /** The account row locked for the rest of the transaction, or null. */
     public Future<JsonObject> lockById(UUID id)
     {
-        return queryOne("SELECT id, tool, login, person_id AS \"personId\", is_bot AS \"isBot\" "
-                + "FROM external_accounts WHERE id = $1 FOR UPDATE", Tuple.of(id));
+        return queryOne("SELECT id, tool, login, person_id AS \"personId\", is_bot AS \"isBot\", "
+                + "starts_with(tool_account_id, $2) AS erased FROM external_accounts WHERE id = $1 FOR UPDATE",
+                Tuple.of(id, ERASED_PREFIX));
+    }
+
+    /**
+     * Erases every account linked to the person and the raw copies in the installed live tables; see
+     * {@link #ERASE_ACCOUNTS}. Resolves to the number of accounts erased.
+     */
+    public Future<Integer> eraseForPerson(UUID personId)
+    {
+        String[] tables = LIVE_REFERENCES.keySet().toArray(String[]::new);
+
+        return queryList("SELECT t FROM unnest($1::text[]) AS t WHERE to_regclass(t) IS NOT NULL", Tuple.tuple().addArrayOfString(tables))
+                .compose(installed ->
+                {
+                    StringBuilder statement = new StringBuilder(ERASE_ACCOUNTS);
+
+                    for (Object row : installed)
+                    {
+                        statement.append(", ").append(LIVE_REFERENCES.get(((JsonObject) row).getString("t")));
+                    }
+
+                    statement.append(" SELECT count(*) AS accounts FROM erased");
+
+                    return queryOne(statement.toString(), Tuple.of(personId, ERASED_PREFIX, ERASED_NAME));
+                })
+                .map(row -> row.getLong("accounts").intValue());
     }
 
     /** Links the account when it has no person yet; resolves to 1 when linked, 0 otherwise. */
@@ -111,7 +204,9 @@ public final class ExternalAccountRepository extends BaseRepository
 
         switch (status)
         {
-            case ExternalAccountService.UNMATCHED -> query.where("ea.person_id IS NULL AND NOT ea.is_bot");
+            // an erased account is nobody to link: it stays out of the unmatched list
+            case ExternalAccountService.UNMATCHED -> query.where("ea.person_id IS NULL AND NOT ea.is_bot "
+                    + "AND NOT starts_with(ea.tool_account_id, '" + ERASED_PREFIX + "')");
 
             case ExternalAccountService.LINKED -> query.where("ea.person_id IS NOT NULL");
 

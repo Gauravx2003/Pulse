@@ -1,8 +1,10 @@
 package com.pulse.modules.integrations;
 
 import com.pulse.platform.db.BaseRepository;
+import com.pulse.platform.db.ListQuery;
 import com.pulse.platform.db.SqlExecutor;
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Tuple;
@@ -18,6 +20,24 @@ final class IntegrationsRepository extends BaseRepository
     IntegrationsRepository(SqlExecutor sql)
     {
         super(sql);
+    }
+
+    /**
+     * A page of the people a live account may be linked to (task 24.7, link-to-person search): not of a
+     * deleted user. {@code ?q=} searches name and email; items are {@code {id, name, title, department, email}}.
+     */
+    Future<JsonObject> linkablePeople(MultiMap params)
+    {
+        ListQuery query = ListQuery.from("SELECT p.id, p.name, p.title, p.department, u.email "
+                        + "FROM people p LEFT JOIN users u ON u.id = p.user_id")
+                .where("u.deleted_at IS NULL")
+                .search("p.name", "u.email")
+                .sort("name", "lower(p.name)")
+                .defaultSort("name")
+                .tieBreaker("p.id")
+                .pageSizes(10, 25);
+
+        return page(query, params);
     }
 
     Future<JsonArray> settings()

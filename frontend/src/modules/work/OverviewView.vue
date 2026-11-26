@@ -3,7 +3,7 @@
 // overload alert, five KPIs and the issues that need attention; a closed sprint, month or release shows
 // the history KPIs, delivery and the sprints of the period, and a release adds its card. Utilization by
 // sprint and Bugs & support follow. An onboarding joiner gets the Onboarding badge and utilization shows
-// Training. Every number comes from GET /work/people/:id/overview.
+// Training in every period (live sprint, closed sprint, month, release). Every number comes from GET /work/people/:id/overview.
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { api } from '@/api/client.js';
@@ -80,7 +80,7 @@ async function load() {
 
 const person = computed(() => data.value?.person ?? null);
 const kpis = computed(() => data.value?.kpis ?? {});
-const onboarding = computed(() => !!kpis.value.onboarding);
+const onboarding = computed(() => !!(data.value?.onboarding ?? kpis.value.onboarding));
 const utilBand = computed(() => band(kpis.value.band));
 const metrics = computed(() => data.value?.metrics ?? {});
 const closedBand = computed(() => band(data.value?.utilizationBand));
@@ -154,14 +154,15 @@ const trendRows = computed(() =>
 const sprintRows = computed(() =>
   (data.value?.sprints ?? []).map((s) => ({
     period: s.period,
-    sprint: s.short,
+    // The live sprint's utilization is planned work vs capacity, not hours logged: say so.
+    sprint: s.live ? `${s.short} · live` : s.short,
     issues: num(s.issues, 0),
     committed: num(s.committed),
     done: num(s.done),
     commitment: pct(s.commitment),
     carried: num(s.carried, 0),
     hours: hours(s.logged),
-    utilization: pct(s.util),
+    utilization: s.live ? `${pct(s.util)} forecast` : pct(s.util),
   })),
 );
 
@@ -169,7 +170,7 @@ const bugs = computed(() => data.value?.bugs ?? {});
 
 const isSelf = computed(() => !!personId.value && personId.value === selfId.value);
 
-const issueCount = computed(() => (data.value?.sprints ?? []).reduce((total, s) => total + (val(s.issues) ?? 0), 0));
+const issueCount = computed(() => val(data.value?.issueCount));
 
 function openSprint(row) {
   periodKey.value = row.period;
@@ -296,6 +297,15 @@ function openWorkItems() {
           />
           <StatTile eyebrow="Hours logged" :value="num(metrics.logged)" unit="h" :foot="`${num(metrics.work, 0)} working days`" />
           <StatTile
+            v-if="onboarding"
+            eyebrow="Utilization"
+            value="Training"
+            foot="Not judged while onboarding"
+            badge="Onboarding"
+            badge-tone="info"
+          />
+          <StatTile
+            v-else
             eyebrow="Utilization"
             :value="num(data.utilization, 0)"
             unit="%"
@@ -337,9 +347,10 @@ function openWorkItems() {
       <div class="pl-grid two">
         <PlCard title="Utilization by sprint" :empty="!trendRows.length" empty-text="No finished sprint yet.">
           <template #actions>
-            <Badge v-if="trend?.overall != null" :text="`Overall ${num(trend.overall, 0)}% · ${trendBand.label}`" :tone="trendBand.tone" />
+            <Badge v-if="onboarding" text="Onboarding · not judged" tone="info" />
+            <Badge v-else-if="trend?.overall != null" :text="`Overall ${num(trend.overall, 0)}% · ${trendBand.label}`" :tone="trendBand.tone" />
           </template>
-          <UtilizationMeter v-for="s in trendRows" :key="s.key" :label="s.label" :value="s.value" :band="s.tone || 'ok'" />
+          <UtilizationMeter v-for="s in trendRows" :key="s.key" :label="s.label" :value="s.value" :band="onboarding ? 'ok' : s.tone || 'ok'" />
         </PlCard>
 
         <PlCard title="Bugs & support" subtitle="A learning signal, not blame">

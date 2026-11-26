@@ -61,11 +61,13 @@ final class UsersService
     /** What a deletion removes and keeps, shown in the confirmation (spec privacy-retention). */
     static final List<String> REMOVED = List.of("Login, password and sessions", "Name, email and contact details",
             "Performance profile details", "OKRs", "Extra-work records",
-            "Free-text pulse notes, 1:1 notes and kudos text they wrote");
+            "Free-text pulse notes, 1:1 notes and kudos text they wrote",
+            "Links to their Jira and GitHub accounts, and those accounts' login, name and email");
 
     static final List<String> KEPT = List.of("Aggregated scores and review records, under an anonymous id",
             "Audit log entries, under an anonymous id",
-            "360° comments, unlinked from the person and scrubbed of names and emails");
+            "360° comments, unlinked from the person and scrubbed of names and emails",
+            "Their Jira and GitHub activity, in team totals with no name");
 
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 

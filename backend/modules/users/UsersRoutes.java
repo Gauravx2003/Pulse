@@ -1,5 +1,6 @@
 package com.pulse.modules.users;
 
+import com.pulse.calc.core.CalcService;
 import com.pulse.platform.http.BodySchema;
 import com.pulse.platform.http.ExpectedVersion;
 import com.pulse.platform.http.Ids;
@@ -68,9 +69,12 @@ final class UsersRoutes
 
     private final RolesService roles;
 
+    private final CalcService calc;
+
     UsersRoutes(ModuleContext ctx)
     {
         this.policy = ctx.policy();
+        this.calc = ctx.calc();
         this.users = new UsersService(ctx);
         this.roles = new RolesService(ctx);
     }
@@ -142,9 +146,22 @@ final class UsersRoutes
                 .onFailure(rc::fail);
     }
 
+    /**
+     * A deletion erases the person's name and unlinks their live tool accounts (task 24.8), so every cached
+     * result naming them or counting their live rows is dropped, here and on other instances.
+     */
     private void delete(RoutingContext rc)
     {
-        users.delete(PolicyService.user(rc), Ids.path(rc, "id"), policy.request(rc)).onSuccess(rc::json).onFailure(rc::fail);
+        users.delete(PolicyService.user(rc), Ids.path(rc, "id"), policy.request(rc))
+                .onSuccess(result ->
+                {
+                    calc.invalidate(CalcService.ALL);
+
+                    CalcService.publish(rc.vertx(), CalcService.ALL);
+
+                    rc.json(result);
+                })
+                .onFailure(rc::fail);
     }
 
     private void deletionPreview(RoutingContext rc)

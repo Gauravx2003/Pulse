@@ -115,10 +115,27 @@ Coding rules are those of `pulse-v2-live-connectors` design decision 0: `JsonObj
 
   Verify: `LiveSyncRoutesTest` covers a changed config (cursor cleared, next sync without `since`, no duplicates), a new secret alone (cursor kept) and a reset during a run (not put back).
 
-- [ ] 6.1 On `pulse_live`:
+- [x] 6.1 On `pulse_live`:
   - confirm the four field ids and save (with 6.2 the cursor clears), run Sync now and record the sync counts (intervals, worklogs, truncated)
   - recalculate the closed periods frozen before that sync (Admin recalculate, with a reason): their snapshots were taken with no interval hours and do not change by themselves
   - for three people, compare a closed sprint's hours logged with a hand calculation from their Jira Start/End values
   - check that no day exceeds `dayHours`
 
   Verify: the results are recorded in this change's PR description, and every compared value matches.
+
+  **Results (2026-11-26):**
+  - Field ids confirmed and saved (Dev 10200/10201, QA 11000/10701); the save logged "the next sync reads everything again" (6.2).
+  - Sync now 16:22–16:38, success, a full read of 10,665 issues: 21,330 interval rows (Dev 8,585 with a start, 20 open, 15 ending at resolution; QA 585, 3 at resolution), 0 Jira worklogs, `truncatedWorklogs` 0. Every issue event counted as updated once, likely because the first sync ran on a build before 25.4's value format.
+  - The four imported people (names kept off the repo; the real data stays in `pulse_live`) had `joined_on` = the import day, which zeroes every earlier period. They were set by hand in `pulse_live` to their real joining dates. Pulse has no Admin recalculation of a closed period, so the 137 period snapshots frozen before the sync were marked superseded and the restart froze them again.
+  - Hours logged in the new sprint snapshots, against a hand calculation from the raw Start/End values (window 10:00–18:00, weekdays, overlaps merged, at most 8 h a day; `pulse_live` has no holidays, leave or visits):
+
+    | Sprint | Person A | Person B | Person C | Person D |
+    |---|---|---|---|---|
+    | J139 (16 Jun – 9 Aug) | 143.26 = 143.26 | 103.48 = 103.48 | 161.08 = 161.08 | 231.23 = 231.23 |
+    | J141 (5 Aug – 13 Sep) | 110.43 = 110.43 | 39.87 = 39.87 | 82.40 = 82.40 | 192.00 = 192.00 |
+    | J142 (8 Sep – 4 Oct) | 102.98 = 102.98 | 87.57 = 87.57 | 136.87 = 136.87 | 119.75 = 119.75 |
+
+    J142 utilization: 68 / 58 / 90 / 79 % of 19 working days × 8 h, as hours ÷ 152.
+  - No day exceeds `dayHours`: the default window is exactly 8 h, and Person D's J141 (192.00 = 24 days × 8 h) shows full days capped at 8.
+
+  **Follow-ups outside this change (Track 1):** a `joined_on` column in the Users CSV import (and the invite form), and an Admin recalculation of a closed period (the step this task assumed).

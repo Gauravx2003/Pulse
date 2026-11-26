@@ -16,6 +16,7 @@
     <select
       class="pl-input is-sm"
       :aria-label="label"
+      :title="selectedLabel"
       :value="modelValue ?? ''"
       :disabled="!options.length"
       @change="emit('update:modelValue', $event.target.value)"
@@ -52,6 +53,10 @@ const kind = computed(() => {
 });
 
 const options = computed(() => props.periods?.[`${kind.value}s`] ?? []);
+
+// A sprint can carry a long Jira name (change jira-sprint-names): the select is capped and ellipsed, and the
+// full label of the chosen period is its tooltip.
+const selectedLabel = computed(() => options.value.find((p) => p.key === props.modelValue)?.label ?? '');
 
 function chooseKind(k) {
   if (k !== kind.value) {

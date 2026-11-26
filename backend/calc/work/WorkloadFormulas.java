@@ -235,6 +235,7 @@ public final class WorkloadFormulas implements FormulaModule
                                 days.result().person(), hoursPerPoint)
                         .put("openIssues", Workload.openIssues(list(issues.result()), hoursPerPoint))
                         .put("sprint", sprint.getString("key"))
+                        .put("sprintName", sprint.getString("short"))
                         .put("elapsedPct", elapsed)
                         .put("hoursPerPoint", hoursPerPoint)
                         .put("focus", ctx.rules().getDouble("focus", 6.0))

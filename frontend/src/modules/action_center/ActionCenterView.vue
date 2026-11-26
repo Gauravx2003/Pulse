@@ -96,9 +96,14 @@ const watch = computed(() => data.signals?.watch ?? []);
 
 const forecastRows = computed(() => data.forecast?.people ?? []);
 const sprintName = computed(() => {
+  const name = data.forecast?.sprintName;
   const key = data.forecast?.sprint;
 
-  return typeof key === 'string' ? `Sprint ${key.replace(/\D/g, '')}` : 'Sprint';
+  if (typeof name === 'string' && name) {
+    return name;
+  }
+
+  return typeof key === 'string' ? key.replace(/^s:/, '') : 'Sprint';
 });
 
 const capacitySprint = computed(() => data.capacity?.sprint ?? null);

@@ -112,7 +112,7 @@ class WorkloadFormulasTest
                     + "return {open:m.open.map(k).sort(),rem:m.rem,work:m.work,cap:m.cap,util:m.util,band:m.band,"
                     + "stale:m.stale.map(k).sort(),sp:m.sp,done:m.done.map(k).sort(),oldest:m.oldest}})(metrics(person('" + id + "')))");
 
-            JsonObject port = without((JsonObject) get(WorkloadFormulas.LIVE_SPRINT, person(id)), "sprint", "openIssues", "elapsedPct",
+            JsonObject port = without((JsonObject) get(WorkloadFormulas.LIVE_SPRINT, person(id)), "sprint", "sprintName", "openIssues", "elapsedPct",
                     "hoursPerPoint", "focus", "staleAfter");
 
             assertSame(id, prototype, port);
